@@ -61,5 +61,5 @@ class OphirJunoCOM:
    def disconnectJuno(self):
       self.OphirCOM.StopAllStreams()
       self.OphirCOM.CloseAll()
-      self.OphirCOM = None
+      self.isConnected = False
 
