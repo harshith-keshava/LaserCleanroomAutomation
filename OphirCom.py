@@ -19,7 +19,6 @@ class OphirJunoCOM:
    
    def connectToJuno(self):
       DeviceList = self.OphirCOM.ScanUSB()
-      print(DeviceList)
       if len(DeviceList) == 0:
          self.isConnected = False
          return False
