@@ -32,6 +32,8 @@ class OphirJunoCOM:
             self.PyrometerSerialCalibDate = str(self.OphirCOM.GetSensorCalibrationDueDate(self.DeviceHandle, 0)).split(' ')[0]
             self.isConnected = True
             return True
+      # Reaching here means no devices with sensors are connected
+      return False
 
    def getJunoSerialNum(self):
       if self.isConnected:
