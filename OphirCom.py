@@ -24,13 +24,13 @@ class OphirJunoCOM:
          self.isConnected = False
          return False
       for Device in DeviceList:   	# if any device is connected
-         DeviceHandle = self.OphirCOM.OpenUSBDevice(Device)	# open first device
-         exists = self.OphirCOM.IsSensorExists(DeviceHandle, 0)
+         self.DeviceHandle = self.OphirCOM.OpenUSBDevice(Device)	# open first device
+         exists = self.OphirCOM.IsSensorExists(self.DeviceHandle, 0)
          if exists:
-            self.JunoSerialNum = self.OphirCOM.GetDeviceInfo(DeviceHandle)[2]
-            self.JunoSerialCalibrationDate = str(self.OphirCOM.GetDeviceCalibrationDueDate(DeviceHandle)).split(' ')[0]
-            self.PyrometerSerialNum = self.OphirCOM.GetSensorInfo(DeviceHandle,0)[0]
-            self.PyrometerSerialCalibDate = str(self.OphirCOM.GetSensorCalibrationDueDate(DeviceHandle, 0)).split(' ')[0]
+            self.JunoSerialNum = self.OphirCOM.GetDeviceInfo(self.DeviceHandle)[2]
+            self.JunoSerialCalibrationDate = str(self.OphirCOM.GetDeviceCalibrationDueDate(self.DeviceHandle)).split(' ')[0]
+            self.PyrometerSerialNum = self.OphirCOM.GetSensorInfo(self.DeviceHandle,0)[0]
+            self.PyrometerSerialCalibDate = str(self.OphirCOM.GetSensorCalibrationDueDate(self.DeviceHandle, 0)).split(' ')[0]
             self.isConnected = True
             return True
 
