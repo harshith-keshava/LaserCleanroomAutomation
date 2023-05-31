@@ -110,9 +110,11 @@ class OphirJunoCOM:
             return True
         return False
     
-    def quickEnd(self):
+    def quickEnd(self, update=True):
         # Go from streaming data straight to disconnected
         # At the time of writing, this function isn't strictly necessary, it just pairs nicely with quickStart
+        if update:
+            self.updateData()
         return self.disconnectJuno()
     
     def clearData(self):
