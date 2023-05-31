@@ -1,5 +1,5 @@
 # Use of Ophir COM object. 
-# Works with python 3.5.1 & 2.7.11
+# Works with python 3.5.1, 2.7.11, & 3.10.6
 # Uses pywin32
 import win32com.client
 import time
