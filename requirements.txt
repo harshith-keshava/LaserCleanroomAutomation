@@ -2,8 +2,8 @@
 pywin32
 
 # Beam Profiling Camera via wxPython
-#wxPython
-#comtypes
+wxPython==4.0.4
+comtypes==1.1.7
 
 # Beam Profiling Camera via PyQt
 #PySide6
