@@ -7,11 +7,11 @@ class CameraDriver:
         self.app = wx.App()
         self.frame = wx.Frame( parent=None, id=wx.ID_ANY,size=(900,900), 
                               title='Python Interface to DataRay')
-        #Panel
-        p = wx.Panel(self.frame,wx.ID_ANY)
+        p = wx.Panel(self.frame,wx.ID_ANY) # TODO: is this actually necessary?
         #Get Data
         self.gd = wx.lib.activex.ActiveXCtrl(p, 'DATARAYOCX.GetDataCtrl.1')
-        #self.gd.ctrl.StartDriver()
+        # Run initialization routine on object creation
+        self.initialize()
     
     def initialize(self):
         self.gd.ctrl.StopDevice()
