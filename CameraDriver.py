@@ -17,11 +17,12 @@ class CameraDriver:
         self.gd.ctrl.StopDevice()
         self.gd.ctrl.StartDriver()
         self.gd.ctrl.ResetCamera(0)
+        # Set resolution and ROI before starting device
+        self.gd.ctrl.SetResolutionAndROI(1, 0, 0, 2048, 2048) # FullResolution=Yes, Left=Top=0, Width=Height=2048
         self.gd.ctrl.StartDevice()
         self.gd.ctrl.GetSoftwareVersion() # 8.0D92 is expected here
         #self.gd.ctrl.LoadThisJobFile('TODO: Add This Filepath')
         self.gd.ctrl.GetCameraNID(0)
-        self.gd.ctrl.SetResolutionAndROI(1, 0, 0, 2048, 2048) # FullResolution=Yes, Left=Top=0, Width=Height=2048
     
     def getTriggerMode(self):
         return self.gd.ctrl.LCMTriggerMode
