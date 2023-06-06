@@ -53,14 +53,20 @@ class CameraDriver:
     def fetchFrame(self):
         # Get a new frame cluster containing:
         # Com Error, Exposure, Gain, Full Res, H Res, V Res, and 2D Image.
-        #StartDevice()
-        #if Error, restart from the top
-        #self.getExposure()
-        #self.getGain()
-        #CaptureIsFullResolution()
-        #GetHorizontalPixels
-        #GetVerticalPixels
-        #GetWinCamDataAsVariant()
+        deviceOK = self.gd.ctrl.StartDevice()
+        # if Error, re-initialize and set trigger mode = 3, exposure = 2.5ms, and gain = 1.0
+        # TODO: are these reasonable/correct values to be using?
+        if not deviceOK:
+            self.initialize()
+            self.setTriggerMode(3)
+            self.setExposureAndGain(2.5, 1.0)
+        newFrame = dict()
+        newFrame['Exposure'] = self.getExposure()
+        newFrame['Gain'] = self.getGain()
+        newFrame['FullRes'] = self.gd.ctrl.CaptureIsFullResolution()
+        newFrame['HRes'] = self.gd.ctrl.GetHorizontalPixels()
+        newFrame['VRes'] = self.gd.ctrl.GetVerticalPixels()
+        newFrame['RawData'] = self.gd.ctrl.GetWinCamDataAsVariant()
         # Convert WinCamData to 2D array of 16 bit unsigned integers
         # TODO: compare to previous and ignore if identical
         ...
