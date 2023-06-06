@@ -36,14 +36,14 @@ class CameraDriver:
         self.setGain(newGain)
 
     def getExposure(self):
-        self.gd.ctrl.GetTargetCameraExposure(0)
+        return self.gd.ctrl.GetTargetCameraExposure(0)
         
     def setExposure(self, newExposure):
         self.gd.ctrl.SetTargetCameraExposure(0, newExposure)
         assert self.gd.ctrl.GetTargetCameraExposure(0)==newExposure, 'Failed to set exposure'
     
     def getGain(self):
-        self.gd.ctrl.GetTargetCameraGain(0)
+        return self.gd.ctrl.GetTargetCameraGain(0)
         
     def setGain(self, newGain):
         self.gd.ctrl.SetTargetCameraGain(0, newGain)
