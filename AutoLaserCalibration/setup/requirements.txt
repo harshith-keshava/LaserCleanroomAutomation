@@ -1,0 +1,12 @@
+numpy
+pandas
+glob2
+freeopcua
+matplotlib
+pyside2
+apscheduler
+PyQt5
+plotly
+kaleido
+pywin32
+pyinstaller
