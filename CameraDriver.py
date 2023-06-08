@@ -1,9 +1,11 @@
 import wx
 import wx.lib.activex
+import png
 
 class CameraDriver:
     
     def __init__(self):
+        self.previousData = None
         self.app = wx.App()
         self.frame = wx.Frame( parent=None, id=wx.ID_ANY,size=(900,900), 
                               title='Python Interface to DataRay')
@@ -66,8 +68,21 @@ class CameraDriver:
         newFrame['FullRes'] = self.gd.ctrl.CaptureIsFullResolution()
         newFrame['HRes'] = self.gd.ctrl.GetHorizontalPixels()
         newFrame['VRes'] = self.gd.ctrl.GetVerticalPixels()
-        newFrame['RawData'] = self.gd.ctrl.GetWinCamDataAsVariant()
+        
         # Convert WinCamData to 2D array of 16 bit unsigned integers
-        # TODO: compare to previous and ignore if identical
-        ...
+        data = self.gd.ctrl.GetWinCamDataAsVariant()
+        width, height = newFrame['HRes'], newFrame['VRes']
+        newFrame['RawData'] = tuple(data[width*i:width*(i+1)] for i in range(height))
+        
+        # Check for stale frame using previous data
+        newFrame['SameAsPrevious'] = self.previousData == newFrame['RawData']
+        self.previousData = newFrame['RawData']
+        
+        # Create PNG from data array
+        # Mode L is greyscale, aka Luminance/Lightness; 16 specifies bit depth (default is 8)
+        newFrame['PNG'] = png.from_array(newFrame['RawData'], mode='L;16')
+        # PNG objects can be saved to file using .save(filename) or .write(openFileObject)
+        # In general, you can only call save/write once; after it has been called the first time the PNG image is written, the source data will have been streamed, and cannot be streamed again.
+        
+        return newFrame
     
