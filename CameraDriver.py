@@ -24,7 +24,7 @@ class CameraDriver:
         self.gd.ctrl.StartDevice()
         self.setTriggerMode(3)
         self.gd.ctrl.AutoShutterOn = False # Disable automatic exposure setting; mostly relevant for using mode 0 (freerun)
-        self.setExposureAndGain(1.0, 1.0)
+        self.setExposureAndGain(2.0, 1.0)
         self.softwareVersion = self.gd.ctrl.GetSoftwareVersion() # 8.0D92 is expected here
         #self.gd.ctrl.LoadThisJobFile('TODO: Add This Filepath')
         self.cameraNID = self.gd.ctrl.GetCameraNID(0)
