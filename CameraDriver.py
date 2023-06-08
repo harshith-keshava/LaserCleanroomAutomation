@@ -24,7 +24,7 @@ class CameraDriver:
         self.gd.ctrl.StartDevice()
         self.gd.ctrl.GetSoftwareVersion() # 8.0D92 is expected here
         #self.gd.ctrl.LoadThisJobFile('TODO: Add This Filepath')
-        self.gd.ctrl.GetCameraNID(0)
+        self.cameraNID = self.gd.ctrl.GetCameraNID(0)
     
     def getTriggerMode(self):
         return self.gd.ctrl.LCMTriggerMode
@@ -63,6 +63,7 @@ class CameraDriver:
             self.setTriggerMode(3)
             self.setExposureAndGain(2.5, 1.0)
         newFrame = dict()
+        newFrame['CameraNID'] = self.cameraNID
         newFrame['Exposure'] = self.getExposure()
         newFrame['Gain'] = self.getGain()
         newFrame['FullRes'] = self.gd.ctrl.CaptureIsFullResolution()
