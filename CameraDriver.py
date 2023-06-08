@@ -22,7 +22,7 @@ class CameraDriver:
         # Set resolution and ROI before starting device
         self.gd.ctrl.SetResolutionAndROI(1, 0, 0, 2048, 2048) # FullResolution=Yes, Left=Top=0, Width=Height=2048
         self.gd.ctrl.StartDevice()
-        self.setTriggerMode(0)
+        self.setTriggerMode(3)
         self.gd.ctrl.AutoShutterOn = False # Disable automatic exposure setting; mostly relevant for using mode 0 (freerun)
         self.setExposureAndGain(1.0, 1.0)
         self.softwareVersion = self.gd.ctrl.GetSoftwareVersion() # 8.0D92 is expected here
