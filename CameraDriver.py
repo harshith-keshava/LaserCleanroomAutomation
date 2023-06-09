@@ -63,6 +63,7 @@ class CameraDriver:
         # if Error, re-initialize with default values
         if not deviceOK:
             self.initialize()
+            assert self.isConnected, 'Failed to connect to camera; check hardware connection'
         newFrame = dict()
         newFrame['CameraNID'] = self.cameraNID
         newFrame['Exposure'] = self.getExposure()
