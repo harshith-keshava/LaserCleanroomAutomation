@@ -21,13 +21,14 @@ class CameraDriver:
         self.gd.ctrl.ResetCamera(0)
         # Set resolution and ROI before starting device
         self.gd.ctrl.SetResolutionAndROI(fullResolution, *topLeft, *dimensions) 
-        self.gd.ctrl.StartDevice()
-        self.setTriggerMode(triggerMode)
-        self.gd.ctrl.AutoShutterOn = False # Disable automatic exposure setting; mostly relevant for using mode 0 (freerun)
-        self.setExposureAndGain(exposure, gain)
-        self.softwareVersion = self.gd.ctrl.GetSoftwareVersion() # 8.0D92 is expected here
-        #self.gd.ctrl.LoadThisJobFile('TODO: Add This Filepath')
-        self.cameraNID = self.gd.ctrl.GetCameraNID(0)
+        self.isConnected = self.gd.ctrl.StartDevice()
+        if self.isConnected:
+            self.setTriggerMode(triggerMode)
+            self.gd.ctrl.AutoShutterOn = False # Disable automatic exposure setting; mostly relevant for using mode 0 (freerun)
+            self.setExposureAndGain(exposure, gain)
+            self.softwareVersion = self.gd.ctrl.GetSoftwareVersion() # 8.0D92 is expected here
+            #self.gd.ctrl.LoadThisJobFile('TODO: Add This Filepath')
+            self.cameraNID = self.gd.ctrl.GetCameraNID(0)
     
     def getTriggerMode(self):
         return self.gd.ctrl.LCMTriggerMode
