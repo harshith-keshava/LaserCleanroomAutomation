@@ -15,16 +15,16 @@ class CameraDriver:
         # Run initialization routine on object creation
         self.initialize()
     
-    def initialize(self):
+    def initialize(self, exposure=2.0, gain=1.0, triggerMode=3, fullResolution=1, topLeft=(0,0), dimensions=(2048,2048)): #dimensions= (width, height)
         self.gd.ctrl.StopDevice()
         self.gd.ctrl.StartDriver()
         self.gd.ctrl.ResetCamera(0)
         # Set resolution and ROI before starting device
-        self.gd.ctrl.SetResolutionAndROI(1, 0, 0, 2048, 2048) # FullResolution=Yes, Left=Top=0, Width=Height=2048
+        self.gd.ctrl.SetResolutionAndROI(fullResolution, *topLeft, *dimensions) 
         self.gd.ctrl.StartDevice()
-        self.setTriggerMode(3)
+        self.setTriggerMode(triggerMode)
         self.gd.ctrl.AutoShutterOn = False # Disable automatic exposure setting; mostly relevant for using mode 0 (freerun)
-        self.setExposureAndGain(2.0, 1.0)
+        self.setExposureAndGain(exposure, gain)
         self.softwareVersion = self.gd.ctrl.GetSoftwareVersion() # 8.0D92 is expected here
         #self.gd.ctrl.LoadThisJobFile('TODO: Add This Filepath')
         self.cameraNID = self.gd.ctrl.GetCameraNID(0)
@@ -59,8 +59,7 @@ class CameraDriver:
         # Get a new frame cluster containing:
         # Com Error, Exposure, Gain, Full Res, H Res, V Res, and 2D Image.
         deviceOK = self.gd.ctrl.StartDevice()
-        # if Error, re-initialize and set trigger mode = 3, exposure = 2.5ms, and gain = 1.0
-        # TODO: are these reasonable/correct values to be using?
+        # if Error, re-initialize with default values
         if not deviceOK:
             self.initialize()
         newFrame = dict()
