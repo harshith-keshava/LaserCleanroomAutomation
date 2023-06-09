@@ -10,8 +10,11 @@ class CameraDriver:
         self.frame = wx.Frame( parent=None, id=wx.ID_ANY,size=(900,900), 
                               title='Python Interface to DataRay')
         p = wx.Panel(self.frame,wx.ID_ANY) # TODO: is this actually necessary?
-        #Get Data
+        # Get Data
         self.gd = wx.lib.activex.ActiveXCtrl(p, 'DATARAYOCX.GetDataCtrl.1')
+        # Set some parameters to avoid potential AttributeErrors on failed connection
+        self.softwareVersion = ''
+        self.cameraNID = 0
         # Run initialization routine on object creation
         self.initialize()
     
@@ -81,11 +84,15 @@ class CameraDriver:
         newFrame['SameAsPrevious'] = self.previousData == newFrame['RawData']
         self.previousData = newFrame['RawData']
         
-        # Create PNG from data array
-        # Mode L is greyscale, aka Luminance/Lightness; 16 specifies bit depth (default is 8)
-        newFrame['PNG'] = png.from_array(newFrame['RawData'], mode='L;16')
-        # PNG objects can be saved to file using .save(filename) or .write(openFileObject)
-        # In general, you can only call save/write once; after it has been called the first time the PNG image is written, the source data will have been streamed, and cannot be streamed again.
+        try:
+            # Create PNG from data array
+            # Mode L is greyscale, aka Luminance/Lightness; 16 specifies bit depth (default is 8)
+            newFrame['PNG'] = png.from_array(newFrame['RawData'], mode='L;16')
+            # PNG objects can be saved to file using .save(filename) or .write(openFileObject)
+            # In general, you can only call save/write once; after it has been called the first time the PNG image is written, the source data will have been streamed, and cannot be streamed again.
+        except:
+            # If PNG creation fails, it's almost certainly because there's no data yet. Also we don't want the function to fail, so just set None instead
+            newFrame['PNG'] = None
         
         return newFrame
     
