@@ -5,7 +5,7 @@ import png
 class CameraDriver:
     
     def __init__(self):
-        self.previousData = None
+        self.previousData = (0,)
         self.app = wx.App()
         self.frame = wx.Frame( parent=None, id=wx.ID_ANY,size=(900,900), 
                               title='Python Interface to DataRay')
