@@ -11,3 +11,11 @@ kaleido
 pywin32
 pyinstaller
 cryptography
+
+# Pyrometer
+#pywin32
+
+# Beam Profiling Camera via wxPython
+wxPython==4.0.4
+comtypes==1.1.7
+pypng
