@@ -1,0 +1,1 @@
+c:/AutoLaserCalibration/venv/Scripts/python.exe c:/AutoLaserCalibration/AutolaserCalibrationApplication.py

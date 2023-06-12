@@ -12,19 +12,25 @@ class OphirJunoCOM:
             self.OphirCOM = win32com.client.Dispatch("OphirLMMeasurement.CoLMMeasurement")
             self.OphirCOM.StopAllStreams()
             self.OphirCOM.CloseAll()
-            self.isConnected = False
-            self.isStreaming = False
-            self.data = tuple()
-            self.newestDataPeak = (None, None, None)
         except OSError as err:
+            self.OphirCOM = None
             print("OS error: {0}".format(err))
         except:
-            traceback.print_exc()
+            self.OphirCOM = None
+            #traceback.print_exc()
+
+        self.isConnected = False
+        self.isStreaming = False
+        self.data = tuple()
+        self.newestDataPeak = (None, None, None)
     
     def connectToJuno(self):
         if self.isConnected: # disconnect before re-connecting
             self.disconnectJuno()
-        DeviceList = self.OphirCOM.ScanUSB()
+        if self.OphirCOM == None:
+            DeviceList = []
+        else:
+            DeviceList = self.OphirCOM.ScanUSB()
         if len(DeviceList) == 0:
             self.isConnected = False
             return False
