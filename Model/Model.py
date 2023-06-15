@@ -150,9 +150,7 @@ class Model:
         "OpticsBoxSinkUpperTemp" : BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.OpticsBoxSinkUpperTemp"),
         "OpticsBoxSinkMiddleTemp" : BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.OpticsBoxSinkMiddleTemp"),
         "OpticsBoxSinkLowerTemp" : BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.OpticsBoxSinkLowerTemp"),
-        "StartTest": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.StartTest"),
-        "AbortTest": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.AbortTest"),
-        "ProceedToNextPixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.ProceedToNextPixel")}
+        "ExampleCommand": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ExampleCommand")}
 
         # definition of all the plc tags as a variable bound to the dictionary element
         # this is redundant to the dictionary but give the option to use dot operators to access the tags rather than strings
@@ -201,9 +199,7 @@ class Model:
         self.testStatusTag = self.plcTags["TestStatus"]
         self.userAccessLevelTag = self.plcTags["UserAccessLevel"]
         self.CurrentLUTIDTag = self.plcTags["CurrentLUTID"]
-        self.startTestTag = self.plcTags["StartTest"]
-        self.abortTestTag = self.plcTags["AbortTest"]
-        self.proceedToNextPixelTag = self.plcTags["ProceedToNextPixel"]
+        self.exampleCommandTag = self.plcTags["ExampleCommand"]
 
         ### Lookup Tables for Data Outputs #####
         self.testStatusTable = ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
@@ -223,17 +219,20 @@ class Model:
             self.testStatusTag._setAsUpdating()
             self.errorNumTag._setAsUpdating()
             self.heartBeatOutTag._setAsUpdating()
-            self.startTestTag._setAsUpdating()
-            self.abortTestTag._setAsUpdating()
             self.proceedToNextPixelTag._setAsUpdating()
             self.userAccessLevelTag._setAsUpdating()
             self.CurrentLUTIDTag._setAsUpdating()
             self.ConfigValid._setAsUpdating()
             self.testStatusTag.attachReaction(self.testStatusReaction)
             self.heartBeatOutTag.attachReaction(self.heartBeatReaction)
-            self.startTestTag.attachReaction(self.startTestReaction)
-            self.abortTestTag.attachReaction(self.abortTestReaction)
             self.proceedToNextPixelTag.attachReaction(self.proceedToNextPixelReaction)
+
+            # monitor for change
+            self.exampleCommandTag._setAsUpdating()
+
+            # attach reaction on change
+            self.exampleCommandTag.attachReaction(self.exampleCommandReaction)
+
             if self.FactoryNameTag.value == "VulcanOne":
                 MachineSettings._factoryID = "V1"
             else:
@@ -281,8 +280,9 @@ class Model:
         self.logger.addNewLog("Starting test")
         self.testInProgress = True
         self.timeStamp = datetime.utcnow()
-        self.saveLocation = self._createoutputdirectory()
-        os.makedirs(self.saveLocation)
+        #self.saveLocation = self._createoutputdirectory()
+        #os.makedirs(self.saveLocation)
+        self.saveLocation = ".\\tmp\\output"
         self.periodicDataFile  = self.saveLocation + "\\opticsBoxData.csv"
         self.writePeriodicDataHeaders()
         self.createLogFile()
@@ -535,6 +535,10 @@ class Model:
         lutNumber = int(re.split('-|_|.', files[0])[5][2:])
         #self._lutDataManager.writeBinaryArraysToVFPLCs(lutNumber, )
 
+    ## Example Command
+    def exampleCommand(self):
+        return
+
     ##################################### TAG REACTIONS ###################################################################
     def testStatusReaction(self):
         testStatus = self.testStatusTag.value
@@ -563,23 +567,11 @@ class Model:
     def heartBeatReaction(self):
         self.heartBeatIntag.setPlcValue(self.heartBeatOutTag.value + 1)
 
-    def startTestReaction(self):
-        start = self.startTestTag.value
-        if start == True:
-            self.logger.addNewLog("Test start command sent by PLC ")
-            self.startTest()
-
-    def abortTestReaction(self):
-        abort = self.abortTestTag.value
-        if abort == True:
-            self.logger.addNewLog("Test abort command sent by PLC ")
-            self.abortTest()
-        
-    def proceedToNextPixelReaction(self):
-        proceedToNextPixel = self.proceedToNextPixelTag.value
-        if proceedToNextPixel == True:
-            self.logger.addNewLog("Proceed to next pixel command sent by PLC ")
-            self.goToNextPixel()
+    def exampleCommandReaction(self):
+        cmd = self.exampleCommandTag.value
+        if cmd == True:
+            self.logger.addNewLog("Example command sent by PLC ")
+            self.exampleCommand()
 
 ############################################# ADDING REACTIONS ##############################################
 
