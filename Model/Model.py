@@ -548,9 +548,11 @@ class Model:
 
     ## Example Command
     def exampleCommand(self):
-        #TODO: figure out how we want to reset this
         self.exampleResultTag.setPlcValue(1)
-        return
+    
+    # Use this one function for a bunch of response resets if possible
+    def resetResponseTags(self):
+        self.exampleResultTag.setPlcValue(0)        
 
     ##################################### TAG REACTIONS ###################################################################
     def testStatusReaction(self):
@@ -585,6 +587,8 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Example command sent by PLC ")
             self.exampleCommand()
+        if cmd == False:
+            self.resetResponseTags()
 
 ############################################# ADDING REACTIONS ##############################################
 
