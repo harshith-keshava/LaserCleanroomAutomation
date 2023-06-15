@@ -127,7 +127,10 @@ class LUTDataManager():
             luts = self.powerLuts
         now=datetime.now()
         if csvPath is None:
-            csvPath = 'C:\\LUTDataGeneration\\CSV'
+            if MachineSettings._simulation:
+                csvPath = '.\\tmp\\LUTDataGeneration\\CSV'
+            else:
+                csvPath = 'C:\\LUTDataGeneration\\CSV'
             if not os.path.isdir(csvPath):
                 os.mkdir(csvPath)
         if luts is None:

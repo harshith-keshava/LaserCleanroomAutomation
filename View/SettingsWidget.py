@@ -34,7 +34,7 @@ class SettingsWidget(QWidget):
         self.InputOutputLayout.addLayout(self.settingsInputLayoutWithHeader)
 
         arrowLabel = QLabel()
-        arrowPixmap = QPixmap('C:\\GitKraken\\AutoLaserCalibration\\view\\images\\arrow.png')
+        arrowPixmap = QPixmap('.\\view\\images\\arrow.png')
         arrowLabel.setPixmap(arrowPixmap)
         self.InputOutputLayout.addWidget(arrowLabel)
 

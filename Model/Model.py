@@ -96,7 +96,11 @@ class Model:
         ############################################# ADD TAGS #########################################
 
         # Connection of the client using the freeopcua library
-        self.client = Client(f'''opc.tcp://{machineSettings._ipAddress}:{machineSettings._portNumber}''', timeout=5) 
+        if machineSettings._simulation:
+            self.client = Client(f'''opc.tcp://127.0.0.1:{machineSettings._portNumber}''', timeout=5)
+        else: 
+            self.client = Client(f'''opc.tcp://{machineSettings._ipAddress}:{machineSettings._portNumber}''', timeout=5)
+
         # plcTags is a dictionary allowing the user to access the plc tags by string and perform a single action on all of them in a loop
         # new tags can be added without changing the model code
         self.plcTags = {"pulseDelayMsec": BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.pulseDelayMsec"),
@@ -283,9 +287,13 @@ class Model:
         self.logger.addNewLog("Starting test")
         self.testInProgress = True
         self.timeStamp = datetime.utcnow()
-        #self.saveLocation = self._createoutputdirectory()
-        #os.makedirs(self.saveLocation)
-        self.saveLocation = ".\\tmp\\output"
+        
+        if MachineSettings._simulation:
+            self.saveLocation = ".\\tmp\\output"
+        else:
+            self.saveLocation = self._createoutputdirectory()
+            os.makedirs(self.saveLocation)
+
         self.periodicDataFile  = self.saveLocation + "\\opticsBoxData.csv"
         self.writePeriodicDataHeaders()
         self.createLogFile()
