@@ -118,14 +118,12 @@ class Model:
         "BeginTest":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.BeginTest"),
         "ErrorNum":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.ErrorNum"),
         "ConfigurationSent":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.ConfigurationSent"),
-        "HeartbeatIn":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.HeartbeatIn"),
         "TestComplete":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.TestComplete"),
         "LaserPowerData":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.LaserPowerData"),
         "ActivePixel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.ActivePixel"),
         "ProceedToNextPixel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.ProceedToNextPixel"),
         "ReadyToConfigure":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.ReadyToConfigure"),
         "ReadyToTest":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.ReadyToTest"),
-        "HeartbeatOut":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.HeartbeatOut"),
         "TestStatus":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.TestStatus"),
         "CurrentPowerWatts":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.CurrentPowerWatts"),
         "UserAccessLevel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.UserAccessLevel"),
@@ -154,6 +152,9 @@ class Model:
         "OpticsBoxSinkUpperTemp" : BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.OpticsBoxSinkUpperTemp"),
         "OpticsBoxSinkMiddleTemp" : BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.OpticsBoxSinkMiddleTemp"),
         "OpticsBoxSinkLowerTemp" : BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.OpticsBoxSinkLowerTemp"),
+        # gen3 stuff below here
+        "HeartbeatOut":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.HeartbeatOut"),
+        "HeartbeatIn":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.HeartbeatIn"),
         "ExampleCommand": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ExampleCommand"),
         "ExampleResult": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ExampleResult")}
 
@@ -175,7 +176,6 @@ class Model:
         self.testPixelTag = self.plcTags["TestPixel"]
         self.beginTestTag = self.plcTags["BeginTest"]
         self.configurationSentTag = self.plcTags["ConfigurationSent"]
-        self.heartBeatIntag = self.plcTags["HeartbeatIn"]
         self.testCompleteTag = self.plcTags["TestComplete"]
         self.laserPowerDataTag = self.plcTags["LaserPowerData"]
         self.activePixelTag = self.plcTags["ActivePixel"] 
@@ -194,7 +194,8 @@ class Model:
         self.FactoryNameTag = self.plcTags["FactoryName"]
         self.ExpectedValueCoefficient = self.plcTags["ExpectedValueCoefficient"]
         self.ConfigValid = self.plcTags["ConfigValid"]
-        
+
+        self.heartBeatIntag = self.plcTags["HeartbeatIn"]        
         self.exampleResultTag = self.plcTags["ExampleResult"]
 
         ### Subscribed Variables (must also add these to the delete)
@@ -202,11 +203,11 @@ class Model:
         self.readyToConfigureTag = self.plcTags["ReadyToConfigure"]
         self.readyToTestTag = self.plcTags["ReadyToTest"]
         self.errorNumTag = self.plcTags["ErrorNum"]
-        self.heartBeatOutTag = self.plcTags["HeartbeatOut"]
         self.testStatusTag = self.plcTags["TestStatus"]
         self.userAccessLevelTag = self.plcTags["UserAccessLevel"]
         self.CurrentLUTIDTag = self.plcTags["CurrentLUTID"]
 
+        self.heartBeatOutTag = self.plcTags["HeartbeatOut"]
         self.exampleCommandTag = self.plcTags["ExampleCommand"]
 
         ### Lookup Tables for Data Outputs #####
