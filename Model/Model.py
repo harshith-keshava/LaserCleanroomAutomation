@@ -150,7 +150,8 @@ class Model:
         "OpticsBoxSinkUpperTemp" : BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.OpticsBoxSinkUpperTemp"),
         "OpticsBoxSinkMiddleTemp" : BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.OpticsBoxSinkMiddleTemp"),
         "OpticsBoxSinkLowerTemp" : BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.OpticsBoxSinkLowerTemp"),
-        "ExampleCommand": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ExampleCommand")}
+        "ExampleCommand": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ExampleCommand"),
+        "ExampleResult": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ExampleResult")}
 
         # definition of all the plc tags as a variable bound to the dictionary element
         # this is redundant to the dictionary but give the option to use dot operators to access the tags rather than strings
@@ -190,6 +191,8 @@ class Model:
         self.ExpectedValueCoefficient = self.plcTags["ExpectedValueCoefficient"]
         self.ConfigValid = self.plcTags["ConfigValid"]
         
+        self.exampleResultTag = self.plcTags["ExampleResult"]
+
         ### Subscribed Variables (must also add these to the delete)
         ###     -> Variables that update using a callback based on the status of the tag on the plc 
         self.readyToConfigureTag = self.plcTags["ReadyToConfigure"]
@@ -199,6 +202,7 @@ class Model:
         self.testStatusTag = self.plcTags["TestStatus"]
         self.userAccessLevelTag = self.plcTags["UserAccessLevel"]
         self.CurrentLUTIDTag = self.plcTags["CurrentLUTID"]
+
         self.exampleCommandTag = self.plcTags["ExampleCommand"]
 
         ### Lookup Tables for Data Outputs #####
@@ -225,7 +229,6 @@ class Model:
             self.ConfigValid._setAsUpdating()
             self.testStatusTag.attachReaction(self.testStatusReaction)
             self.heartBeatOutTag.attachReaction(self.heartBeatReaction)
-            self.proceedToNextPixelTag.attachReaction(self.proceedToNextPixelReaction)
 
             # monitor for change
             self.exampleCommandTag._setAsUpdating()
@@ -537,6 +540,8 @@ class Model:
 
     ## Example Command
     def exampleCommand(self):
+        #TODO: figure out how we want to reset this
+        self.exampleResultTag.setPlcValue(1)
         return
 
     ##################################### TAG REACTIONS ###################################################################
