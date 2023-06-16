@@ -2,6 +2,7 @@ import wx
 import wx.lib.activex
 import png
 import threading
+import time
 
 class CameraDriver:
     
@@ -78,6 +79,12 @@ class CameraDriver:
         newFrame['HRes'] = self.gd.ctrl.GetHorizontalPixels()
         newFrame['VRes'] = self.gd.ctrl.GetVerticalPixels()
         
+        # Get timestamp and convert to various formats
+        # To refactor for local time instead of GMT, use time.localtime instead of time.gmtime (same usage)
+        newFrame['TimeSec'] = time.time()
+        newFrame['TimeStruct'] = time.gmtime(newFrame['TimeSec'])
+        newFrame['TimeString'] = time.asctime(newFrame['TimeStruct'])
+
         # Convert WinCamData to 2D array of 16 bit unsigned integers
         data = self.gd.ctrl.GetWinCamDataAsVariant()
         width, height = newFrame['HRes'], newFrame['VRes']
