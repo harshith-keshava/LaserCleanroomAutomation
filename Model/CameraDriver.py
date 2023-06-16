@@ -7,7 +7,7 @@ import time
 class CameraDriver:
     
     def __init__(self):
-        self.frames = []
+        self.frames = [] # TODO: consider using a Queue. While lists themselves are threadsafe (eg. self.frames.append(newFrame) is fine), their contents are not (ex. modifying self.frames[0] directly)
         self.previousData = (0,)
         self.updateThread = None
         self.app = wx.App()
