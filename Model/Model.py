@@ -156,7 +156,14 @@ class Model:
         "HeartbeatOut":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.HeartbeatOut"),
         "HeartbeatIn":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.HeartbeatIn"),
         "ExampleCommand": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ExampleCommand"),
-        "ExampleResult": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ExampleResult")}
+        "ExampleResult": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ExampleResult"),
+        "InitializePixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.InitializePixel"),
+        "PixelInitialized": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelInitialized"),
+        "CapturePixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CapturePixel"),
+        "PixelCaptured": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelCaptured"),
+        "ProcessPixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ProcessPixel"),
+        "PixelProcessed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelProcessed"),
+        "PixelResult": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelResult")}
 
         # definition of all the plc tags as a variable bound to the dictionary element
         # this is redundant to the dictionary but give the option to use dot operators to access the tags rather than strings
@@ -197,6 +204,10 @@ class Model:
 
         self.heartBeatIntag = self.plcTags["HeartbeatIn"]        
         self.exampleResultTag = self.plcTags["ExampleResult"]
+        self.pixelInitializedTag = self.plcTags["PixelInitialized"]
+        self.pixelCapturedTag = self.plcTags["PixelCaptured"]
+        self.pixelProcessedTag = self.plcTags["PixelProcessed"]
+        self.pixelResultTag = self.plcTags["PixelResult"]
 
         ### Subscribed Variables (must also add these to the delete)
         ###     -> Variables that update using a callback based on the status of the tag on the plc 
@@ -209,6 +220,9 @@ class Model:
 
         self.heartBeatOutTag = self.plcTags["HeartbeatOut"]
         self.exampleCommandTag = self.plcTags["ExampleCommand"]
+        self.initializePixelTag = self.plcTags["InitializePixel"]
+        self.capturePixelTag = self.plcTags["CapturePixel"]
+        self.processPixelTag = self.plcTags["ProcessPixel"]
 
         ### Lookup Tables for Data Outputs #####
         self.testStatusTable = ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
@@ -227,19 +241,25 @@ class Model:
             self.readyToTestTag._setAsUpdating()
             self.testStatusTag._setAsUpdating()
             self.errorNumTag._setAsUpdating()
-            self.heartBeatOutTag._setAsUpdating()
             self.proceedToNextPixelTag._setAsUpdating()
             self.userAccessLevelTag._setAsUpdating()
             self.CurrentLUTIDTag._setAsUpdating()
             self.ConfigValid._setAsUpdating()
             self.testStatusTag.attachReaction(self.testStatusReaction)
-            self.heartBeatOutTag.attachReaction(self.heartBeatReaction)
 
             # monitor for change
             self.exampleCommandTag._setAsUpdating()
+            self.heartBeatOutTag._setAsUpdating()
+            self.initializePixelTag._setAsUpdating()
+            self.capturePixelTag._setAsUpdating()
+            self.processPixelTag._setAsUpdating()
 
             # attach reaction on change
             self.exampleCommandTag.attachReaction(self.exampleCommandReaction)
+            self.heartBeatOutTag.attachReaction(self.heartBeatReaction)
+            self.initializePixelTag.attachReaction(self.initializePixelReaction)
+            self.capturePixelTag.attachReaction(self.capturePixelReaction)
+            self.processPixelTag.attachReaction(self.processPixelReaction)
 
             if self.FactoryNameTag.value == "VulcanOne":
                 MachineSettings._factoryID = "V1"
@@ -550,10 +570,25 @@ class Model:
     ## Example Command
     def exampleCommand(self):
         self.exampleResultTag.setPlcValue(1)
+
+    def initializePixel(self):
+        self.pixelInitializedTag.setPlcValue(1)
+
+    def capturePixel(self):
+        self.pixelCapturedTag.setPlcValue(1)
+
+    def processPixel(self):
+        self.pixelResultTag.setPlcValue(1)  # autopass
+        self.pixelProcessedTag.setPlcValue(1)
     
-    # Use this one function for a bunch of response resets if possible
+    ## Use this one function for a bunch of response resets if possible
     def resetResponseTags(self):
-        self.exampleResultTag.setPlcValue(0)        
+        self.exampleResultTag.setPlcValue(0)
+        self.pixelResultTag.setPlcValue(0)
+        self.pixelInitializedTag.setPlcValue(0)
+        self.pixelCapturedTag.setPlcValue(0)     
+        self.pixelProcessedTag.setPlcValue(0)
+
 
     ##################################### TAG REACTIONS ###################################################################
     def testStatusReaction(self):
@@ -588,6 +623,30 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Example command sent by PLC ")
             self.exampleCommand()
+        if cmd == False:
+            self.resetResponseTags()
+
+    def initializePixelReaction(self):
+        cmd = self.initializePixelTag.value
+        if cmd == True:
+            self.logger.addNewLog("Initialize pixel command received from PLC ")
+            self.initializePixel()
+        if cmd == False:
+            self.resetResponseTags()
+        
+    def capturePixelReaction(self):
+        cmd = self.capturePixelTag.value
+        if cmd == True:
+            self.logger.addNewLog("Capture pixel command received from  PLC ")
+            self.capturePixel()
+        if cmd == False:
+            self.resetResponseTags()
+
+    def processPixelReaction(self):
+        cmd = self.processPixelTag.value
+        if cmd == True:
+            self.logger.addNewLog("Process pixel command received from  PLC ")
+            self.processPixel()
         if cmd == False:
             self.resetResponseTags()
 
