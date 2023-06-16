@@ -1,6 +1,6 @@
 ﻿$AppRootPath = "$PSScriptRoot\.."
 Set-Location $AppRootPath
-python -m venv venv
+py -3.7 -m venv venv
 .\venv\Scripts\activate
 pip install -r .\setup\requirements.txt
 $DeskTopPath=[Environment]::GetFolderPath("Desktop")
