@@ -30,7 +30,7 @@ class CameraDriver:
             self.gd.ctrl.AutoShutterOn = False # Disable automatic exposure setting; mostly relevant for using mode 0 (freerun)
             self.setExposureAndGain(exposure, gain)
             self.softwareVersion = self.gd.ctrl.GetSoftwareVersion() # 8.0D92 is expected here
-            #self.gd.ctrl.LoadThisJobFile('TODO: Add This Filepath')
+            #self.gd.ctrl.LoadThisJobFile('ConfigFiles\wincam_settings.ojf')
             self.cameraNID = self.gd.ctrl.GetCameraNID(0)
     
     def getTriggerMode(self):
