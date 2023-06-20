@@ -2,11 +2,12 @@ import wx
 import wx.lib.activex
 import png
 import time
+import numpy as np
 
 class CameraDriver:
     
     def __init__(self):
-        self.previousData = (0,)
+        self.previousData = np.array((0,))
         self.app = wx.App()
         self.frame = wx.Frame( parent=None, id=wx.ID_ANY,size=(900,900), 
                               title='Python Interface to DataRay')
@@ -82,23 +83,23 @@ class CameraDriver:
         newFrame['TimeStruct'] = time.gmtime(newFrame['TimeSec'])
         newFrame['TimeString'] = time.asctime(newFrame['TimeStruct'])
 
-        # Convert WinCamData to 2D array of 16 bit unsigned integers
+        # Convert WinCamData tuple to 2D numpy array
         data = self.gd.ctrl.GetWinCamDataAsVariant()
-        width, height = newFrame['HRes'], newFrame['VRes']
-        newFrame['RawData'] = tuple(data[width*i:width*(i+1)] for i in range(height))
+        newFrame['Data'] = np.array(data).reshape((newFrame['VRes'], newFrame['HRes'])) # (numRows, numCols)
         
         # Check for stale frame using previous data
-        newFrame['SameAsPrevious'] = self.previousData == newFrame['RawData']
+        newFrame['SameAsPrevious'] = (self.previousData.size == newFrame['Data'].size) and (self.previousData == newFrame['Data']).all()
         self.previousData = newFrame['RawData']
         
-        try:
+        # Check number of dimensions before making png so it doesn't error
+        if newFrame['Data'].ndim == 2:
             # Create PNG from data array
             # Mode L is greyscale, aka Luminance/Lightness; 16 specifies bit depth (default is 8)
-            newFrame['PNG'] = png.from_array(newFrame['RawData'], mode='L;16')
+            newFrame['PNG'] = png.from_array(newFrame['Data'], mode='L;16')
             # PNG objects can be saved to file using .save(filename) or .write(openFileObject)
             # In general, you can only call save/write once; after it has been called the first time the PNG image is written, the source data will have been streamed, and cannot be streamed again.
-        except:
-            # If PNG creation fails, it's almost certainly because there's no data yet. Also we don't want the function to fail, so just set None instead
+        else:
+            # There probably isn't data, so set PNG to None
             newFrame['PNG'] = None
         
         return newFrame
