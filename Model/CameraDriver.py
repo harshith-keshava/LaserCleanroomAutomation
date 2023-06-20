@@ -1,15 +1,12 @@
 import wx
 import wx.lib.activex
 import png
-import threading
 import time
 
 class CameraDriver:
     
     def __init__(self):
-        self.frames = [] # TODO: consider using a Queue. While lists themselves are threadsafe (eg. self.frames.append(newFrame) is fine), their contents are not (ex. modifying self.frames[0] directly)
         self.previousData = (0,)
-        self.updateThread = None
         self.app = wx.App()
         self.frame = wx.Frame( parent=None, id=wx.ID_ANY,size=(900,900), 
                               title='Python Interface to DataRay')
@@ -105,34 +102,3 @@ class CameraDriver:
             newFrame['PNG'] = None
         
         return newFrame
-    
-    # Threading functions
-    def startUpdatingFrames(self):
-        self.updateThread = StoppableThread(target=self.frameUpdateTask, daemon=True)
-        self.updateThread.start()
-    
-    def stopUpdatingFrames(self):
-        if self.updateThread is not None:
-            self.updateThread.stop()
-            self.updateThread.join()
-            self.updateThread = None
-    
-    def frameUpdateTask(self):
-        if self.updateThread is not None:
-            while not self.updateThread.stopped():
-                new_frame = self.fetchFrame()
-                if not new_frame['SameAsPrevious']:
-                    self.frames.append(new_frame)
-            # end when stopped
-    
-
-class StoppableThread(threading.Thread):
-    def __init__(self, *args, **kwargs):
-        super(StoppableThread, self).__init__(*args, **kwargs)
-        self._stop_event = threading.Event()
-
-    def stop(self):
-        self._stop_event.set()
-        
-    def stopped(self):
-        return self._stop_event.is_set()
