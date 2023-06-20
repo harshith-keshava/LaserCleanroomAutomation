@@ -186,14 +186,9 @@ class Model:
         # this makes tags come up in the autocomplete of the test editor vs having the remember/lookup the exact string
         # new tags do not have to be added here in addition to the dictionary but they can be 
         self.pulseDelayMsecTag = self.plcTags["pulseDelayMsec"]
-        self.pulseOnMsecTag = self.plcTags["pulseOnMsec"]
         self.pulseOffMsecTag = self.plcTags["pulseOffMsec"]
-        self.numPulsesPerLevelTag = self.plcTags["numPulsesPerLevel"]
         self.availableLaserPowerWattsTag = self.plcTags["availableLaserPowerWatts"]
         self.safePowerLimitWattsTag = self.plcTags["safePowerLimitWatts"]
-        self.startingPowerLevelTag = self.plcTags["startingPowerLevel"]
-        self.numPowerLevelStepsTag = self.plcTags["numPowerLevelSteps"]
-        self.powerLevelIncrementTag = self.plcTags["powerLevelIncrement"]
         self.testPixelsTag = self.plcTags["PixelList"]
         self.testPixelsToTestTag = self.plcTags["NumPixelsToTest"]
         self.testPixelTag = self.plcTags["TestPixel"]
@@ -203,7 +198,6 @@ class Model:
         self.laserPowerDataTag = self.plcTags["LaserPowerData"]
         self.activePixelTag = self.plcTags["ActivePixel"] 
         self.proceedToNextPixelTag = self.plcTags["ProceedToNextPixel"]
-        self.currentPowerWattsTag= self.plcTags["CurrentPowerWatts"]
         self.PixelListTag = self.plcTags["PixelList"]
         self.TestTypeTag = self.plcTags["TestType"]
         self.ScaledEnergyLiveTag = self.plcTags["ScaledEnergyLive"]
@@ -218,11 +212,22 @@ class Model:
         self.ExpectedValueCoefficient = self.plcTags["ExpectedValueCoefficient"]
         self.ConfigValid = self.plcTags["ConfigValid"]
 
+        ## Gen 3
         self.heartBeatIntag = self.plcTags["HeartbeatIn"]        
+        
         self.exampleResultTag = self.plcTags["ExampleResult"]
+        
         self.pixelInitializedTag = self.plcTags["PixelInitialized"]
+        
         self.pixelCapturedTag = self.plcTags["PixelCaptured"]
-        self.currentPowerLevelTag = self.plcTags["CurrentPowerLevel"]
+        self.pulseOnMsecTag = self.plcTags["pulseOnMsec"]
+        self.numPulsesPerLevelTag = self.plcTags["numPulsesPerLevel"]
+        self.startingPowerLevelTag = self.plcTags["startingPowerLevel"]
+        self.numPowerLevelStepsTag = self.plcTags["numPowerLevelSteps"]
+        self.powerLevelIncrementTag = self.plcTags["powerLevelIncrement"]
+        self.currentPowerWattsTag= self.plcTags["CurrentPowerWatts"]
+
+
         self.pixelProcessedTag = self.plcTags["PixelProcessed"]
         self.pixelResultTag = self.plcTags["PixelResult"]
 
