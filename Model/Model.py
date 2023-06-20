@@ -161,6 +161,7 @@ class Model:
         "PixelInitialized": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelInitialized"),
         "CapturePixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CapturePixel"),
         "PixelCaptured": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelCaptured"),
+        "CurrentPowerLevel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CurrentPowerLevel"),
         "ProcessPixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ProcessPixel"),
         "PixelProcessed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelProcessed"),
         "PixelResult": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelResult")}
@@ -206,6 +207,7 @@ class Model:
         self.exampleResultTag = self.plcTags["ExampleResult"]
         self.pixelInitializedTag = self.plcTags["PixelInitialized"]
         self.pixelCapturedTag = self.plcTags["PixelCaptured"]
+        self.currentPowerLevelTag = self.plcTags["CurrentPowerLevel"]
         self.pixelProcessedTag = self.plcTags["PixelProcessed"]
         self.pixelResultTag = self.plcTags["PixelResult"]
 
@@ -575,6 +577,7 @@ class Model:
         self.pixelInitializedTag.setPlcValue(1)
 
     def capturePixel(self):
+        self.currentPowerLevelTag.value()
         self.pixelCapturedTag.setPlcValue(1)
 
     def processPixel(self):
