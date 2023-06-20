@@ -104,14 +104,14 @@ class Model:
         # plcTags is a dictionary allowing the user to access the plc tags by string and perform a single action on all of them in a loop
         # new tags can be added without changing the model code
         self.plcTags = {"pulseDelayMsec": BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.pulseDelayMsec"),
-        "pulseOnMsec": BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.pulseOnMsec"),
+        # "pulseOnMsec": BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.pulseOnMsec"),
         "pulseOffMsec":BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.pulseOffMsec"),
-        "numPulsesPerLevel":BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.numPulsesPerLevel"),
+        # "numPulsesPerLevel":BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.numPulsesPerLevel"),
         "availableLaserPowerWatts":BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.availableLaserPowerWatts"),
         "safePowerLimitWatts":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.safePowerLimitWatts"),
-        "startingPowerLevel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.startingPowerLevel"),
-        "numPowerLevelSteps":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.numPowerLevelSteps"),
-        "powerLevelIncrement":BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.powerLevelIncrement"),
+        # "startingPowerLevel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.startingPowerLevel"),
+        # "numPowerLevelSteps":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.numPowerLevelSteps"),
+        # "powerLevelIncrement":BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.powerLevelIncrement"),
         "PixelList":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.PixelList"),
         "NumPixelsToTest":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.NumPixelsToTest"),
         "TestPixel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.TestPixel"),
@@ -125,7 +125,7 @@ class Model:
         "ReadyToConfigure":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.ReadyToConfigure"),
         "ReadyToTest":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.ReadyToTest"),
         "TestStatus":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.TestStatus"),
-        "CurrentPowerWatts":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.CurrentPowerWatts"),
+        # "CurrentPowerWatts":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.CurrentPowerWatts"),
         "UserAccessLevel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.UserAccessLevel"),
         "TestType": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.TestType"),
         "ScaledEnergyLive": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.ScaledEnergyLive"),
@@ -152,16 +152,31 @@ class Model:
         "OpticsBoxSinkUpperTemp" : BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.OpticsBoxSinkUpperTemp"),
         "OpticsBoxSinkMiddleTemp" : BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.OpticsBoxSinkMiddleTemp"),
         "OpticsBoxSinkLowerTemp" : BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.OpticsBoxSinkLowerTemp"),
-        # gen3 stuff below here
+        
+        ## gen3 stuff below here
+        # heartbeat
         "HeartbeatOut":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.HeartbeatOut"),
         "HeartbeatIn":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.HeartbeatIn"),
+        
+        # example
         "ExampleCommand": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ExampleCommand"),
         "ExampleResult": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ExampleResult"),
+        
+        # initialize
         "InitializePixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.InitializePixel"),
         "PixelInitialized": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelInitialized"),
+        
+        # capture
         "CapturePixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CapturePixel"),
         "PixelCaptured": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelCaptured"),
-        "CurrentPowerLevel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CurrentPowerLevel"),
+        "pulseOnMsec": BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.pulseOnTime_ms"),
+        "numPulsesPerLevel":BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.numPulsesPerLevel"),
+        "startingPowerLevel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.startingPowerLevel"),
+        "numPowerLevelSteps":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.numPowerLevels"),
+        "powerLevelIncrement":BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.powerLevelIncrement"),
+        "CurrentPowerWatts":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CurrentPowerWatts"),
+
+        # process
         "ProcessPixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ProcessPixel"),
         "PixelProcessed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelProcessed"),
         "PixelResult": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelResult")}
@@ -577,7 +592,6 @@ class Model:
         self.pixelInitializedTag.setPlcValue(1)
 
     def capturePixel(self):
-        self.currentPowerLevelTag.value()
         self.pixelCapturedTag.setPlcValue(1)
 
     def processPixel(self):
