@@ -348,7 +348,6 @@ class Model:
     ## Resets all the data arrays to fill for the test and tells the plc to start the start
     def startTest(self): 
         self.logger.addNewLog("Starting test")
-        self.testInProgress = True
         self.timeStamp = datetime.utcnow()
         
         if MachineSettings._simulation:
@@ -369,8 +368,6 @@ class Model:
         self.commandedPowerLevels = [] ## Array generated with the power levels derived from processing commanded power data
         self.dataReady.value = False
         self.lutDataReady.value = False
-        self.beginTestTag.setPlcValue(True)
-        self.testCompleteTag.setPlcValue(False)
         self.dataCollector.add_job(self.logPeriodicData, 'interval', seconds=30)
         self.dataCollector.resume()
     
@@ -420,14 +417,11 @@ class Model:
     def endTest(self):
         self.dataCollector.remove_all_jobs()
         self.dataCollector.pause()
-        self.testInProgress = False
         self.logger.addNewLog("Test Ended")
-        self.testCompleteTag.setPlcValue(True)
         self.laserTestData = list([np.trim_zeros(np.array(pixelData)) for pixelData in self.laserTestData])
         self.commandedPowerData = list([np.trim_zeros(np.array(pixelData)) for pixelData in self.commandedPowerData])
         self.commandedPowerLevels = [(self.testSettings._startingPowerLevel + self.testSettings._powerLevelIncrement * powerLevel) * 525/255 for powerLevel in range(self.testSettings._numPowerLevelSteps)]
         self.exportData()
-        self.testPixelTag.setPlcValue(0)
         self.generateTestResultDataFrame()
         if self.testSettings._testType == 2:
             self.generateLuts()
