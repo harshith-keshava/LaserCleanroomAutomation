@@ -87,8 +87,12 @@ class CameraDriver:
 
         # Convert WinCamData tuple to 2D numpy array
         rawData = self.gd.ctrl.GetWinCamDataAsVariant()
-        imageData = np.array(rawData).reshape((metadata['VRes'], metadata['HRes'])) # (numRows, numCols)
-        
+        imageData = np.array(rawData)
+        if metadata['VRes']*metadata['HRes'] == len(rawData):
+            imageData = imageData.reshape((metadata['VRes'], metadata['HRes'])) # (numRows, numCols)
+        else:
+            imageData = imageData.reshape((1,-1)) # (numRows=1, numCols=any); if there's a mismatch in rows/cols for any reason, one row will at least contain everything. TODO: does image processing hate this?
+
         # Check for stale frame using previous data
         metadata['SameAsPrevious'] = (self.previousData.size == imageData.size) and (self.previousData == imageData).all()
         self.previousData = imageData
