@@ -101,7 +101,7 @@ class OmsFrame:
         self.metadata = metadata
         self.framedata = framedata
     
-    def save(self, filename):
+    def save(self, filename, include_binary=False):
         try:
             # Create PNG from frame data each time we want to save because each object can only be saved once (the object's data gets 'streamed' and is then spent)
             # Mode L is greyscale, aka Luminance/Lightness; 16 specifies bit depth (default is 8)
@@ -111,3 +111,7 @@ class OmsFrame:
         
         with open(filename+'.json', 'w') as f:
             json.dump(self.metadata, f)
+        
+        if include_binary:
+            with open(filename+'.bin', 'wb') as f:
+                f.write(self.framedata.tobytes())
