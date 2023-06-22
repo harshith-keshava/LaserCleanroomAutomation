@@ -41,26 +41,25 @@ class CameraDriver:
         
     def setTriggerMode(self, triggerMode):
         self.gd.ctrl.LCMTriggerMode = triggerMode
-        assert self.gd.ctrl.LCMTriggerMode==triggerMode, 'Failed to set trigger mode'
+        return self.gd.ctrl.LCMTriggerMode==triggerMode
     
     def setExposureAndGain(self, newExposure, newGain):
-        # This class's setters check their own success, so no need to check again here
-        self.setExposure(newExposure)
-        self.setGain(newGain)
+        # Propagate success of both setters
+        return self.setExposure(newExposure) and self.setGain(newGain)
 
     def getExposure(self):
         return self.gd.ctrl.GetTargetCameraExposure(0)
         
     def setExposure(self, newExposure):
         self.gd.ctrl.SetTargetCameraExposure(0, newExposure)
-        assert self.gd.ctrl.GetTargetCameraExposure(0)==newExposure, 'Failed to set exposure'
+        return self.gd.ctrl.GetTargetCameraExposure(0)==newExposure
     
     def getGain(self):
         return self.gd.ctrl.GetTargetCameraGain(0)
         
     def setGain(self, newGain):
         self.gd.ctrl.SetTargetCameraGain(0, newGain)
-        assert self.gd.ctrl.GetTargetCameraGain(0)==newGain, 'Failed to set gain'
+        return self.gd.ctrl.GetTargetCameraGain(0)==newGain
     
     def fetchFrame(self):
         # Get a new frame cluster containing:
@@ -69,7 +68,8 @@ class CameraDriver:
         # if Error, re-initialize with default values
         if not deviceOK:
             self.initialize()
-            assert self.isConnected, 'Failed to connect to camera; check hardware connection'
+            # TODO: I don't want to error here, but something should happen
+            # assert self.isConnected, 'Failed to connect to camera; check hardware connection'
         
         metadata = dict()
         metadata['CameraNID'] = self.cameraNID
