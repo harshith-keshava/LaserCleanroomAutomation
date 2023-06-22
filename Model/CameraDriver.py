@@ -113,9 +113,9 @@ class OmsFrame:
         except:
             pass # If it fails, we simply won't have a png due to not having valid image data
         
-        with open(filename+'.json', 'w') as f:
+        with open(filename+'.json', 'w+') as f:
             json.dump(self.metadata, f)
         
         if include_binary:
-            with open(filename+'.bin', 'wb') as f:
+            with open(filename+'.bin', 'w+b') as f:
                 f.write(self.framedata.tobytes())
