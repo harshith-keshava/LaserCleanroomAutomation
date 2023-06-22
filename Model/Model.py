@@ -104,14 +104,14 @@ class Model:
         # plcTags is a dictionary allowing the user to access the plc tags by string and perform a single action on all of them in a loop
         # new tags can be added without changing the model code
         self.plcTags = {"pulseDelayMsec": BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.pulseDelayMsec"),
-        "pulseOnMsec": BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.pulseOnMsec"),
+        # "pulseOnMsec": BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.pulseOnMsec"),
         "pulseOffMsec":BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.pulseOffMsec"),
-        "numPulsesPerLevel":BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.numPulsesPerLevel"),
+        # "numPulsesPerLevel":BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.numPulsesPerLevel"),
         "availableLaserPowerWatts":BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.availableLaserPowerWatts"),
         "safePowerLimitWatts":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.safePowerLimitWatts"),
-        "startingPowerLevel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.startingPowerLevel"),
-        "numPowerLevelSteps":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.numPowerLevelSteps"),
-        "powerLevelIncrement":BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.powerLevelIncrement"),
+        # "startingPowerLevel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.startingPowerLevel"),
+        # "numPowerLevelSteps":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.numPowerLevelSteps"),
+        # "powerLevelIncrement":BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.LaserParameters.powerLevelIncrement"),
         "PixelList":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.PixelList"),
         "NumPixelsToTest":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.NumPixelsToTest"),
         "TestPixel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.TestPixel"),
@@ -125,7 +125,7 @@ class Model:
         "ReadyToConfigure":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.ReadyToConfigure"),
         "ReadyToTest":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.ReadyToTest"),
         "TestStatus":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.TestStatus"),
-        "CurrentPowerWatts":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.CurrentPowerWatts"),
+        # "CurrentPowerWatts":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.CurrentPowerWatts"),
         "UserAccessLevel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.UserAccessLevel"),
         "TestType": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.TestType"),
         "ScaledEnergyLive": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.ScaledEnergyLive"),
@@ -152,25 +152,53 @@ class Model:
         "OpticsBoxSinkUpperTemp" : BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.OpticsBoxSinkUpperTemp"),
         "OpticsBoxSinkMiddleTemp" : BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.OpticsBoxSinkMiddleTemp"),
         "OpticsBoxSinkLowerTemp" : BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.OpticsBoxSinkLowerTemp"),
-        # gen3 stuff below here
+        
+        ## gen3 stuff below here
+        # heartbeat
         "HeartbeatOut":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.HeartbeatOut"),
         "HeartbeatIn":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.HeartbeatIn"),
+        
+        # example
         "ExampleCommand": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ExampleCommand"),
-        "ExampleResult": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ExampleResult")}
+        "ExampleResult": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ExampleResult"),
+        
+        # initialize calibration
+        "InitializeCalibration": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.InitializeCalibration"),
+        "CalibrationInitialized": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.CalibrationInitialized"),       
+
+        # initialize pixel
+        "InitializePixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.InitializePixel"),
+        "PixelInitialized": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelInitialized"),
+        
+        # capture pixel
+        "CapturePixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CapturePixel"),
+        "PixelCaptured": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelCaptured"),
+        "pulseOnMsec": BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.pulseOnTime_ms"),
+        "numPulsesPerLevel":BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.numPulsesPerLevel"),
+        "startingPowerLevel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.startingPowerLevel"),
+        "numPowerLevelSteps":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.numPowerLevels"),
+        "powerLevelIncrement":BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.powerIncrementPerStep"),
+        "CurrentPowerWatts":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CurrentPowerWatts"),
+
+        # process pixel
+        "ProcessPixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ProcessPixel"),
+        "PixelProcessed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelProcessed"),
+        "PixelResult": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelResult"),
+        
+        # process calibration
+        "ProcessCalibration": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ProcessCalibration"),
+        "CalibrationProcessed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.CalibrationProcessed"),
+
+        }
 
         # definition of all the plc tags as a variable bound to the dictionary element
         # this is redundant to the dictionary but give the option to use dot operators to access the tags rather than strings
         # this makes tags come up in the autocomplete of the test editor vs having the remember/lookup the exact string
         # new tags do not have to be added here in addition to the dictionary but they can be 
         self.pulseDelayMsecTag = self.plcTags["pulseDelayMsec"]
-        self.pulseOnMsecTag = self.plcTags["pulseOnMsec"]
         self.pulseOffMsecTag = self.plcTags["pulseOffMsec"]
-        self.numPulsesPerLevelTag = self.plcTags["numPulsesPerLevel"]
         self.availableLaserPowerWattsTag = self.plcTags["availableLaserPowerWatts"]
         self.safePowerLimitWattsTag = self.plcTags["safePowerLimitWatts"]
-        self.startingPowerLevelTag = self.plcTags["startingPowerLevel"]
-        self.numPowerLevelStepsTag = self.plcTags["numPowerLevelSteps"]
-        self.powerLevelIncrementTag = self.plcTags["powerLevelIncrement"]
         self.testPixelsTag = self.plcTags["PixelList"]
         self.testPixelsToTestTag = self.plcTags["NumPixelsToTest"]
         self.testPixelTag = self.plcTags["TestPixel"]
@@ -180,7 +208,6 @@ class Model:
         self.laserPowerDataTag = self.plcTags["LaserPowerData"]
         self.activePixelTag = self.plcTags["ActivePixel"] 
         self.proceedToNextPixelTag = self.plcTags["ProceedToNextPixel"]
-        self.currentPowerWattsTag= self.plcTags["CurrentPowerWatts"]
         self.PixelListTag = self.plcTags["PixelList"]
         self.TestTypeTag = self.plcTags["TestType"]
         self.ScaledEnergyLiveTag = self.plcTags["ScaledEnergyLive"]
@@ -195,8 +222,28 @@ class Model:
         self.ExpectedValueCoefficient = self.plcTags["ExpectedValueCoefficient"]
         self.ConfigValid = self.plcTags["ConfigValid"]
 
+        ## Gen 3
         self.heartBeatIntag = self.plcTags["HeartbeatIn"]        
+        
         self.exampleResultTag = self.plcTags["ExampleResult"]
+        
+        self.calibrationInitializedTag = self.plcTags["CalibrationInitialized"]
+
+        self.pixelInitializedTag = self.plcTags["PixelInitialized"]
+        
+        self.pixelCapturedTag = self.plcTags["PixelCaptured"]
+        self.pulseOnMsecTag = self.plcTags["pulseOnMsec"]
+        self.numPulsesPerLevelTag = self.plcTags["numPulsesPerLevel"]
+        self.startingPowerLevelTag = self.plcTags["startingPowerLevel"]
+        self.numPowerLevelStepsTag = self.plcTags["numPowerLevelSteps"]
+        self.powerLevelIncrementTag = self.plcTags["powerLevelIncrement"]
+        self.currentPowerWattsTag= self.plcTags["CurrentPowerWatts"]
+
+
+        self.pixelProcessedTag = self.plcTags["PixelProcessed"]
+        self.pixelResultTag = self.plcTags["PixelResult"]
+
+        self.calibrationProcessedTag = self.plcTags["CalibrationProcessed"]
 
         ### Subscribed Variables (must also add these to the delete)
         ###     -> Variables that update using a callback based on the status of the tag on the plc 
@@ -209,6 +256,11 @@ class Model:
 
         self.heartBeatOutTag = self.plcTags["HeartbeatOut"]
         self.exampleCommandTag = self.plcTags["ExampleCommand"]
+        self.initializeCalibrationTag = self.plcTags["InitializeCalibration"]
+        self.initializePixelTag = self.plcTags["InitializePixel"]
+        self.capturePixelTag = self.plcTags["CapturePixel"]
+        self.processPixelTag = self.plcTags["ProcessPixel"]
+        self.processCalibrationTag = self.plcTags["ProcessCalibration"]
 
         ### Lookup Tables for Data Outputs #####
         self.testStatusTable = ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
@@ -227,19 +279,29 @@ class Model:
             self.readyToTestTag._setAsUpdating()
             self.testStatusTag._setAsUpdating()
             self.errorNumTag._setAsUpdating()
-            self.heartBeatOutTag._setAsUpdating()
             self.proceedToNextPixelTag._setAsUpdating()
             self.userAccessLevelTag._setAsUpdating()
             self.CurrentLUTIDTag._setAsUpdating()
             self.ConfigValid._setAsUpdating()
             self.testStatusTag.attachReaction(self.testStatusReaction)
-            self.heartBeatOutTag.attachReaction(self.heartBeatReaction)
 
             # monitor for change
             self.exampleCommandTag._setAsUpdating()
+            self.heartBeatOutTag._setAsUpdating()
+            self.initializeCalibrationTag._setAsUpdating()
+            self.initializePixelTag._setAsUpdating()
+            self.capturePixelTag._setAsUpdating()
+            self.processPixelTag._setAsUpdating()
+            self.processCalibrationTag._setAsUpdating()
 
             # attach reaction on change
             self.exampleCommandTag.attachReaction(self.exampleCommandReaction)
+            self.heartBeatOutTag.attachReaction(self.heartBeatReaction)
+            self.initializeCalibrationTag.attachReaction(self.initializeCalibrationReaction)
+            self.initializePixelTag.attachReaction(self.initializePixelReaction)
+            self.capturePixelTag.attachReaction(self.capturePixelReaction)
+            self.processPixelTag.attachReaction(self.processPixelReaction)
+            self.processCalibrationTag.attachReaction(self.processCalibrationReaction)
 
             if self.FactoryNameTag.value == "VulcanOne":
                 MachineSettings._factoryID = "V1"
@@ -550,10 +612,70 @@ class Model:
     ## Example Command
     def exampleCommand(self):
         self.exampleResultTag.setPlcValue(1)
+
+    def initializeCalibration(self): 
+        self.logger.addNewLog("Starting test")
+
+        # overwrite test settings from plc values
+        self.testSettings._pulseOnMsec = self.pulseOnMsecTag.value
+        self.testSettings._numPulsesPerLevel = self.numPulsesPerLevelTag.value
+        self.testSettings._startingPowerLevel = self.startingPowerLevelTag.value
+        self.testSettings._numPowerLevelSteps = self.numPowerLevelStepsTag.value
+        self.testSettings._powerLevelIncrement = self.powerLevelIncrementTag.value
+        self._lutDataManager.changeTestSettings(self.testSettings) 
+
+        self.timeStamp = datetime.utcnow()
+        
+        if MachineSettings._simulation:
+            self.saveLocation = ".\\tmp\\output"
+        else:
+            self.saveLocation = self._createoutputdirectory()
+            os.makedirs(self.saveLocation)
+
+        self.periodicDataFile  = self.saveLocation + "\\opticsBoxData.csv"
+        self.writePeriodicDataHeaders()
+        self.createLogFile()
+        self.currentPixelIndex.value = 0
+        self.results = None
+        self.laserTestData = [[] for pixel in range(MachineSettings._numberOfPixels)] ## Data array that is populated during a test with power measurements and postprocessed for later analysis. This array is consumed after data is saved.
+        self.laserTestEnergy = [[] for pixel in range(MachineSettings._numberOfPixels)] ##Data array that is populated during a test with energy measurements and postprocessed for later analysis. This array is consumed after data is saved.
+        self.laserTestStatus = [5 for pixel in range(MachineSettings._numberOfPixels)] ## Data array that is populated during a test with post test pixel status and postprocessed for later analysis. This array is consumed after data is saved.
+        self.commandedPowerData = [[] for pixel in range(MachineSettings._numberOfPixels)] ## Data array that is populated during a test with commmanded Power Data(W) and postprocessed for later analysis. This array is consumed after data is saved.
+        self.commandedPowerLevels = [] ## Array generated with the power levels derived from processing commanded power data
+        self.dataReady.value = False
+        self.lutDataReady.value = False
+        self.dataCollector.add_job(self.logPeriodicData, 'interval', seconds=30)
+        self.dataCollector.resume()
+        
+        self.calibrationInitializedTag.setPlcValue(1)
+
+    def initializePixel(self):
+        self.pixelInitializedTag.setPlcValue(1)
+
+    def capturePixel(self):
+        testStatus = 1
+        self._collectTestData(testStatus)
+        self.pixelCapturedTag.setPlcValue(1)
+
+    def processPixel(self):
+        self.pixelResultTag.setPlcValue(1)  # autopass
+        self.pixelProcessedTag.setPlcValue(1)
+
+    def processCalibration(self):
+        self.endTest()
+        self.calibrationProcessedTag.setPlcValue(1)
     
-    # Use this one function for a bunch of response resets if possible
+    ## Use this one function for a bunch of response resets if possible
     def resetResponseTags(self):
-        self.exampleResultTag.setPlcValue(0)        
+        self.exampleResultTag.setPlcValue(0)
+        self.pixelResultTag.setPlcValue(0)
+        self.calibrationInitializedTag.setPlcValue(0)
+        self.pixelInitializedTag.setPlcValue(0)
+        self.pixelCapturedTag.setPlcValue(0)     
+        self.pixelProcessedTag.setPlcValue(0)
+        self.calibrationProcessedTag.setPlcValue(0)
+
+
 
     ##################################### TAG REACTIONS ###################################################################
     def testStatusReaction(self):
@@ -588,6 +710,46 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Example command sent by PLC ")
             self.exampleCommand()
+        if cmd == False:
+            self.resetResponseTags()
+
+    def initializePixelReaction(self):
+        cmd = self.initializePixelTag.value
+        if cmd == True:
+            self.logger.addNewLog("Initialize pixel command received from PLC ")
+            self.initializePixel()
+        if cmd == False:
+            self.resetResponseTags()
+        
+    def capturePixelReaction(self):
+        cmd = self.capturePixelTag.value
+        if cmd == True:
+            self.logger.addNewLog("Capture pixel command received from  PLC ")
+            self.capturePixel()
+        if cmd == False:
+            self.resetResponseTags()
+
+    def processPixelReaction(self):
+        cmd = self.processPixelTag.value
+        if cmd == True:
+            self.logger.addNewLog("Process pixel command received from  PLC ")
+            self.processPixel()
+        if cmd == False:
+            self.resetResponseTags()
+
+    def processCalibrationReaction(self):
+        cmd = self.processCalibrationTag.value
+        if cmd == True:
+            self.logger.addNewLog("Process calibration command received from  PLC ")
+            self.processCalibration()
+        if cmd == False:
+            self.resetResponseTags()
+
+    def initializeCalibrationReaction(self):
+        cmd = self.initializeCalibrationTag.value
+        if cmd == True:
+            self.logger.addNewLog("Initialize calibration command received from  PLC ")
+            self.initializeCalibration()
         if cmd == False:
             self.resetResponseTags()
 
@@ -673,11 +835,11 @@ class Model:
    ############################## HELPER FUNCTION ##########################################
 
     def _collectTestData(self, testStatus):
-        laserData = self.laserPowerDataTag.value
-        self.laserTestData[self.activePixelTag.value - 1] = list(np.array(laserData)/(self.testSettings._pulseOnMsec / 1000))
-        self.laserTestEnergy[self.activePixelTag.value - 1] = laserData
+        # TODO: get laser power from pyrometer
+        self.laserTestData[self.activePixelTag.value - 1].append(5/(self.testSettings._pulseOnMsec / 1000))
+        self.laserTestEnergy[self.activePixelTag.value - 1].append(5)
         self.laserTestStatus[self.activePixelTag.value - 1] =testStatus
-        self.commandedPowerData[self.activePixelTag.value - 1] = self.currentPowerWattsTag.value
+        self.commandedPowerData[self.activePixelTag.value - 1].append(self.currentPowerWattsTag.value)
        
     def _createoutputdirectory(self):
         date = self.timeStamp.strftime("%Y%m%d")

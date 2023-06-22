@@ -51,7 +51,7 @@ class LiveFigureCanvas(FigureCanvas):
 
         # Initiate the timer
         self._timer_ = self.new_timer(interval, [(self._update_canvas_, (), {})])
-        self._timer_.start()
+        # self._timer_.start()
         return
 
     def _update_canvas_(self, ) -> None:

@@ -272,7 +272,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.sched.add_job(lambda : self.percentErrorStatus.setText(str(round(self.model.PercentErrorLiveTag.value, 3))), 'interval', seconds=0.5)
         self.sched.add_job(lambda : self.currentTestPixelStatus.setText(str(self.model.activePixelTag.value)), 'interval', seconds=0.5)
         self.sched.add_job(lambda : self.pixelIndexStatus.setText(str(self.model.getCurrentPixelIndex()) + " of " + str(len(self.testSettings._pixelList))), 'interval', seconds=0.5)
-        self.sched.add_job(lambda : self.currentCommandedPowerStatus.setText(str(round(max(self.model.currentPowerWattsTag.value), 3))), 'interval', seconds=0.5)
+        # self.sched.add_job(lambda : self.currentCommandedPowerStatus.setText(str(round(max(self.model.currentPowerWattsTag.value), 3))), 'interval', seconds=0.5)
         
 
         sleep(0.25)
