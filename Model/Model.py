@@ -24,6 +24,7 @@ import plotly.express as px
 from Model.FTP_Manager import FTP_Manager
 import re
 from apscheduler.schedulers.background import BackgroundScheduler
+from Model.CameraDriver import CameraDriver
 
 ## ENUM to define the test modes 
 ## CONTINUOUS = user input only for pixels that are out of spec based on tolerance band or fail
@@ -91,6 +92,7 @@ class Model:
         self.TestType = TestType.CALIBRATION
         self.TestMode = TestMode.SEMI_AUTO
         self.dataCollector = BackgroundScheduler()
+        self.camera = CameraDriver()
         self.testName = ""
     
         ############################################# ADD TAGS #########################################
@@ -646,6 +648,9 @@ class Model:
         self.lutDataReady.value = False
         self.dataCollector.add_job(self.logPeriodicData, 'interval', seconds=30)
         self.dataCollector.resume()
+
+        if not self.camera.isConnected:
+            self.camera.initialize()
         
         self.calibrationInitializedTag.setPlcValue(1)
 
@@ -655,6 +660,7 @@ class Model:
     def capturePixel(self):
         testStatus = 1
         self._collectTestData(testStatus)
+        self._captureFrameData()
         self.pixelCapturedTag.setPlcValue(1)
 
     def processPixel(self):
@@ -833,6 +839,11 @@ class Model:
         return self.ConfigValid.value
 
    ############################## HELPER FUNCTION ##########################################
+
+    def _captureFrameData(self):
+        currentFrame = self.camera.fetchFrame()
+        # Save to camera-specific subdirectory until otherwise specified. Include binary data for now.
+        currentFrame.save(self.saveLocation + '\\cameraData\\pixel_' + str(self.currentPixelIndex.value + 1), include_binary=True)
 
     def _collectTestData(self, testStatus):
         # TODO: get laser power from pyrometer
