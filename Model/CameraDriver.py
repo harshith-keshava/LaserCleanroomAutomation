@@ -86,7 +86,7 @@ class CameraDriver:
 
         # Convert WinCamData tuple to 2D numpy array
         rawData = self.gd.ctrl.GetWinCamDataAsVariant()
-        imageData = np.array(rawData)
+        imageData = np.array(rawData, dtype=np.uint16)
         if metadata['VRes']*metadata['HRes'] == len(rawData):
             imageData = imageData.reshape((metadata['VRes'], metadata['HRes'])) # (numRows, numCols)
         else:
