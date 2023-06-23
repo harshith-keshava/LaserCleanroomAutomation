@@ -8,7 +8,6 @@ import json
 class CameraDriver:
     
     def __init__(self):
-        self.previousData = np.array((0,))
         self.app = wx.App()
         self.frame = wx.Frame( parent=None, id=wx.ID_ANY,size=(900,900), 
                               title='Python Interface to DataRay')
@@ -92,10 +91,6 @@ class CameraDriver:
             imageData = imageData.reshape((metadata['VRes'], metadata['HRes'])) # (numRows, numCols)
         else:
             imageData = imageData.reshape((1,-1)) # (numRows=1, numCols=any); if there's a mismatch in rows/cols for any reason, one row will at least contain everything. TODO: does image processing hate this?
-
-        # Check for stale frame using previous data
-        metadata['SameAsPrevious'] = (self.previousData.size == imageData.size) and (self.previousData == imageData).all()
-        self.previousData = imageData
         
         return OmsFrame(metadata, imageData)
 
