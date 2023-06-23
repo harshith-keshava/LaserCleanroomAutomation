@@ -843,7 +843,7 @@ class Model:
     def _captureFrameData(self):
         currentFrame = self.camera.fetchFrame()
         # Save to camera-specific subdirectory until otherwise specified. Include binary data for now.
-        if not os.exists(self.saveLocation + "\\cameraData"):
+        if not os.path.exists(self.saveLocation + "\\cameraData"):
             os.mkdir(self.saveLocation + "\\cameraData")
         currentFrame.save(self.saveLocation + "\\cameraData\\pixel_" + str(self.currentPixelIndex.value + 1), include_binary=True)
 
