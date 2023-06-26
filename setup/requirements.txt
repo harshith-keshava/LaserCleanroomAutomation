@@ -17,5 +17,5 @@ cryptography
 
 # Beam Profiling Camera via wxPython
 wxPython==4.0.4
-comtypes==1.1.7
+#comtypes==1.1.7    # install separately with pip v10.0.1
 pypng
