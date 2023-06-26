@@ -12,6 +12,33 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "cwd": "${workspaceFolder}"
-        }
+        },
+        {
+            "name": "Test Camera",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\\camera_driver_testing.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Test Camera (DataRay",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\\dataray-python-camera-example-2021.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Test Pyro",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\\pyrometer_driver_testing.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}"
+        },
     ]
 }

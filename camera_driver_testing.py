@@ -11,4 +11,4 @@ if __name__ == '__main__':
     time.sleep(5)
     print('Fetching and saving current frame data...')
     exampleFrame = camera.fetchFrame()
-    exampleFrame.save('exampleFrame', include_binary=True)
+    exampleFrame.save('tmp/output/camera_driver_testing/exampleFrame', include_binary=True)
