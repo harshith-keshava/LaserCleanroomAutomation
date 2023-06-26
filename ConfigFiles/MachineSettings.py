@@ -5,7 +5,7 @@ import pandas as pd
 
 class MachineSettings():
 
-    _simulation = True
+    _simulation = False
     _numberOfRacks = 4
     _numberOfLasersPerRack = 21
     _numberOfPixels = 84 #maximum number of lasers 4*21
