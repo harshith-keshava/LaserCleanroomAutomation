@@ -1,3 +1,4 @@
+## requirements that work with pip v23.1.2
 numpy
 pandas
 glob2
@@ -8,14 +9,12 @@ apscheduler
 PyQt5
 plotly
 kaleido
-pywin32
 pyinstaller
 cryptography
 
 # Pyrometer
-#pywin32
+pywin32
 
 # Beam Profiling Camera via wxPython
 wxPython==4.0.4
-#comtypes==1.1.7    # install separately with pip v10.0.1
 pypng
