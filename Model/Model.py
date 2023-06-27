@@ -25,6 +25,7 @@ from Model.FTP_Manager import FTP_Manager
 import re
 from apscheduler.schedulers.background import BackgroundScheduler
 from Model.CameraDriver import CameraDriver
+from Model.OphirCom import OphirJunoCOM
 
 ## ENUM to define the test modes 
 ## CONTINUOUS = user input only for pixels that are out of spec based on tolerance band or fail
@@ -93,6 +94,8 @@ class Model:
         self.TestMode = TestMode.SEMI_AUTO
         self.dataCollector = BackgroundScheduler()
         self.camera = CameraDriver()
+        self.pyrometer = OphirJunoCOM()
+        self.pyrometer.connectToJuno()
         self.testName = ""
     
         ############################################# ADD TAGS #########################################
@@ -649,15 +652,28 @@ class Model:
         self.calibrationInitializedTag.setPlcValue(1)
 
     def initializePixel(self):
-        self.pixelInitializedTag.setPlcValue(1)
+        if self.pyrometer.isConnected:
+            if self.pyrometer.isStreaming:
+                self.pyrometer.endDataCollection()
+            self.pyrometer.clearData()
+            self.pyrometer.startDataCollection()
+            self.pixelInitializedTag.setPlcValue(1)
 
     def capturePixel(self):
         testStatus = 1
-        self._collectTestData(testStatus)
-        self._captureFrameData()
-        self.pixelCapturedTag.setPlcValue(1)
+        pyroDataCaptured = self._collectTestData(testStatus)
+        frameCaptured = self._captureFrameData()
+        print("\npyroDataCaptured: " + pyroDataCaptured)
+        print("\nframeCaptured: " + frameCaptured)
+        
+        # let the cmd timeout if we fail one of these
+        # TODO: implement a proper error response
+        if pyroDataCaptured and frameCaptured:
+            # success
+            self.pixelCapturedTag.setPlcValue(1)
 
     def processPixel(self):
+        self.pyrometer.clearData()
         self.pixelResultTag.setPlcValue(1)  # autopass
         self.pixelProcessedTag.setPlcValue(1)
 
@@ -835,18 +851,40 @@ class Model:
    ############################## HELPER FUNCTION ##########################################
 
     def _captureFrameData(self):
-        currentFrame = self.camera.fetchFrame()
-        # Save to camera-specific subdirectory until otherwise specified. Include binary data for now.
-        if not os.path.exists(self.saveLocation + "\\cameraData"):
-            os.mkdir(self.saveLocation + "\\cameraData")
-        currentFrame.save(self.saveLocation + "\\cameraData\\pixel_" + str(self.currentPixelIndex.value + 1), include_binary=True)
+        if self.camera.isConnected:
+            currentFrame = self.camera.fetchFrame()
+            # Save to camera-specific subdirectory until otherwise specified. Include binary data for now.
+            if not os.path.exists(self.saveLocation + "\\cameraData"):
+                os.mkdir(self.saveLocation + "\\cameraData")
+            currentFrame.save(self.saveLocation + "\\cameraData\\pixel_" + str(self.currentPixelIndex.value + 1), include_binary=True)
+            return True
+        else:
+            return False
 
     def _collectTestData(self, testStatus):
-        # TODO: get laser power from pyrometer
-        self.laserTestData[self.activePixelTag.value - 1].append(5/(self.testSettings._pulseOnMsec / 1000))
-        self.laserTestEnergy[self.activePixelTag.value - 1].append(5)
-        self.laserTestStatus[self.activePixelTag.value - 1] =testStatus
-        self.commandedPowerData[self.activePixelTag.value - 1].append(self.currentPowerWattsTag.value)
+
+        if self.pyrometer.isConnected and self.pyrometer.isStreaming:
+            self.pyrometer.endDataCollection()
+            data = self.pyrometer.getFullData()
+            
+            print("\ndata: [ ")
+            for datum in data:
+                print(datum[0] + ", ")
+            print("]")
+
+            dataPeak = self.pyrometer.getFullDataPeak()
+            print("\ndataPeak" + dataPeak)
+            
+            # TODO: process data, generate test status here
+
+            self.laserTestData[self.activePixelTag.value - 1].append(dataPeak/(self.testSettings._pulseOnMsec / 1000))
+            self.laserTestEnergy[self.activePixelTag.value - 1].append(dataPeak)
+            self.laserTestStatus[self.activePixelTag.value - 1] =testStatus
+            self.commandedPowerData[self.activePixelTag.value - 1].append(self.currentPowerWattsTag.value)
+
+            return True
+        else:
+            return False
        
     def _createoutputdirectory(self):
         date = self.timeStamp.strftime("%Y%m%d")
