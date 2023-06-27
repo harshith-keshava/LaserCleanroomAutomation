@@ -82,7 +82,7 @@ class Model:
         self._lutDataManager = LUTDataManager(self.testSettings) ## Helper class to manage the LUT generation logic
         self._lutDataManager.changeTestSettings(self.testSettings) 
         self.logger = Logger() ## Logger to give information to the gui about the current test status
-        self.saveLocation = "" ## Save path in the printer info drive of the processed data 
+        self.saveLocation = ".\\tmp" ## Save path in the printer info drive of the processed data 
         self.periodicDataFile  = ""
         self.timeStamp = None ## New timestamp is created at the start of each test. Type = datetime.datetime.now()
         self.testInProgress = False
@@ -96,6 +96,7 @@ class Model:
         self.camera = CameraDriver()
         self.pyrometer = OphirJunoCOM()
         self.pyrometer.connectToJuno()
+        print("Juno connection:" + str(self.pyrometer.isConnected))
         self.testName = ""
     
         ############################################# ADD TAGS #########################################
@@ -495,10 +496,10 @@ class Model:
                     numDataPoints = len(pulseSplitData[pixelIdx][powerLevelNum])
                 else:
                     numDataPoints = 0
-                outputData.append([self.timeStamp.strftime("%Y-%m-%d,%H:%M:%S"), MachineSettings._machineID, MachineSettings._factoryID, self.testTypesAsString[self.testSettings._testType], pixelIdx + 1, MachineSettings._vfpMap[pixelIdx][2], MachineSettings._vfpMap[pixelIdx][3],dev_daq_p_data[pixelIdx][powerLevelNum] < 5, self.testStatusTable[self.laserTestStatus[pixelIdx]], commandedPower, avg_daq_p_data[pixelIdx][powerLevelNum], std_daq_p_data[pixelIdx][powerLevelNum], dev_daq_p_data[pixelIdx][powerLevelNum], numDataPoints])
+                if pixelIdx < (MachineSettings._vfpMap.size/MachineSettings._vfpMap[0].size):
+                    outputData.append([self.timeStamp.strftime("%Y-%m-%d,%H:%M:%S"), MachineSettings._machineID, MachineSettings._factoryID, self.testTypesAsString[self.testSettings._testType], pixelIdx + 1, MachineSettings._vfpMap[pixelIdx][2], MachineSettings._vfpMap[pixelIdx][3],dev_daq_p_data[pixelIdx][powerLevelNum] < 5, self.testStatusTable[self.laserTestStatus[pixelIdx]], commandedPower, avg_daq_p_data[pixelIdx][powerLevelNum], std_daq_p_data[pixelIdx][powerLevelNum], dev_daq_p_data[pixelIdx][powerLevelNum], numDataPoints])
         cols =["Date","Machine ID","Factory ID", "Test Type", "Pixel", "Rack", "Laser", "Process Acceptance", "Status", "Commanded Power", "Pulse Power Average", "Pulse Power Stdv", "Pulse Power Deviation", "Data Points"] # add rack and laser printer name, name of test(CVER, DVER....), timestamp  
         self.results = pd.DataFrame(outputData, columns=cols)
-        self.results.to_csv("tmp\\LPM_processed.csv", index=False)
         self.results.to_csv(self.saveLocation + "\\LPM_processed.csv", index=False)
         self.dataReady.value = True
         validRanges = ["ValidRanges"]
@@ -653,24 +654,28 @@ class Model:
 
     def initializePixel(self):
         if self.pyrometer.isConnected:
-            if self.pyrometer.isStreaming:
-                self.pyrometer.endDataCollection()
+            print("pyrometer: connected")
+            print("pyrometer: clearing buffer")
             self.pyrometer.clearData()
+            print("pyromter: starting streaming")
             self.pyrometer.startDataCollection()
-            self.pixelInitializedTag.setPlcValue(1)
+        else:
+            print("pyromter: failed - not connected")
 
     def capturePixel(self):
         testStatus = 1
         pyroDataCaptured = self._collectTestData(testStatus)
         frameCaptured = self._captureFrameData()
-        print("\npyroDataCaptured: " + pyroDataCaptured)
-        print("\nframeCaptured: " + frameCaptured)
+        print("\npyroDataCaptured: " + str(pyroDataCaptured))
+        print("\nframeCaptured: " + str(frameCaptured))
         
         # let the cmd timeout if we fail one of these
         # TODO: implement a proper error response
         if pyroDataCaptured and frameCaptured:
             # success
             self.pixelCapturedTag.setPlcValue(1)
+        else:
+            print("capture failed")
 
     def processPixel(self):
         self.pyrometer.clearData()
@@ -863,22 +868,22 @@ class Model:
 
     def _collectTestData(self, testStatus):
 
-        if self.pyrometer.isConnected and self.pyrometer.isStreaming:
+        if self.pyrometer.isConnected:
             self.pyrometer.endDataCollection()
             data = self.pyrometer.getFullData()
             
             print("\ndata: [ ")
             for datum in data:
-                print(datum[0] + ", ")
+                print(str(datum[0]) + ", ")
             print("]")
 
             dataPeak = self.pyrometer.getFullDataPeak()
-            print("\ndataPeak" + dataPeak)
+            print("\ndataPeak: " + str(dataPeak[0]))
             
             # TODO: process data, generate test status here
 
-            self.laserTestData[self.activePixelTag.value - 1].append(dataPeak/(self.testSettings._pulseOnMsec / 1000))
-            self.laserTestEnergy[self.activePixelTag.value - 1].append(dataPeak)
+            self.laserTestData[self.activePixelTag.value - 1].append(dataPeak[0]/(self.testSettings._pulseOnMsec / 1000))
+            self.laserTestEnergy[self.activePixelTag.value - 1].append(dataPeak[0])
             self.laserTestStatus[self.activePixelTag.value - 1] =testStatus
             self.commandedPowerData[self.activePixelTag.value - 1].append(self.currentPowerWattsTag.value)
 

@@ -8,7 +8,7 @@ class MachineSettings():
     _simulation = False
     _numberOfRacks = 4
     _numberOfLasersPerRack = 21
-    _numberOfPixels = 84 #maximum number of lasers 4*21
+    _numberOfPixels = 68#84 #maximum number of lasers 4*21
     _16BitAnalogMaxPower = 2 ** 16
     _ipAddress = '192.168.200.50'
     _portNumber = '4850'
