@@ -500,6 +500,7 @@ class Model:
                     outputData.append([self.timeStamp.strftime("%Y-%m-%d,%H:%M:%S"), MachineSettings._machineID, MachineSettings._factoryID, self.testTypesAsString[self.testSettings._testType], pixelIdx + 1, MachineSettings._vfpMap[pixelIdx][2], MachineSettings._vfpMap[pixelIdx][3],dev_daq_p_data[pixelIdx][powerLevelNum] < 5, self.testStatusTable[self.laserTestStatus[pixelIdx]], commandedPower, avg_daq_p_data[pixelIdx][powerLevelNum], std_daq_p_data[pixelIdx][powerLevelNum], dev_daq_p_data[pixelIdx][powerLevelNum], numDataPoints])
         cols =["Date","Machine ID","Factory ID", "Test Type", "Pixel", "Rack", "Laser", "Process Acceptance", "Status", "Commanded Power", "Pulse Power Average", "Pulse Power Stdv", "Pulse Power Deviation", "Data Points"] # add rack and laser printer name, name of test(CVER, DVER....), timestamp  
         self.results = pd.DataFrame(outputData, columns=cols)
+        self.results.to_csv("tmp\\LPM_processed.csv", index=False)
         self.results.to_csv(self.saveLocation + "\\LPM_processed.csv", index=False)
         self.dataReady.value = True
         validRanges = ["ValidRanges"]
@@ -866,6 +867,7 @@ class Model:
             # Save to camera-specific subdirectory until otherwise specified. Include binary data for now.
             if not os.path.exists(self.saveLocation + "\\cameraData"):
                 os.mkdir(self.saveLocation + "\\cameraData")
+            print("saving frame to: " + self.saveLocation + "\\cameraData\\pixel_" + str(self.currentPixelIndex.value + 1))
             currentFrame.save(self.saveLocation + "\\cameraData\\pixel_" + str(self.currentPixelIndex.value + 1), include_binary=True)
             return True
         else:
@@ -881,7 +883,9 @@ class Model:
             
             print("\ndata: [ ")
             for pulse in pulses:
-                print(str(pulse[0]) + ", ")
+                for datum in pulse:
+                    print(str(datum) + ", ")
+                print(";")
             print("]")
 
             pulsePeak = self.pyrometer.getFullDataPeak()
@@ -935,21 +939,21 @@ class Model:
         if(self.testSettings._testType == 1):
             time = self.timeStamp.strftime("%H%M")
             calID = self.CurrentLUTIDTag.value
-            drivePath = os.path.join(r'\\brl-nas02',"printerinfo", MachineSettings._factoryID, machineID,"Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_LOWPOWER")
+            drivePath = os.path.join(".","tmp","printerinfo", MachineSettings._factoryID, machineID,"Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_LOWPOWER")
             self.testName = machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_LOWPOWER"
         elif(self.testSettings._testType == 2):    
             calID = self.testSettings._CalId  
-            drivePath = os.path.join(r'\\brl-nas02',"printerinfo", MachineSettings._factoryID, machineID,"Laser Data", "30_Calibrations", machineID + "_LUT_" + str(calID).zfill(5)+"_" + date)
+            drivePath = os.path.join(".","tmp","printerinfo", MachineSettings._factoryID, machineID,"Laser Data", "30_Calibrations", machineID + "_LUT_" + str(calID).zfill(5)+"_" + date)
             self.testName = machineID + "_LUT_" + str(calID).zfill(5)+"_" + date + " Calibration"
         elif(self.testSettings._testType == 3):
             time = self.timeStamp.strftime("%H%M")
             calID = self.CurrentLUTIDTag.value
-            drivePath = os.path.join(r'\\brl-nas02',"printerinfo", MachineSettings._factoryID, machineID,"Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_CVER")
+            drivePath = os.path.join(".","tmp","printerinfo", MachineSettings._factoryID, machineID,"Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_CVER")
             self.testName = machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_CVER"
         elif(self.testSettings._testType == 4):
             time = self.timeStamp.strftime("%H%M")
             calID = self.CurrentLUTIDTag.value
-            drivePath = os.path.join(r'\\brl-nas02',"printerinfo", MachineSettings._factoryID, machineID,"Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_DVER")
+            drivePath = os.path.join(".","tmp","printerinfo", MachineSettings._factoryID, machineID,"Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_DVER")
             self.testName = machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_DVER"
         
         counter = 1
