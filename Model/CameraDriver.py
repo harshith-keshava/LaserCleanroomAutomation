@@ -20,7 +20,7 @@ class CameraDriver:
         # Run initialization routine on object creation
         self.initialize()
     
-    def initialize(self, exposure=2.0, gain=1.0, triggerMode=3, fullResolution=1, topLeft=(0,0), dimensions=(2048,2048)): #dimensions= (width, height)
+    def initialize(self, exposure=1.0, gain=1.0, triggerMode=3, fullResolution=1, topLeft=(0,0), dimensions=(2048,2048)): #dimensions= (width, height)
         self.gd.ctrl.StopDevice()
         self.gd.ctrl.StartDriver()
         self.gd.ctrl.ResetCamera(0)
