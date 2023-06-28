@@ -653,6 +653,7 @@ class Model:
         self.calibrationInitializedTag.setPlcValue(1)
 
     def initializePixel(self):
+        print("initializePixel()")
         if self.pyrometer.isConnected:
             print("pyrometer: connected")
             print("pyrometer: clearing buffer")
@@ -663,8 +664,9 @@ class Model:
             print("pyromter: failed - not connected")
 
     def capturePixel(self):
+        print("capturePixel()")
         testStatus = 1
-        pyroDataCaptured = self._collectTestData(testStatus)
+        pyroDataCaptured = self._capturePowerData()
         frameCaptured = self._captureFrameData()
         print("\npyroDataCaptured: " + str(pyroDataCaptured))
         print("\nframeCaptured: " + str(frameCaptured))
@@ -678,11 +680,13 @@ class Model:
             print("capture failed")
 
     def processPixel(self):
+        print("processPixel()")
         self.pyrometer.clearData()
         self.pixelResultTag.setPlcValue(1)  # autopass
         self.pixelProcessedTag.setPlcValue(1)
 
     def processCalibration(self):
+        print("processCalibration()")
         self.endTest()
         self.calibrationProcessedTag.setPlcValue(1)
     
@@ -706,19 +710,19 @@ class Model:
             pass
         elif testStatus == 1:
             self.logger.addNewLog("tested pixel " + str(self.currentPixelIndex.value + 1) + " out of " + str(len(self.testSettings._pixelList)) + " passed")
-            self._collectTestData(testStatus)
+            self._capturePowerData()
             if self.TestMode == TestMode.CONTINUOUS:
                 self.goToNextPixel()
         
         elif testStatus == 2 or testStatus == 3:
             winsound.MessageBeep(-1)
             self.logger.addNewLog("tested pixel " + str(self.currentPixelIndex.value + 1) + " out of " + str(len(self.testSettings._pixelList)) + " failed")
-            self._collectTestData(testStatus)
+            self._capturePowerData()
 
         elif testStatus == 4:
             winsound.MessageBeep(-1)
             self.logger.addNewLog("tested pixel " + str(self.currentPixelIndex.value + 1) + " out of " + str(len(self.testSettings._pixelList)) + " failed, no power")
-            self._collectTestData(testStatus)
+            self._capturePowerData()
         elif testStatus == 10:
             self.logger.addNewLog("Critical test failure, aborting....")
             self.abortTest()
@@ -856,6 +860,7 @@ class Model:
    ############################## HELPER FUNCTION ##########################################
 
     def _captureFrameData(self):
+        print("_captureFrameData()")
         if self.camera.isConnected:
             currentFrame = self.camera.fetchFrame()
             # Save to camera-specific subdirectory until otherwise specified. Include binary data for now.
@@ -866,29 +871,62 @@ class Model:
         else:
             return False
 
-    def _collectTestData(self, testStatus):
-
+    def _capturePowerData(self):
+        
+        print("_capturePowerData()")
         if self.pyrometer.isConnected:
+
             self.pyrometer.endDataCollection()
-            data = self.pyrometer.getFullData()
+            pulses = self.pyrometer.getFullData()
             
             print("\ndata: [ ")
-            for datum in data:
-                print(str(datum[0]) + ", ")
+            for pulse in pulses:
+                print(str(pulse[0]) + ", ")
             print("]")
 
-            dataPeak = self.pyrometer.getFullDataPeak()
-            print("\ndataPeak: " + str(dataPeak[0]))
-            
-            # TODO: process data, generate test status here
+            pulsePeak = self.pyrometer.getFullDataPeak()
+            print("\npulsePeak: " + str(pulsePeak[0]))
 
-            self.laserTestData[self.activePixelTag.value - 1].append(dataPeak[0]/(self.testSettings._pulseOnMsec / 1000))
-            self.laserTestEnergy[self.activePixelTag.value - 1].append(dataPeak[0])
-            self.laserTestStatus[self.activePixelTag.value - 1] =testStatus
-            self.commandedPowerData[self.activePixelTag.value - 1].append(self.currentPowerWattsTag.value)
+            allPulsesOkay = True   # group status
+            lastError = 0
+            
+            for pulse in pulses:
+
+                measuredPower = pulse[0]/(self.testSettings._pulseOnMsec / 1000)
+                measuredEnergy = pulse[0]
+                expectedPower = self.currentPowerWattsTag.value
+
+                # append data for each pulse
+                self.laserTestData[self.activePixelTag.value - 1].append(measuredPower)
+                self.laserTestEnergy[self.activePixelTag.value - 1].append(measuredEnergy)
+                self.commandedPowerData[self.activePixelTag.value - 1].append(expectedPower)
+
+                # evaluate the variable formerly known as testStatus
+                # check the power of each pulse but only report 1 status per pixel
+                # test status meaning: ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
+                if measuredPower > (expectedPower * 1.5):
+                    # high power
+                    lastError = 2
+                    allPulsesOkay = False
+                elif measuredPower < (expectedPower * 0.5):
+                    # low power
+                    lastError = 3
+                    allPulsesOkay = False
+                elif measuredPower < (expectedPower * 0.05):
+                    # no power
+                    lastError = 4
+                    allPulsesOkay = False
+
+            if allPulsesOkay:
+                # pixel pass
+                self.laserTestStatus[self.activePixelTag.value - 1] = 5
+            else:
+                self.laserTestStatus[self.activePixelTag.value - 1] = lastError
 
             return True
+        
         else:
+            
             return False
        
     def _createoutputdirectory(self):
