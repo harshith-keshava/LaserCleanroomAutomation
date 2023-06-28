@@ -20,7 +20,8 @@ class OphirJunoCOM:
             #traceback.print_exc()
 
         self.isConnected = False
-        self.isStreaming = False
+        #TODO: implement isStreaming flag
+        #self.isStreaming = False
         self.data = tuple()
         self.newestDataPeak = (None, None, None)
     
