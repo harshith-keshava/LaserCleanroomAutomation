@@ -682,6 +682,7 @@ class Model:
 
     def processPixel(self):
         print("processPixel()")
+        self.pyrometer.endDataCollection()
         self.pyrometer.clearData()
         self.pixelResultTag.setPlcValue(1)  # autopass
         self.pixelProcessedTag.setPlcValue(1)
@@ -878,8 +879,8 @@ class Model:
         print("_capturePowerData()")
         if self.pyrometer.isConnected:
 
-            self.pyrometer.endDataCollection()
             pulses = self.pyrometer.getFullData()
+            self.pyrometer.clearData()
             
             print("\ndata: [ ")
             for pulse in pulses:
