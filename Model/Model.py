@@ -896,34 +896,41 @@ class Model:
             
             for pulse in pulses:
 
-                measuredPower = pulse[0]/(self.testSettings._pulseOnMsec / 1000)
-                measuredEnergy = pulse[0]
-                expectedPower = self.currentPowerWattsTag.value
+                energy = pulse[0]
+                timestamp = pulse[1]
+                status = pulse[2]
 
-                # append data for each pulse
-                self.laserTestData[self.activePixelTag.value - 1].append(measuredPower)
-                self.laserTestEnergy[self.activePixelTag.value - 1].append(measuredEnergy)
-                self.commandedPowerData[self.activePixelTag.value - 1].append(expectedPower)
+                # throw out pulses with non-zero status
+                # TODO: figure out why we're getting pulses with non-zero status
+                if (status == 0):
+                    measuredPower = energy/(self.testSettings._pulseOnMsec / 1000)
+                    measuredEnergy = energy
+                    expectedPower = self.currentPowerWattsTag.value
 
-                # evaluate the variable formerly known as testStatus
-                # check the power of each pulse but only report 1 status per pixel
-                # test status meaning: ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
-                if measuredPower > (expectedPower * 1.5):
-                    # high power
-                    lastError = 2
-                    allPulsesOkay = False
-                elif measuredPower < (expectedPower * 0.5):
-                    # low power
-                    lastError = 3
-                    allPulsesOkay = False
-                elif measuredPower < (expectedPower * 0.05):
-                    # no power
-                    lastError = 4
-                    allPulsesOkay = False
+                    # append data for each pulse
+                    self.laserTestData[self.activePixelTag.value - 1].append(measuredPower)
+                    self.laserTestEnergy[self.activePixelTag.value - 1].append(measuredEnergy)
+                    self.commandedPowerData[self.activePixelTag.value - 1].append(expectedPower)
+
+                    # evaluate the variable formerly known as testStatus
+                    # check the power of each pulse but only report 1 status per pixel
+                    # test status meaning: ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
+                    if measuredPower > (expectedPower * 1.5):
+                        # high power
+                        lastError = 2
+                        allPulsesOkay = False
+                    elif measuredPower < (expectedPower * 0.5):
+                        # low power
+                        lastError = 3
+                        allPulsesOkay = False
+                    elif measuredPower < (expectedPower * 0.05):
+                        # no power
+                        lastError = 4
+                        allPulsesOkay = False
 
             if allPulsesOkay:
                 # pixel pass
-                self.laserTestStatus[self.activePixelTag.value - 1] = 5
+                self.laserTestStatus[self.activePixelTag.value - 1] = 1
             else:
                 self.laserTestStatus[self.activePixelTag.value - 1] = lastError
 
