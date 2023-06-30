@@ -860,13 +860,13 @@ class Model:
         return self.testStatusTag.value
 
     def getViablePixelList(self):
-        return list(np.trim_zeros(np.array(self.viablePixelListTag.value)))
+        return list(np.trim_zeros(np.array([])))
 
     def isReadyToTest(self):
-        return self.readyToTestTag.value & self.readyToConfigureTag.value
+        return True #self.readyToTestTag.value & self.readyToConfigureTag.value
 
     def isTestComplete(self):
-        return self.testCompleteTag.value
+        return False #self.testCompleteTag.value
 
     def getCurrentPixelIndex(self):
         return self.currentPixelIndex.value

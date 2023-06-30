@@ -267,11 +267,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     
         self.sched = BackgroundScheduler()
-        self.sched.add_job(lambda : self.energyStatus.setText(str(round(self.model.ScaledEnergyLiveTag.value, 3))), 'interval', seconds=0.5)
-        self.sched.add_job(lambda : self.powerStatus.setText(str(round(self.model.ScaledEnergyLiveTag.value / (self.testSettings._pulseOnMsec / 1000), 2))), 'interval', seconds=0.5)
-        self.sched.add_job(lambda : self.percentErrorStatus.setText(str(round(self.model.PercentErrorLiveTag.value, 3))), 'interval', seconds=0.5)
-        self.sched.add_job(lambda : self.currentTestPixelStatus.setText(str(self.model.activePixelTag.value)), 'interval', seconds=0.5)
-        self.sched.add_job(lambda : self.pixelIndexStatus.setText(str(self.model.getCurrentPixelIndex()) + " of " + str(len(self.testSettings._pixelList))), 'interval', seconds=0.5)
+#       self.sched.add_job(lambda : self.energyStatus.setText(str(round(self.model.ScaledEnergyLiveTag.value, 3))), 'interval', seconds=0.5)
+#       self.sched.add_job(lambda : self.powerStatus.setText(str(round(self.model.ScaledEnergyLiveTag.value / (self.testSettings._pulseOnMsec / 1000), 2))), 'interval', seconds=0.5)
+#       self.sched.add_job(lambda : self.percentErrorStatus.setText(str(round(self.model.PercentErrorLiveTag.value, 3))), 'interval', seconds=0.5)
+#       self.sched.add_job(lambda : self.currentTestPixelStatus.setText(str(self.model.activePixelTag.value)), 'interval', seconds=0.5)
+#       self.sched.add_job(lambda : self.pixelIndexStatus.setText(str(self.model.getCurrentPixelIndex()) + " of " + str(len(self.testSettings._pixelList))), 'interval', seconds=0.5)
         # self.sched.add_job(lambda : self.currentCommandedPowerStatus.setText(str(round(max(self.model.currentPowerWattsTag.value), 3))), 'interval', seconds=0.5)
         
 
