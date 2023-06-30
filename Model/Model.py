@@ -200,8 +200,11 @@ class Model:
         "CalibrationProcessed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.CalibrationProcessed"),
 
         # pixel iteration
-        "ActivePixel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ActivePixel"),
-        "VFPMap":BNRopcuaTag(self.client, "ns=6;s=::ASGlobalPV:gOpcData_ToGen3CalibApp.VFPMap")
+        "VFPMapPixels": BNRopcuaTag(self.client, "ns=6;s=::ASGlobalPV:gOpcData_ToGen3CalibApp.VFPMapPixels"),
+        "VFPMapEnables": BNRopcuaTag(self.client, "ns=6;s=::ASGlobalPV:gOpcData_ToGen3CalibApp.VFPMapEnables"),
+        "VFPMapRacks": BNRopcuaTag(self.client, "ns=6;s=::ASGlobalPV:gOpcData_ToGen3CalibApp.VFPMapRacks"),
+        "VFPMapLasers": BNRopcuaTag(self.client, "ns=6;s=::ASGlobalPV:gOpcData_ToGen3CalibApp.VFPMapLasers"),
+        "ActivePixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ActivePixel")
 
         }
 
@@ -259,7 +262,10 @@ class Model:
         self.calibrationProcessedTag = self.plcTags["CalibrationProcessed"]
 
         self.activePixelTag = self.plcTags["ActivePixel"]  # 1-indexed pixel that is currently being used
-        self.vfpMapTag = self.plcTags["VFPMap"] 
+        self.vfpMapPixelsTag = self.plcTags["VFPMapPixels"] 
+        self.vfpMapEnablesTag = self.plcTags["VFPMapEnables"] 
+        self.vfpMapRacksTag = self.plcTags["VFPMapRacks"] 
+        self.vfpMapLasersTag = self.plcTags["VFPMapLasers"] 
 
 
         ### Subscribed Variables (must also add these to the delete)
@@ -326,6 +332,7 @@ class Model:
                 MachineSettings._factoryID = self.FactoryNameTag.value
             MachineSettings._machineID = self.MachineNameTag.value
             self.dataCollector.start(paused=True)
+
         except:
             print("Could not connect to server")
             self.logger.addNewLog("Could not connect to server, check the connection to the PLC")
@@ -377,10 +384,10 @@ class Model:
         self.writePeriodicDataHeaders()
         self.createLogFile()
         self.results = None
-        self.laserTestData = [[] for pixel in range(self.laserSettings._numberOfPixels)] ## Data array that is populated during a test with power measurements and postprocessed for later analysis. This array is consumed after data is saved.
-        self.laserTestEnergy = [[] for pixel in range(self.laserSettings._numberOfPixels)] ##Data array that is populated during a test with energy measurements and postprocessed for later analysis. This array is consumed after data is saved.
-        self.laserTestStatus = [5 for pixel in range(self.laserSettings._numberOfPixels)] ## Data array that is populated during a test with post test pixel status and postprocessed for later analysis. This array is consumed after data is saved.
-        self.commandedPowerData = [[] for pixel in range(self.laserSettings._numberOfPixels)] ## Data array that is populated during a test with commmanded Power Data(W) and postprocessed for later analysis. This array is consumed after data is saved.
+        self.laserTestData = [[] for pixel in range(self.laserSettings.numberOfPixels)] ## Data array that is populated during a test with power measurements and postprocessed for later analysis. This array is consumed after data is saved.
+        self.laserTestEnergy = [[] for pixel in range(self.laserSettings.numberOfPixels)] ##Data array that is populated during a test with energy measurements and postprocessed for later analysis. This array is consumed after data is saved.
+        self.laserTestStatus = [5 for pixel in range(self.laserSettings.numberOfPixels)] ## Data array that is populated during a test with post test pixel status and postprocessed for later analysis. This array is consumed after data is saved.
+        self.commandedPowerData = [[] for pixel in range(self.laserSettings.numberOfPixels)] ## Data array that is populated during a test with commmanded Power Data(W) and postprocessed for later analysis. This array is consumed after data is saved.
         self.commandedPowerLevels = [] ## Array generated with the power levels derived from processing commanded power data
         self.currentPowerLevelIndex = 0
         self.dataReady.value = False
@@ -644,8 +651,17 @@ class Model:
             self.saveLocation = self._createoutputdirectory()
             os.makedirs(self.saveLocation)
 
-        # Get pixel mapping
-        self.laserSettings.vfpMap = self.vfpMapTag.value
+        # Get pixel mapping (in column slices, compose into proper 2d array because opcua client was choking on 2d array)
+        vfpMap = [[]]
+        for index, pixel in enumerate(self.vfpMapPixelsTag.value):
+            vfpMap[index][0] = pixel
+        for index, enable in enumerate(self.vfpMapEnablesTag.value):
+            vfpMap[index][1] = enable
+        for index, rack in enumerate(self.vfpMapRacksTag.value):
+            vfpMap[index][2] = rack
+        for index, laser in enumerate(self.vfpMapLasersTag.value):
+            vfpMap[index][3] = laser
+        self.laserSettings.vfpMap = vfpMap
 
         self.periodicDataFile  = self.saveLocation + "\\opticsBoxData.csv"
         self.writePeriodicDataHeaders()
@@ -659,7 +675,7 @@ class Model:
         self.dataReady.value = False
         self.lutDataReady.value = False
         self.dataCollector.add_job(self.logPeriodicData, 'interval', seconds=30)
-        self.dataCollector.resume()
+        #self.dataCollector.resume()
 
         if not self.camera.isConnected:
             self.camera.initialize()
