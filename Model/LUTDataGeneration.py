@@ -131,7 +131,7 @@ class LUTDataManager():
             if MachineSettings._simulation:
                 csvPath = '.\\tmp\\LUTDataGeneration\\CSV'
             else:
-                csvPath = 'C:\\LUTDataGeneration\\CSV'
+                csvPath = '.\\tmp\\CSV'
             if not os.path.isdir(csvPath):
                 os.mkdir(csvPath)
         if luts is None:
@@ -192,7 +192,7 @@ class LUTDataManager():
     def _generateSaveDir(self, calID):
         now = datetime.now()
         date = now.strftime("%Y%m%d")
-        drivePath = os.path.join(r'\\brl-nas02',"printerinfo", MachineSettings._factoryID, MachineSettings._machineID,"Laser Data", "30_Calibrations", MachineSettings._machineID + "_LUT_" + str(calID).zfill(5)+"_"+date)
+        drivePath = os.path.join(".", "tmp", "printerinfo", MachineSettings._factoryID, MachineSettings._machineID,"Laser Data", "30_Calibrations", MachineSettings._machineID + "_LUT_" + str(calID).zfill(5)+"_"+date)
         return drivePath
         
     def getResultsLUT(self):
