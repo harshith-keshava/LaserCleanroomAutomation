@@ -98,6 +98,8 @@ class Model:
         self.pyrometer.connectToJuno()
         print("Juno connection:" + str(self.pyrometer.isConnected))
         self.testName = ""
+        self.currentPowerLevelIndex = 0 ## power level counter to adjust camera exposure
+        self.exposureAt100W = 1 ## 1ms exposure at 100W pulse
     
         ############################################# ADD TAGS #########################################
 
@@ -372,6 +374,7 @@ class Model:
         self.laserTestStatus = [5 for pixel in range(MachineSettings._numberOfPixels)] ## Data array that is populated during a test with post test pixel status and postprocessed for later analysis. This array is consumed after data is saved.
         self.commandedPowerData = [[] for pixel in range(MachineSettings._numberOfPixels)] ## Data array that is populated during a test with commmanded Power Data(W) and postprocessed for later analysis. This array is consumed after data is saved.
         self.commandedPowerLevels = [] ## Array generated with the power levels derived from processing commanded power data
+        self.currentPowerLevelIndex = 0
         self.dataReady.value = False
         self.lutDataReady.value = False
         self.dataCollector.add_job(self.logPeriodicData, 'interval', seconds=30)
@@ -655,6 +658,11 @@ class Model:
 
     def initializePixel(self):
         print("initializePixel()")
+
+        ## update exposure counter, set starting exposure
+        self.currentPowerLevelIndex = 0
+        self.updateExposure(self.currentPowerLevelIndex)
+
         if self.pyrometer.isConnected:
             print("pyrometer: connected")
             print("pyrometer: clearing buffer")
@@ -666,9 +674,15 @@ class Model:
 
     def capturePixel(self):
         print("capturePixel()")
-        testStatus = 1
+
         pyroDataCaptured = self._capturePowerData()
+
         frameCaptured = self._captureFrameData()
+        if self.currentPowerLevelIndex < self.numPowerLevelStepsTag.value:
+            # update exposure for next power level if applicable
+            self.currentPowerLevelIndex += 1
+            self.updateExposure(self.currentPowerLevelIndex)
+
         print("\npyroDataCaptured: " + str(pyroDataCaptured))
         print("\nframeCaptured: " + str(frameCaptured))
         
@@ -940,6 +954,27 @@ class Model:
         else:
             
             return False
+        
+    def updateExposure(self, powerLevelIndex):
+        
+        nextPowerWatts = self.startingPowerLevelTag.value + (self.powerLevelIncrementTag.value * powerLevelIndex)
+        maxExposureTime = self.pulseOnMsecTag.value * 1.1
+
+        if nextPowerWatts != 0:
+            exposure = self.exposureAt100W / (nextPowerWatts / 100)     ## when power doubles, exposure halves
+        else:
+            print("Next power is zero, falling back to default")
+            exposure = self.exposureAt100W
+
+        if exposure > (maxExposureTime):
+            print("Exposure longer than 110% pulse on time - limiting")
+            exposure = maxExposureTime
+
+        print("setting exposure to " + str(exposure) + "ms")
+        
+        status = self.camera.setExposure()
+
+        print("status: " + str(status))
        
     def _createoutputdirectory(self):
         date = self.timeStamp.strftime("%Y%m%d")
