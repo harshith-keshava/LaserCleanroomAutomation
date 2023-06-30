@@ -15,7 +15,7 @@ class LaserSettings:
         return len(self._vfpMap)
 
     @vfpMap.setter
-    def vfpMap(self, map):
-        self._vfpMap = map
+    def vfpMap(self, pixelMap):
+        self._vfpMap = [ pixel.copy() for pixel in pixelMap ]
 
         
