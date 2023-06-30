@@ -10,6 +10,7 @@ from io import BytesIO
 from ConfigFiles.MachineSettings import MachineSettings
 import os
 from Model.FTP_Manager import FTP_Manager
+from Model.LaserSettings import LaserSettings
 from ftplib import FTP
 from io import BytesIO
 import numpy as np
@@ -66,7 +67,7 @@ class LUTDataManager():
             self.lutStatus[pixel] = ("Power Called Failure") 
         return lutScaledData
         
-    def convertLaserDataToLUTData(self, laserCalibrationData, commandedPowerData, lasertestStatus, calID, saveLocation=None,time=None):
+    def convertLaserDataToLUTData(self, laserCalibrationData, commandedPowerData, lasertestStatus, calID, laserSettings: LaserSettings, saveLocation=None,time=None):
         #Get current time for the purpose of file naming and database tags
         time=datetime.now()
         #Convert the test settings into distinct power levels in WATTS to be able to split the raw data up and compare the values 
@@ -77,9 +78,9 @@ class LUTDataManager():
         # 0, 1, 0 is the default quadratic coefficients i.e. a linear line for the LUT for the lasers
         linearCoefficients = [0, 1, 0]
         #create master coefficient matrix for the lasers; Shape = [Pixels x 3] = [[Coeff1_Pixel1, Coeff2_Pixel1, Coeff3_Pixel1], ..... ,[Coeff1_Pixel147, Coeff2_Pixel147, Coeff3_Pixel147]]
-        CFMatrix=np.asarray([linearCoefficients for pixel in range(MachineSettings._numberOfPixels)], dtype=float)
+        CFMatrix=np.asarray([linearCoefficients for pixel in range(laserSettings.numberOfPixels)], dtype=float)
         #initialize a default array of statuses with the default as untested and overwrite the index with the test status when the pixel is processed 
-        self.lutStatus = ["Untested" for pixel in range(MachineSettings._numberOfPixels)]
+        self.lutStatus = ["Untested" for pixel in range(laserSettings.numberOfPixels)]
         #Coefficient calculation for loop
         #Loop through the laser data for each pixel splitting the data by its power levels and average value per power level. 
         #Using the average value for each power level, make a quadratic best fit
@@ -102,12 +103,12 @@ class LUTDataManager():
             else:
                 self.lutStatus[pixelNum] = "Power Tolerance Failure"
         #Generate LUT Power data for each laser for each rack into a single numpy array (Shape = (7,21,256) for rack, laser, power data point)
-        luts = np.asarray([self.scaledLUTfromCoeff(CFMatrix[pixel], pixel) for pixel in range(MachineSettings._numberOfPixels)], dtype = np.uint16)
+        luts = np.asarray([self.scaledLUTfromCoeff(CFMatrix[pixel], pixel) for pixel in range(laserSettings.numberOfPixels)], dtype = np.uint16)
         self.powerLuts = luts
         results_coeff = []
         results_lut = []
-        for pixelNum in range(MachineSettings._numberOfPixels):
-            pixel, enable, rack, laser = MachineSettings._vfpMap[pixelNum]
+        for pixelNum in range(laserSettings.numberOfPixels):
+            pixel, enable, rack, laser = laserSettings.vfpMap[pixelNum]
             results_coeff.append([pixel, rack, laser, CFMatrix[pixelNum][0], CFMatrix[pixelNum][1], CFMatrix[pixelNum][2]])
             for dataPoint in range(0,256):
                 results_lut.append([time.strftime("%Y-%m-%d,%H:%M:%S"), MachineSettings._machineID, MachineSettings._factoryID, pixel, rack, laser, self.lutStatus[pixelNum], CFMatrix[pixelNum][0], CFMatrix[pixelNum][1], CFMatrix[pixelNum][2], dataPoint, np.int32(luts[pixelNum][dataPoint])])
@@ -145,21 +146,21 @@ class LUTDataManager():
         self.binaries = binaries
         return binaries
 
-    def writeBinariesToFolder(self, calID, binaries=None, binPath = None):
+    def writeBinariesToFolder(self, calID, laserSettings: LaserSettings, binaries=None, binPath = None):
         if binaries is None:
             binaries = self.binaries
         if not os.path.isdir('tmp\\bin\\'):
             os.mkdir('tmp\\bin\\')
         [os.remove('tmp\\bin\\' + file) for file in os.listdir('tmp\\bin\\')]
         for pixelNum, binary in enumerate(binaries):
-            pixel, enable, rack, laser = MachineSettings._vfpMap[pixelNum]
+            pixel, enable, rack, laser = laserSettings.vfpMap[pixelNum]
             self.writeBinaryArrayToFile(int(rack), int(laser), binary, calID, 'tmp\\bin\\')
         #Write binaries for each laser to their own file with the name format being VF-LaserPowerLUT_R{rackNum}_P{laserNum}_ID{id}.vflpc
         if binPath is not None:
             if not os.path.isdir(binPath):
                 os.mkdir(binPath)
             for pixelNum, binary in enumerate(binaries):
-                pixel, enable, rack, laser = MachineSettings._vfpMap[pixelNum]
+                pixel, enable, rack, laser = laserSettings.vfpMap[pixelNum]
                 self.writeBinaryArrayToFile(rack, laser, binary, calID, binPath)
         
 
@@ -169,21 +170,21 @@ class LUTDataManager():
             outfile.write(binaryFile.getbuffer())
         binaryFile.seek(0)
 
-    def uploadLinearLuts(self):
+    def uploadLinearLuts(self, laserSettings: LaserSettings):
         powerModifiedLimit16Bit = MachineSettings._16BitAnalogMaxPower  * self.testSettings._powerModifiedLimit
         powerperct=np.linspace(0,1,256)
         lineardata=np.round(powerperct * MachineSettings._16BitAnalogMaxPower,0) #convert to 65535 scale and apply threshold
         lineardata[lineardata>np.round(powerModifiedLimit16Bit)] = np.round(powerModifiedLimit16Bit,0)
-        luts = np.asarray([lineardata for pixel in range(MachineSettings._numberOfPixels)], dtype = np.uint16)
+        luts = np.asarray([lineardata for pixel in range(laserSettings.numberOfPixels)], dtype = np.uint16)
         bins = self.convertLUTDataToBinaries(luts)
         self.writeBinaryArraysToVFPLCs(99999, bins)
 
-    def writeBinaryArraysToVFPLCs(self, lutNumber, binaries=None):
+    def writeBinaryArraysToVFPLCs(self, lutNumber, laserSettings: LaserSettings, binaries=None):
         if binaries is None:
             binaries = self.binaries
         vflcrs = MachineSettings._vflcrIPs
         for pixelNum, binary in enumerate(binaries):
-            pixel, enable, rack, laser = MachineSettings._vfpMap[pixelNum]
+            pixel, enable, rack, laser = laserSettings.vfpMap[pixelNum]
             print("Sending data to VFLCR")
             FTP_Manager.writeBinaryArrayToVfplc(vflcrs[rack-1],rack,laser,binary, lutNumber)
             

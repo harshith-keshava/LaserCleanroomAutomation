@@ -29,7 +29,7 @@ class ResultsWidget(QWidget):
         self.dataResultsComboBox.addItem("LPM Pixel Deviation")
         self.dataResultsComboBox.addItem("LUT Processed")
         self.dataResultsComboBox.addItem("Summary Chart")
-        self.rackButtons = [QPushButton("Rack {rackNum}".format(rackNum = rackIdx + 1)) for rackIdx in range(MachineSettings._numberOfRacks)]
+        self.rackButtons = [QPushButton("Rack {rackNum}".format(rackNum = rackIdx + 1)) for rackIdx in range(3)]
         [rackButton.setObjectName("rackButton") for rackButton in self.rackButtons]
         [rackButton.setCheckable(True) for rackButton in self.rackButtons]
         self.rackButtonGroup = QButtonGroup()

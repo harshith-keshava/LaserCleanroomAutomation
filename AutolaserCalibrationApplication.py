@@ -2,6 +2,7 @@ import sys, os
 
 import PySide2
 from Model.Model import Model
+from Model.Model import LaserSettings
 from ConfigFiles.TestSettings import TestSettings
 from ConfigFiles.MachineSettings import MachineSettings
 from View.PyQtUI import MainWindow
@@ -20,7 +21,8 @@ except ImportError:
 
 c = TestSettings()
 s = MachineSettings()
-m = Model(s,c)
+l = LaserSettings()
+m = Model(s,c,l)
 
 if __name__ == '__main__':
     PySide2.QtWidgets.QApplication.setAttribute(PySide2.QtCore.Qt.AA_EnableHighDpiScaling, True)

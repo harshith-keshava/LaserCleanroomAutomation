@@ -26,6 +26,7 @@ import re
 from apscheduler.schedulers.background import BackgroundScheduler
 from Model.CameraDriver import CameraDriver
 from Model.OphirCom import OphirJunoCOM
+from Model.LaserSettings import LaserSettings
 
 ## ENUM to define the test modes 
 ## CONTINUOUS = user input only for pixels that are out of spec based on tolerance band or fail
@@ -67,16 +68,17 @@ class SubscribedVariable:
 
     def addReaction(self, reaction):
         self.reactions.append(reaction)
-    
+
 ## Model tha defined the basis of the backend functionality and comminication with the PLC
 class Model:
 
-    def __init__(self, machineSettings, configurationSettings) -> None:
+    def __init__(self, machineSettings, configurationSettings, laserSettings: LaserSettings) -> None:
+        self.laserSettings = laserSettings    # object that holds pixel map, number of pixels info
         self.testSettings = TestSettings() ## Current test settings given to the model through the user interface 
-        self.laserTestData = [[] for pixel in range(MachineSettings._numberOfPixels)] ## Data array that is populated during a test with power measurements and postprocessed for later analysis. This array is consumed after data is saved.
-        self.laserTestEnergy = [[] for pixel in range(MachineSettings._numberOfPixels)] ##Data array that is populated during a test with energy measurements and postprocessed for later analysis. This array is consumed after data is saved.
-        self.laserTestStatus = [5 for pixel in range(MachineSettings._numberOfPixels)] ## Data array that is populated during a test with post test pixel status and postprocessed for later analysis. This array is consumed after data is saved.
-        self.commandedPowerData = [[] for pixel in range(MachineSettings._numberOfPixels)] ## Data array that is populated during a test with commmanded Power Data(W) and postprocessed for later analysis. This array is consumed after data is saved.
+        self.laserTestData = [[] for pixel in range(self.laserSettings.numberOfPixels)] ## Data array that is populated during a test with power measurements and postprocessed for later analysis. This array is consumed after data is saved.
+        self.laserTestEnergy = [[] for pixel in range(self.laserSettings.numberOfPixels)] ##Data array that is populated during a test with energy measurements and postprocessed for later analysis. This array is consumed after data is saved.
+        self.laserTestStatus = [5 for pixel in range(self.laserSettings.numberOfPixels)] ## Data array that is populated during a test with post test pixel status and postprocessed for later analysis. This array is consumed after data is saved.
+        self.commandedPowerData = [[] for pixel in range(self.laserSettings.numberOfPixels)] ## Data array that is populated during a test with commmanded Power Data(W) and postprocessed for later analysis. This array is consumed after data is saved.
         self.commandedPowerLevels = [] ## Array generated with the power levels derived from processing commanded power data
         self.results = None ## Pandas Dataframe with cols: ["Date","Machine ID","Factory ID", "Test Type", "Pixel", "Process Acceptance", "Status", "Commanded Power", "Pulse Power Average", "Pulse Power Stdv", "Pulse Power Deviation"]. Processed Results of a test
         self._lutDataManager = LUTDataManager(self.testSettings) ## Helper class to manage the LUT generation logic
@@ -128,7 +130,7 @@ class Model:
         "ConfigurationSent":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.ConfigurationSent"),
         "TestComplete":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.TestComplete"),
         "LaserPowerData":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.LaserPowerData"),
-        "ActivePixel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.ActivePixel"),
+        # "ActivePixel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.ActivePixel"),
         "ProceedToNextPixel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.ProceedToNextPixel"),
         "ReadyToConfigure":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.ReadyToConfigure"),
         "ReadyToTest":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.ReadyToTest"),
@@ -197,6 +199,10 @@ class Model:
         "ProcessCalibration": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ProcessCalibration"),
         "CalibrationProcessed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.CalibrationProcessed"),
 
+        # pixel iteration
+        "ActivePixel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ActivePixel"),
+        "VFPMap":BNRopcuaTag(self.client, "ns=6;s=::ASGlobalPV:gOpcData_ToGen3CalibApp.VFPMap")
+
         }
 
         # definition of all the plc tags as a variable bound to the dictionary element
@@ -214,7 +220,6 @@ class Model:
         self.configurationSentTag = self.plcTags["ConfigurationSent"]
         self.testCompleteTag = self.plcTags["TestComplete"]
         self.laserPowerDataTag = self.plcTags["LaserPowerData"]
-        self.activePixelTag = self.plcTags["ActivePixel"] 
         self.proceedToNextPixelTag = self.plcTags["ProceedToNextPixel"]
         self.PixelListTag = self.plcTags["PixelList"]
         self.TestTypeTag = self.plcTags["TestType"]
@@ -252,6 +257,10 @@ class Model:
         self.pixelResultTag = self.plcTags["PixelResult"]
 
         self.calibrationProcessedTag = self.plcTags["CalibrationProcessed"]
+
+        self.activePixelTag = self.plcTags["ActivePixel"]  # 1-indexed pixel that is currently being used
+        self.vfpMapTag = self.plcTags["VFPMap"] 
+
 
         ### Subscribed Variables (must also add these to the delete)
         ###     -> Variables that update using a callback based on the status of the tag on the plc 
@@ -367,12 +376,11 @@ class Model:
         self.periodicDataFile  = self.saveLocation + "\\opticsBoxData.csv"
         self.writePeriodicDataHeaders()
         self.createLogFile()
-        self.currentPixelIndex.value = 0
         self.results = None
-        self.laserTestData = [[] for pixel in range(MachineSettings._numberOfPixels)] ## Data array that is populated during a test with power measurements and postprocessed for later analysis. This array is consumed after data is saved.
-        self.laserTestEnergy = [[] for pixel in range(MachineSettings._numberOfPixels)] ##Data array that is populated during a test with energy measurements and postprocessed for later analysis. This array is consumed after data is saved.
-        self.laserTestStatus = [5 for pixel in range(MachineSettings._numberOfPixels)] ## Data array that is populated during a test with post test pixel status and postprocessed for later analysis. This array is consumed after data is saved.
-        self.commandedPowerData = [[] for pixel in range(MachineSettings._numberOfPixels)] ## Data array that is populated during a test with commmanded Power Data(W) and postprocessed for later analysis. This array is consumed after data is saved.
+        self.laserTestData = [[] for pixel in range(self.laserSettings._numberOfPixels)] ## Data array that is populated during a test with power measurements and postprocessed for later analysis. This array is consumed after data is saved.
+        self.laserTestEnergy = [[] for pixel in range(self.laserSettings._numberOfPixels)] ##Data array that is populated during a test with energy measurements and postprocessed for later analysis. This array is consumed after data is saved.
+        self.laserTestStatus = [5 for pixel in range(self.laserSettings._numberOfPixels)] ## Data array that is populated during a test with post test pixel status and postprocessed for later analysis. This array is consumed after data is saved.
+        self.commandedPowerData = [[] for pixel in range(self.laserSettings._numberOfPixels)] ## Data array that is populated during a test with commmanded Power Data(W) and postprocessed for later analysis. This array is consumed after data is saved.
         self.commandedPowerLevels = [] ## Array generated with the power levels derived from processing commanded power data
         self.currentPowerLevelIndex = 0
         self.dataReady.value = False
@@ -499,8 +507,8 @@ class Model:
                     numDataPoints = len(pulseSplitData[pixelIdx][powerLevelNum])
                 else:
                     numDataPoints = 0
-                if pixelIdx < (MachineSettings._vfpMap.size/MachineSettings._vfpMap[0].size):
-                    outputData.append([self.timeStamp.strftime("%Y-%m-%d,%H:%M:%S"), MachineSettings._machineID, MachineSettings._factoryID, self.testTypesAsString[self.testSettings._testType], pixelIdx + 1, MachineSettings._vfpMap[pixelIdx][2], MachineSettings._vfpMap[pixelIdx][3],dev_daq_p_data[pixelIdx][powerLevelNum] < 5, self.testStatusTable[self.laserTestStatus[pixelIdx]], commandedPower, avg_daq_p_data[pixelIdx][powerLevelNum], std_daq_p_data[pixelIdx][powerLevelNum], dev_daq_p_data[pixelIdx][powerLevelNum], numDataPoints])
+                if pixelIdx < (self.laserSettings.numberOfPixels):
+                    outputData.append([self.timeStamp.strftime("%Y-%m-%d,%H:%M:%S"), MachineSettings._machineID, MachineSettings._factoryID, self.testTypesAsString[self.testSettings._testType], pixelIdx + 1, self.laserSettings.vfpMap[pixelIdx][2], self.laserSettings.vfpMap[pixelIdx][3],dev_daq_p_data[pixelIdx][powerLevelNum] < 5, self.testStatusTable[self.laserTestStatus[pixelIdx]], commandedPower, avg_daq_p_data[pixelIdx][powerLevelNum], std_daq_p_data[pixelIdx][powerLevelNum], dev_daq_p_data[pixelIdx][powerLevelNum], numDataPoints])
         cols =["Date","Machine ID","Factory ID", "Test Type", "Pixel", "Rack", "Laser", "Process Acceptance", "Status", "Commanded Power", "Pulse Power Average", "Pulse Power Stdv", "Pulse Power Deviation", "Data Points"] # add rack and laser printer name, name of test(CVER, DVER....), timestamp  
         self.results = pd.DataFrame(outputData, columns=cols)
         self.results.to_csv("tmp\\LPM_processed.csv", index=False)
@@ -524,7 +532,7 @@ class Model:
         passedPixels = self.results.loc[self.results["Status"] == "Passed"]["Pixel"].to_numpy()
         validRanges = []
         startRange = 1
-        for pixel in range(1,MachineSettings._numberOfPixels+1):
+        for pixel in range(1,self.laserSettings.numberOfPixels+1):
             if pixel not in passedPixels and startRange is not None:
                 validRanges.append([startRange, pixel-1])
                 startRange = None
@@ -534,7 +542,7 @@ class Model:
 
 
     def generateLuts(self):
-        luts = self._lutDataManager.convertLaserDataToLUTData(self.laserTestData, self.commandedPowerData, self.laserTestStatus, self.testSettings._CalId, saveLocation=self.saveLocation)
+        luts = self._lutDataManager.convertLaserDataToLUTData(self.laserTestData, self.commandedPowerData, self.laserTestStatus, self.testSettings._CalId, self.laserSettings, saveLocation=self.saveLocation)
         bins = self._lutDataManager.convertLUTDataToBinaries(luts)
         self.lutDataReady.value = True
 
@@ -544,14 +552,14 @@ class Model:
         while(any(lutExistsStatus)):
             for vflcrNum, vflcrIP in enumerate(MachineSettings._vflcrIPs):
                 lutExistsStatus[vflcrNum] = not FTP_Manager.lutsEmpty(vflcrIP)
-        self._lutDataManager.uploadLinearLuts()
+        self._lutDataManager.uploadLinearLuts(self.laserSettings)
         self.UploadLUTsTag.setPlcValue(True)
 
     def uploadCalibratedLuts(self, calibrationID:int):
         self.logger.addNewLog("Writing binaries to folders and printer.......")
         self.DeleteLUTsTag.setPlcValue(True)
         binpath = self.saveLocation + "\\bin\\"
-        self._lutDataManager.writeBinariesToFolder(calibrationID, binPath=binpath)
+        self._lutDataManager.writeBinariesToFolder(calibrationID, self.laserSettings, binPath=binpath)
         lutExistsStatus = [True for VFLCR in MachineSettings._vflcrIPs]
         while(any(lutExistsStatus)):
             for vflcrNum, vflcrIP in enumerate(MachineSettings._vflcrIPs):
@@ -559,7 +567,7 @@ class Model:
         if not os.path.exists(binpath):
             os.makedirs(binpath)
         self.logger.addNewLog("Binaries written to folder complete")
-        self._lutDataManager.writeBinaryArraysToVFPLCs(calibrationID)
+        self._lutDataManager.writeBinaryArraysToVFPLCs(calibrationID, self.laserSettings)
         self.logger.addNewLog("Binaries written to printer complete")
         self.UploadLUTsTag.setPlcValue(True)
 
@@ -601,7 +609,7 @@ class Model:
             dataFile.write(b'\n')
 
     def disablePixel(self, pixel):
-        pixel, enable, rack, laser = MachineSettings._vfpMap[pixel - 1]
+        pixel, enable, rack, laser = self.laserSettings.vfpMap[pixel - 1]
         pixelEnableTag = BNRopcuaTag(self.client, 'ns=6;s=::AsGlobalPV:gCommissioningSettings.laserControlSystem.rackConfig[{rack}].ignoreLaser[{laser}]'.format(rack=int(rack), laser=int(laser)))
         pixelEnableTag.setPlcValue(True)
         print(pixelEnableTag.value)
@@ -636,15 +644,17 @@ class Model:
             self.saveLocation = self._createoutputdirectory()
             os.makedirs(self.saveLocation)
 
+        # Get pixel mapping
+        self.laserSettings.vfpMap(self.vfpMapTag.value)
+
         self.periodicDataFile  = self.saveLocation + "\\opticsBoxData.csv"
         self.writePeriodicDataHeaders()
         self.createLogFile()
-        self.currentPixelIndex.value = 0
         self.results = None
-        self.laserTestData = [[] for pixel in range(MachineSettings._numberOfPixels)] ## Data array that is populated during a test with power measurements and postprocessed for later analysis. This array is consumed after data is saved.
-        self.laserTestEnergy = [[] for pixel in range(MachineSettings._numberOfPixels)] ##Data array that is populated during a test with energy measurements and postprocessed for later analysis. This array is consumed after data is saved.
-        self.laserTestStatus = [5 for pixel in range(MachineSettings._numberOfPixels)] ## Data array that is populated during a test with post test pixel status and postprocessed for later analysis. This array is consumed after data is saved.
-        self.commandedPowerData = [[] for pixel in range(MachineSettings._numberOfPixels)] ## Data array that is populated during a test with commmanded Power Data(W) and postprocessed for later analysis. This array is consumed after data is saved.
+        self.laserTestData = [[] for pixel in range(self.laserSettings.numberOfPixels)] ## Data array that is populated during a test with power measurements and postprocessed for later analysis. This array is consumed after data is saved.
+        self.laserTestEnergy = [[] for pixel in range(self.laserSettings.numberOfPixels)] ##Data array that is populated during a test with energy measurements and postprocessed for later analysis. This array is consumed after data is saved.
+        self.laserTestStatus = [5 for pixel in range(self.laserSettings.numberOfPixels)] ## Data array that is populated during a test with post test pixel status and postprocessed for later analysis. This array is consumed after data is saved.
+        self.commandedPowerData = [[] for pixel in range(self.laserSettings.numberOfPixels)] ## Data array that is populated during a test with commmanded Power Data(W) and postprocessed for later analysis. This array is consumed after data is saved.
         self.commandedPowerLevels = [] ## Array generated with the power levels derived from processing commanded power data
         self.dataReady.value = False
         self.lutDataReady.value = False
@@ -658,6 +668,11 @@ class Model:
 
     def initializePixel(self):
         print("initializePixel()")
+
+        print("Active Pixel: " + str(self.activePixelTag.value))
+
+        if self.activePixelTag.value == 0:
+            print("Active pixel is 0 which isn't really a thing so this is going to end up writing the data for this pixel as the last pixel :shrug:")
 
         ## update exposure counter, set starting exposure
         self.currentPowerLevelIndex = 0
@@ -882,8 +897,8 @@ class Model:
             # Save to camera-specific subdirectory until otherwise specified. Include binary data for now.
             if not os.path.exists(self.saveLocation + "\\cameraData"):
                 os.mkdir(self.saveLocation + "\\cameraData")
-            print("saving frame to: " + self.saveLocation + "\\cameraData\\pixel_" + str(self.currentPixelIndex.value + 1) + "_level_" + str(self.currentPowerLevelIndex + 1))
-            currentFrame.save(self.saveLocation + "\\cameraData\\pixel_" + str(self.currentPixelIndex.value + 1) + "_level_" + str(self.currentPowerLevelIndex + 1), include_binary=True)
+            print("saving frame to: " + self.saveLocation + "\\cameraData\\pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1))
+            currentFrame.save(self.saveLocation + "\\cameraData\\pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1), include_binary=True)
             return True
         else:
             return False
