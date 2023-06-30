@@ -645,7 +645,7 @@ class Model:
             os.makedirs(self.saveLocation)
 
         # Get pixel mapping
-        self.laserSettings.vfpMap(self.vfpMapTag.value)
+        self.laserSettings.vfpMap = self.vfpMapTag.value
 
         self.periodicDataFile  = self.saveLocation + "\\opticsBoxData.csv"
         self.writePeriodicDataHeaders()
