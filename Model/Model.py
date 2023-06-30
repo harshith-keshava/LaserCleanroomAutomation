@@ -882,8 +882,8 @@ class Model:
             # Save to camera-specific subdirectory until otherwise specified. Include binary data for now.
             if not os.path.exists(self.saveLocation + "\\cameraData"):
                 os.mkdir(self.saveLocation + "\\cameraData")
-            print("saving frame to: " + self.saveLocation + "\\cameraData\\pixel_" + str(self.currentPixelIndex.value + 1))
-            currentFrame.save(self.saveLocation + "\\cameraData\\pixel_" + str(self.currentPixelIndex.value + 1), include_binary=True)
+            print("saving frame to: " + self.saveLocation + "\\cameraData\\pixel_" + str(self.currentPixelIndex.value + 1) + "_level_" + str(self.currentPowerLevelIndex + 1))
+            currentFrame.save(self.saveLocation + "\\cameraData\\pixel_" + str(self.currentPixelIndex.value + 1) + "_level_" + str(self.currentPowerLevelIndex + 1), include_binary=True)
             return True
         else:
             return False
