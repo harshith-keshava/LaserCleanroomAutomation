@@ -137,7 +137,6 @@ class Model:
         "TestStatus":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.TestStatus"),
         # "CurrentPowerWatts":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.CurrentPowerWatts"),
         "UserAccessLevel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.UserAccessLevel"),
-        "TestType": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.TestType"),
         "ScaledEnergyLive": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.ScaledEnergyLive"),
         "PercentErrorLive": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.PercentErrorLive"),
         "AbortTest": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.AbortTest"),
@@ -201,7 +200,10 @@ class Model:
 
         # pixel iteration
         "ActivePixel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ActivePixel"),
-        "VFPMap":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.VFPMap")
+        "VFPMap":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.VFPMap"),
+
+        # Test Type
+        "TestType": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.TestType")
 
         }
 
@@ -222,7 +224,6 @@ class Model:
         self.laserPowerDataTag = self.plcTags["LaserPowerData"]
         self.proceedToNextPixelTag = self.plcTags["ProceedToNextPixel"]
         self.PixelListTag = self.plcTags["PixelList"]
-        self.TestTypeTag = self.plcTags["TestType"]
         self.ScaledEnergyLiveTag = self.plcTags["ScaledEnergyLive"]
         self.PercentErrorLiveTag = self.plcTags["PercentErrorLive"]
         self.viablePixelListTag = self.plcTags["ViablePixelList"]
@@ -260,6 +261,8 @@ class Model:
 
         self.activePixelTag = self.plcTags["ActivePixel"]  # 1-indexed pixel that is currently being used
         self.vfpMapTag = self.plcTags["VFPMap"] 
+
+        self.TestTypeTag = self.plcTags["TestType"]
 
 
         ### Subscribed Variables (must also add these to the delete)
@@ -440,7 +443,7 @@ class Model:
         self.commandedPowerLevels = [(self.testSettings._startingPowerLevel + self.testSettings._powerLevelIncrement * powerLevel) * 525/255 for powerLevel in range(self.testSettings._numPowerLevelSteps)]
         self.exportData()
         self.generateTestResultDataFrame()
-        if self.testSettings._testType == 2:
+        if self.testType == TestType.CALIBRATION:
             self.generateLuts()
 
     ## Sends the abort signal to the PLC and saves out whatever data is currently captured in the data arrays 
@@ -635,6 +638,9 @@ class Model:
         self.testSettings._numPowerLevelSteps = self.numPowerLevelStepsTag.value
         self.testSettings._powerLevelIncrement = self.powerLevelIncrementTag.value
         self._lutDataManager.changeTestSettings(self.testSettings) 
+
+        # read test type
+        self.testType = TestType(self.TestTypeTag.value)
 
         self.timeStamp = datetime.utcnow()
         
@@ -994,21 +1000,21 @@ class Model:
     def _createoutputdirectory(self):
         date = self.timeStamp.strftime("%Y%m%d")
         machineID = str(MachineSettings._machineID)[0:2] + str(MachineSettings._machineID[2:]).zfill(2)
-        if(self.testSettings._testType == 1):
+        if(self.testType == TestType.LOW_POWER_CHECK):
             time = self.timeStamp.strftime("%H%M")
             calID = self.CurrentLUTIDTag.value
             drivePath = os.path.join(".","tmp","printerinfo", MachineSettings._factoryID, machineID,"Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_LOWPOWER")
             self.testName = machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_LOWPOWER"
-        elif(self.testSettings._testType == 2):    
+        elif(self.testType == TestType.CALIBRATION):    
             calID = self.testSettings._CalId  
             drivePath = os.path.join(".","tmp","printerinfo", MachineSettings._factoryID, machineID,"Laser Data", "30_Calibrations", machineID + "_LUT_" + str(calID).zfill(5)+"_" + date)
             self.testName = machineID + "_LUT_" + str(calID).zfill(5)+"_" + date + " Calibration"
-        elif(self.testSettings._testType == 3):
+        elif(self.testType == TestType.CLEAN_POWER_VERIFICATION):
             time = self.timeStamp.strftime("%H%M")
             calID = self.CurrentLUTIDTag.value
             drivePath = os.path.join(".","tmp","printerinfo", MachineSettings._factoryID, machineID,"Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_CVER")
             self.testName = machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_CVER"
-        elif(self.testSettings._testType == 4):
+        elif(self.testType == TestType.DIRTY_POWER_VERIFICATION):
             time = self.timeStamp.strftime("%H%M")
             calID = self.CurrentLUTIDTag.value
             drivePath = os.path.join(".","tmp","printerinfo", MachineSettings._factoryID, machineID,"Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_DVER")
