@@ -142,9 +142,7 @@ class Model:
         "AbortTest": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.AbortTest"),
         "MachineName": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.MachineName"),
         "ViablePixelList": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.ViablePixelList"),
-        "CurrentLUTID": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.CurrentLUTID"),
         "DeleteLUTs": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.DeleteLUTs"),
-        "UploadLUTs": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.UploadLUTs"),
         "ToleranceBandPercent": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.ToleranceBandPercent"),
         "FactoryName": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.FactoryName"),
         "ExpectedValueCoefficient" : BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromCalibApp.ExpectedValueCoefficient"),
@@ -203,7 +201,13 @@ class Model:
         "VFPMap":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.VFPMap"),
 
         # Test Type
-        "TestType": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.TestType")
+        "TestType": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.TestType"),
+
+        # LUTs
+        "UploadLinearLUTs": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.UploadLinearLUTs"),
+        "UploadCalibratedLUTs": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.UploadCalibratedLUTs"),
+        "LUTsUploaded": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.LUTsUploaded"),
+        "CurrentLUTID": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CurrentLUTID")
 
         }
 
@@ -230,7 +234,6 @@ class Model:
         self.MachineNameTag = self.plcTags["MachineName"]
         self.AbortTestTag = self.plcTags["AbortTest"]
         self.DeleteLUTsTag = self.plcTags["DeleteLUTs"]
-        self.UploadLUTsTag = self.plcTags["UploadLUTs"]
         self.ToleranceBandPercentTag = self.plcTags["ToleranceBandPercent"]
         self.FactoryNameTag = self.plcTags["FactoryName"]
         self.ExpectedValueCoefficient = self.plcTags["ExpectedValueCoefficient"]
@@ -263,6 +266,10 @@ class Model:
         self.vfpMapTag = self.plcTags["VFPMap"] 
 
         self.TestTypeTag = self.plcTags["TestType"]
+
+        self.UploadLinearLUTsTag = self.plcTags["UploadLinearLUTs"]
+        self.UploadCalibratedLUTsTag = self.plcTags["UploadCalibratedLUTs"]
+        self.LUTsUploadedTag = self.plcTags["LUTsUploaded"]
 
 
         ### Subscribed Variables (must also add these to the delete)
@@ -301,7 +308,6 @@ class Model:
             self.errorNumTag._setAsUpdating()
             self.proceedToNextPixelTag._setAsUpdating()
             self.userAccessLevelTag._setAsUpdating()
-            self.CurrentLUTIDTag._setAsUpdating()
             self.ConfigValid._setAsUpdating()
             self.testStatusTag.attachReaction(self.testStatusReaction)
 
@@ -313,6 +319,8 @@ class Model:
             self.capturePixelTag._setAsUpdating()
             self.processPixelTag._setAsUpdating()
             self.processCalibrationTag._setAsUpdating()
+            self.UploadLinearLUTsTag._setAsUpdating()
+            self.UploadCalibratedLUTsTag._setAsUpdating()
 
             # attach reaction on change
             self.exampleCommandTag.attachReaction(self.exampleCommandReaction)
@@ -322,6 +330,8 @@ class Model:
             self.capturePixelTag.attachReaction(self.capturePixelReaction)
             self.processPixelTag.attachReaction(self.processPixelReaction)
             self.processCalibrationTag.attachReaction(self.processCalibrationReaction)
+            self.UploadLinearLUTsTag.attachReaction(self.uploadLinearLUTsReaction)
+            self.UploadCalibratedLUTsTag.attachReaction(self.uploadCalibratedLUTsReaction)
 
             if self.FactoryNameTag.value == "VulcanOne":
                 MachineSettings._factoryID = "V1"
@@ -550,29 +560,54 @@ class Model:
         self.lutDataReady.value = True
 
     def uploadLinearLuts(self):
-        self.DeleteLUTsTag.setPlcValue(True)
+
         lutExistsStatus = [True for VFLCR in MachineSettings._vflcrIPs]
+        start = now = time.time()
+        
         while(any(lutExistsStatus)):
+            
+            # timeout after 10s, exit without telling the plc we finished
+            now = time.time()
+            if ((now - start) > 10): 
+                print("Timed out waiting for VFLCR LUTs to empty")
+                return
+            
             for vflcrNum, vflcrIP in enumerate(MachineSettings._vflcrIPs):
                 lutExistsStatus[vflcrNum] = not FTP_Manager.lutsEmpty(vflcrIP)
+
         self._lutDataManager.uploadLinearLuts(self.laserSettings)
-        self.UploadLUTsTag.setPlcValue(True)
+        self.LUTsUploadedTag.setPlcValue(True)
+
 
     def uploadCalibratedLuts(self, calibrationID:int):
+        
         self.logger.addNewLog("Writing binaries to folders and printer.......")
-        self.DeleteLUTsTag.setPlcValue(True)
+        
         binpath = self.saveLocation + "\\bin\\"
         self._lutDataManager.writeBinariesToFolder(calibrationID, self.laserSettings, binPath=binpath)
+        
         lutExistsStatus = [True for VFLCR in MachineSettings._vflcrIPs]
+        start = now = time.time()
+        
         while(any(lutExistsStatus)):
+            
+            # timeout after 10s, exit without telling the plc we finished
+            now = time.time()
+            if ((now - start) > 10): 
+                print("Timed out waiting for VFLCR LUTs to empty")
+                return
+            
             for vflcrNum, vflcrIP in enumerate(MachineSettings._vflcrIPs):
                 lutExistsStatus[vflcrNum] = not FTP_Manager.lutsEmpty(vflcrIP)
+
         if not os.path.exists(binpath):
             os.makedirs(binpath)
         self.logger.addNewLog("Binaries written to folder complete")
+
         self._lutDataManager.writeBinaryArraysToVFPLCs(calibrationID, self.laserSettings)
         self.logger.addNewLog("Binaries written to printer complete")
-        self.UploadLUTsTag.setPlcValue(True)
+
+        self.LUTsUploadedTag.setPlcValue(True)
 
     def uploadPreviousLuts(self, calibrationID:int):
         self.DeleteLUTsTag.setPlcValue(True)
@@ -736,6 +771,7 @@ class Model:
         self.pixelCapturedTag.setPlcValue(0)     
         self.pixelProcessedTag.setPlcValue(0)
         self.calibrationProcessedTag.setPlcValue(0)
+        self.LUTsUploadedTag.setPlcValue(0)
 
 
 
@@ -812,6 +848,22 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Initialize calibration command received from  PLC ")
             self.initializeCalibration()
+        if cmd == False:
+            self.resetResponseTags()
+
+    def uploadLinearLUTsReaction(self):
+        cmd = self.UploadLinearLUTsTag.value
+        if cmd == True:
+            self.logger.addNewLog("Upload linear LUTs command received from  PLC ")
+            self.uploadLinearLuts()
+        if cmd == False:
+            self.resetResponseTags()
+
+    def uploadCalibratedLUTsReaction(self):
+        cmd = self.UploadCalibratedLUTsTag.value
+        if cmd == True:
+            self.logger.addNewLog("Upload calibrated LUTs command received from  PLC ")
+            self.uploadCalibratedLuts(self.CurrentLUTIDTag.value)
         if cmd == False:
             self.resetResponseTags()
 
