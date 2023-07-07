@@ -725,6 +725,7 @@ class Model:
             self.pyrometer.clearData()
             print("pyromter: starting streaming")
             self.pyrometer.startDataCollection()
+            self.pixelInitializedTag.setPlcValue(1)
         else:
             print("pyromter: failed - not connected")
 
@@ -1045,7 +1046,7 @@ class Model:
 
         print("setting exposure to " + str(exposure) + "ms")
         
-        status = self.camera.setExposure()
+        status = self.camera.setExposure(exposure)
 
         print("status: " + str(status))
        
