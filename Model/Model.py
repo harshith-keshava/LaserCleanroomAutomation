@@ -479,6 +479,7 @@ class Model:
             self.pyrometer.clearData()
             print("pyromter: starting streaming")
             self.pyrometer.startDataCollection()
+            self.pixelInitializedTag.setPlcValue(1)
         else:
             print("pyromter: failed - not connected")
 
