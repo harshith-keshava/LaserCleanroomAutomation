@@ -242,11 +242,11 @@ class Model:
         except:
             print("OPCUA reaction setup failed")
 
-            if self.FactoryNameTag.value == "VulcanOne":
-                MachineSettings._factoryID = "V1"
-            else:
-                MachineSettings._factoryID = self.FactoryNameTag.value
-            MachineSettings._machineID = self.MachineNameTag.value
+        if self.FactoryNameTag.value == "VulcanOne":
+            MachineSettings._factoryID = "V1"
+        else:
+            MachineSettings._factoryID = self.FactoryNameTag.value
+        MachineSettings._machineID = self.MachineNameTag.value
 
     ## Takes care of creating the log file, also goes to printer info drive to give tester info about the test
     def createLogFile(self):
