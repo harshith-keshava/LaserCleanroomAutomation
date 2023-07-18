@@ -93,8 +93,8 @@ class Model:
         self.plcTags = {
 
         # machine info
-        "MachineName": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.MachineName"),
-        "FactoryName": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToCalibApp.FactoryName"),
+        "MachineName": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.MachineName"),
+        "FactoryName": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.FactoryName"),
 
         # heartbeat
         "HeartbeatOut":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.HeartbeatOut"),
