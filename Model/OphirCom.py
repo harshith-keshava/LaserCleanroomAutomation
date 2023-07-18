@@ -78,7 +78,10 @@ class OphirJunoCOM:
         self.isConnected = False
     
     def startDataCollection(self):
-        self.OphirCOM.StartStream(self.DeviceHandle, 0)
+        try:
+            self.OphirCOM.StartStream(self.DeviceHandle, 0)
+        except Exception as e:
+            print(e)
     
     def updateData(self):
         # Data should be a sequence of triples for ease of use
