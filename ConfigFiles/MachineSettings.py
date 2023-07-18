@@ -1,10 +1,6 @@
 
-from Model.FTP_Manager import FTP_Manager
-from numpy import genfromtxt
-import pandas as pd 
-
 class MachineSettings():
-    _simulation = False
+    _simulation = True
     _16BitAnalogMaxPower = 2 ** 16
     _ipAddress = '192.168.200.50'
     _portNumber = '4850'

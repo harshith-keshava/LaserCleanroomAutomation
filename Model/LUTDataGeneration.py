@@ -1,7 +1,6 @@
 
 from datetime import datetime
 from ConfigFiles.TestSettings import TestSettings
-from ftplib import FTP
 import numpy as np
 import pandas as pd
 from datetime import datetime
@@ -11,7 +10,6 @@ from ConfigFiles.MachineSettings import MachineSettings
 import os
 from Model.FTP_Manager import FTP_Manager
 from Model.LaserSettings import LaserSettings
-from ftplib import FTP
 from io import BytesIO
 import numpy as np
 import os
