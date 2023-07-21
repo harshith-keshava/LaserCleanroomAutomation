@@ -315,17 +315,17 @@ class Model:
             access_key = "TODO"
             secret_key = "TODO"
             bucket = "TODO"
-            data_source = self.saveLocation
-            destination = "TODO"
+            local_filepath = self.saveLocation
+            S3_object_name = "TODO"
             
             client = Minio(endpoint, access_key, secret_key)
             found = client.bucket_exists(bucket)
             if not found:
                 ... #TODO: handle
-            client.fput_object(bucket, destination, data_source)
-            self.logger.addNewLog(f"Data from {data_source} uploaded to bucket {bucket} as {destination}")
+            client.fput_object(bucket, S3_object_name, local_filepath)
+            self.logger.addNewLog(f"Data from {local_filepath} uploaded to bucket {bucket} as {S3_object_name}")
         except (S3Error, urllib3.exceptions.MaxRetryError) as e:
-            self.logger.addNewLog(f"Failed to upload data from {data_source} to bucket {bucket} as {destination}")
+            self.logger.addNewLog(f"Failed to upload data from {local_filepath} to bucket {bucket} as {S3_object_name}")
             print("Upload failed. Exception:\n", e)
             ... #TODO: handle
     
