@@ -350,7 +350,7 @@ class Model:
             self.logger.addNewLog(f"S3 object {S3_object_name} downloaded from bucket {bucket} to {local_filepath}")
         except (S3Error, urllib3.exceptions.MaxRetryError) as e:
             self.logger.addNewLog(f"Failed to download S3 object {S3_object_name} from bucket {bucket} to {local_filepath}")
-            print("Upload failed. Exception:\n", e)
+            print("Download failed. Exception:\n", e)
             ... #TODO: handle
         ... #TODO: parse results file
     
