@@ -329,6 +329,31 @@ class Model:
             print("Upload failed. Exception:\n", e)
             ... #TODO: handle
     
+    ## Called when results are ready
+    ## Downloads results file (TODO: parse results and set relevant PLC tags)
+    def getProcessedResults(self):
+        self.logger.addNewLog("Downloading results.......")
+        try:
+            # Placeholder string vars
+            endpoint = "TODO"
+            access_key = "TODO"
+            secret_key = "TODO"
+            bucket = "TODO"
+            local_filepath = "TODO"
+            S3_object_name = "TODO"
+            
+            client = Minio(endpoint, access_key, secret_key)
+            found = client.bucket_exists(bucket)
+            if not found:
+                ... #TODO: handle
+            client.fget_object(bucket, S3_object_name, local_filepath)
+            self.logger.addNewLog(f"S3 object {S3_object_name} downloaded from bucket {bucket} to {local_filepath}")
+        except (S3Error, urllib3.exceptions.MaxRetryError) as e:
+            self.logger.addNewLog(f"Failed to download S3 object {S3_object_name} from bucket {bucket} to {local_filepath}")
+            print("Upload failed. Exception:\n", e)
+            ... #TODO: handle
+        ... #TODO: parse results file
+    
     
     ## Creating the dataframe for the process team and the database team
     ## Dataframe headers are ["DateTime","Factory", "Machine", "TestType","Pixel","Rack", "Laser","Status","Commanded Power","Pulse Power Average","Pulse Power Stdv","Pulse Power Deviation"]
