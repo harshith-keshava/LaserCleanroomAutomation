@@ -18,3 +18,7 @@ pywin32
 # Beam Profiling Camera via wxPython
 wxPython==4.0.4
 pypng
+
+# S3 Access
+urllib3<2.0 # urllib3>=2.0 requires OpenSSL>=1.1.1, which is incompatible with python==3.7
+minio
