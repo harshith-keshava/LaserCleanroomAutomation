@@ -19,6 +19,9 @@ from Model.FTP_Manager import FTP_Manager
 from Model.CameraDriver import CameraDriver
 from Model.OphirCom import OphirJunoCOM
 from Model.LaserSettings import LaserSettings
+from minio import Minio
+from minio.error import S3Error
+import urllib3.exceptions
 
 ## Test Type Enum for the different types of tests that process team runs
 ## Calibration: Predefined tolerance band always run with Linear LUTS, run to generate new LUTs for the VFLCRs
@@ -281,6 +284,7 @@ class Model:
         self.generateTestResultDataFrame()
         if self.testType == TestType.CALIBRATION:
             self.generateLuts()
+        self.uploadData()
 
     ## Called by the end of test and abort sequences
     ## Saves the data into a project temporary folder
@@ -300,6 +304,32 @@ class Model:
                 rawOutputWriter.writerow([pixelIdx + 1] + [self.laserTestStatus[pixelIdx]] + list(pixelTested))
         self.logger.addNewLog("Raw data saved to the tmp folder and " + self.saveLocation)
 
+    
+    ## Called by the end of test and abort sequences
+    ## Uploads data to S3 for processing
+    def uploadData(self):
+        self.logger.addNewLog("Uploading data.......")
+        try:
+            # Placeholder string vars
+            endpoint = "TODO"
+            access_key = "TODO"
+            secret_key = "TODO"
+            bucket = "TODO"
+            data_source = self.saveLocation
+            destination = "TODO"
+            
+            client = Minio(endpoint, access_key, secret_key)
+            found = client.bucket_exists(bucket)
+            if not found:
+                ... #TODO: handle
+            client.fput_object(bucket, destination, data_source)
+            self.logger.addNewLog(f"Data from {data_source} uploaded to bucket {bucket} as {destination}")
+        except (S3Error, urllib3.exceptions.MaxRetryError) as e:
+            self.logger.addNewLog(f"Failed to upload data from {data_source} to bucket {bucket} as {destination}")
+            print("Upload failed. Exception:\n", e)
+            ... #TODO: handle
+    
+    
     ## Creating the dataframe for the process team and the database team
     ## Dataframe headers are ["DateTime","Factory", "Machine", "TestType","Pixel","Rack", "Laser","Status","Commanded Power","Pulse Power Average","Pulse Power Stdv","Pulse Power Deviation"]
     ## saves to local temporary folder which is rewritten every test and the printerinfo drive     
