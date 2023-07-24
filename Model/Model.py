@@ -145,7 +145,11 @@ class Model:
         "UploadLinearLUTs": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.UploadLinearLUTs"),
         "UploadCalibratedLUTs": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.UploadCalibratedLUTs"),
         "LUTsUploaded": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.LUTsUploaded"),
-        "CurrentLUTID": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CurrentLUTID")
+        "CurrentLUTID": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CurrentLUTID"),
+
+        # Upload test data
+        "UploadTestData": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.UploadTestData"),
+        "TestDataUploaded": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.TestDataUploaded")
 
         }
 
@@ -187,6 +191,8 @@ class Model:
         self.UploadLinearLUTsTag = self.plcTags["UploadLinearLUTs"]
         self.UploadCalibratedLUTsTag = self.plcTags["UploadCalibratedLUTs"]
         self.LUTsUploadedTag = self.plcTags["LUTsUploaded"]
+        
+        self.testDataUploadedTag = self.plcTags["TestDataUploaded"]
 
 
         ### Subscribed Variables (must also add these to the delete)
@@ -199,6 +205,7 @@ class Model:
         self.capturePixelTag = self.plcTags["CapturePixel"]
         self.processPixelTag = self.plcTags["ProcessPixel"]
         self.processCalibrationTag = self.plcTags["ProcessCalibration"]
+        self.uploadTestDataTag = self.plcTags["UploadTestData"]
 
         ### Lookup Tables for Data Outputs #####
         self.testStatusTable = ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
@@ -228,6 +235,7 @@ class Model:
             self.processCalibrationTag._setAsUpdating()
             self.UploadLinearLUTsTag._setAsUpdating()
             self.UploadCalibratedLUTsTag._setAsUpdating()
+            self.uploadTestDataTag._setAsUpdating()
         except:
             print("OPCUA subscription setup failed")
 
@@ -242,6 +250,7 @@ class Model:
             self.processCalibrationTag.attachReaction(self.processCalibrationReaction)
             self.UploadLinearLUTsTag.attachReaction(self.uploadLinearLUTsReaction)
             self.UploadCalibratedLUTsTag.attachReaction(self.uploadCalibratedLUTsReaction)
+            self.uploadTestDataTag.attachReaction(self.uploadTestDataReaction)
         except:
             print("OPCUA reaction setup failed")
 
@@ -284,7 +293,6 @@ class Model:
         self.generateTestResultDataFrame()
         if self.testType == TestType.CALIBRATION:
             self.generateLuts()
-        self.uploadData()
 
     ## Called by the end of test and abort sequences
     ## Saves the data into a project temporary folder
@@ -304,33 +312,7 @@ class Model:
                 rawOutputWriter.writerow([pixelIdx + 1] + [self.laserTestStatus[pixelIdx]] + list(pixelTested))
         self.logger.addNewLog("Raw data saved to the tmp folder and " + self.saveLocation)
 
-    
-    ## Called by the end of test and abort sequences
-    ## Uploads data to S3 for processing
-    def uploadData(self):
-        self.logger.addNewLog("Uploading data.......")
-        try:
-            # Placeholder string vars
-            endpoint = "TODO"
-            access_key = "TODO"
-            secret_key = "TODO"
-            bucket = "TODO"
-            local_filepath = self.saveLocation
-            S3_object_name = "TODO"
-            
-            client = Minio(endpoint, access_key, secret_key)
-            if not client.bucket_exists(bucket):
-                self.logger.addNewLog(f"Failed to upload data from {local_filepath} to bucket {bucket} as {S3_object_name}")
-                print(f"Upload failed. Bucket {bucket} not found.")
-                ... #TODO: handle
-                return
-            client.fput_object(bucket, S3_object_name, local_filepath)
-            self.logger.addNewLog(f"Data from {local_filepath} uploaded to bucket {bucket} as {S3_object_name}")
-        except (S3Error, urllib3.exceptions.MaxRetryError) as e:
-            self.logger.addNewLog(f"Failed to upload data from {local_filepath} to bucket {bucket} as {S3_object_name}")
-            print("Upload failed. Exception:\n", e)
-            ... #TODO: handle
-    
+
     ## Called when results are ready
     ## Downloads results file (TODO: parse results and set relevant PLC tags)
     def getProcessedResults(self):
@@ -355,6 +337,7 @@ class Model:
             print("Download failed. Exception:\n", e)
             ... #TODO: handle
         ... #TODO: parse results file
+
     
     
     ## Creating the dataframe for the process team and the database team
@@ -573,6 +556,31 @@ class Model:
         print("processCalibration()")
         self.endTest()
         self.calibrationProcessedTag.setPlcValue(1)
+        
+    def uploadTestData(self):
+        print("uploadTestData()")
+        try:
+            # Placeholder string vars
+            endpoint = "TODO"
+            access_key = "TODO"
+            secret_key = "TODO"
+            bucket = "TODO"
+            local_filepath = self.saveLocation
+            S3_object_name = "TODO"
+            
+            client = Minio(endpoint, access_key, secret_key)
+            if not client.bucket_exists(bucket):
+                self.logger.addNewLog(f"Failed to upload data from {local_filepath} to bucket {bucket} as {S3_object_name}")
+                print(f"Upload failed. Bucket {bucket} not found.")
+                ... #TODO: handle
+                return
+            client.fput_object(bucket, S3_object_name, local_filepath)
+            self.logger.addNewLog(f"Data from {local_filepath} uploaded to bucket {bucket} as {S3_object_name}")
+            self.testDataUploadedTag.setPlcValue(1) #TODO: add better response than timeout in failure cases
+        except (S3Error, urllib3.exceptions.MaxRetryError) as e:
+            self.logger.addNewLog(f"Failed to upload data from {local_filepath} to bucket {bucket} as {S3_object_name}")
+            print("Upload failed. Exception:\n", e)
+            ... #TODO: handle
     
     ## Use this one function for a bunch of response resets if possible
     def resetResponseTags(self):
@@ -584,6 +592,7 @@ class Model:
         self.pixelProcessedTag.setPlcValue(0)
         self.calibrationProcessedTag.setPlcValue(0)
         self.LUTsUploadedTag.setPlcValue(0)
+        self.testDataUploadedTag.setPlcValue(0)
 
     ##################################### TAG REACTIONS ###################################################################
 
@@ -651,6 +660,14 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Upload calibrated LUTs command received from  PLC ")
             self.uploadCalibratedLuts(self.CurrentLUTIDTag.value)
+        if cmd == False:
+            self.resetResponseTags()
+    
+    def uploadTestDataReaction(self):
+        cmd = self.uploadTestDataTag.value
+        if cmd == True:
+            self.logger.addNewLog("Upload test data command received from  PLC ")
+            self.uploadTestData()
         if cmd == False:
             self.resetResponseTags()
 
