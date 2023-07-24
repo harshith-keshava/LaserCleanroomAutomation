@@ -572,15 +572,15 @@ class Model:
             if not client.bucket_exists(bucket):
                 self.logger.addNewLog(f"Failed to upload data from {local_filepath} to bucket {bucket} as {S3_object_name}")
                 print(f"Upload failed. Bucket {bucket} not found.")
-                ... #TODO: handle
+                ... #TODO: add error response
                 return
             client.fput_object(bucket, S3_object_name, local_filepath)
             self.logger.addNewLog(f"Data from {local_filepath} uploaded to bucket {bucket} as {S3_object_name}")
-            self.testDataUploadedTag.setPlcValue(1) #TODO: add better response than timeout in failure cases
+            self.testDataUploadedTag.setPlcValue(1)
         except (S3Error, urllib3.exceptions.MaxRetryError) as e:
             self.logger.addNewLog(f"Failed to upload data from {local_filepath} to bucket {bucket} as {S3_object_name}")
             print("Upload failed. Exception:\n", e)
-            ... #TODO: handle
+            ... #TODO: add error response
     
     ## Use this one function for a bunch of response resets if possible
     def resetResponseTags(self):
