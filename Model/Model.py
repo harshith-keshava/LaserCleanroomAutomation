@@ -319,8 +319,7 @@ class Model:
             S3_object_name = "TODO"
             
             client = Minio(endpoint, access_key, secret_key)
-            found = client.bucket_exists(bucket)
-            if not found:
+            if not client.bucket_exists(bucket):
                 self.logger.addNewLog(f"Failed to upload data from {local_filepath} to bucket {bucket} as {S3_object_name}")
                 print(f"Upload failed. Bucket {bucket} not found.")
                 ... #TODO: handle
