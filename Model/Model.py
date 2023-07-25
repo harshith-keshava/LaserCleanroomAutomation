@@ -147,9 +147,13 @@ class Model:
         "LUTsUploaded": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.LUTsUploaded"),
         "CurrentLUTID": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CurrentLUTID"),
 
-        # Upload test data
+        # Process test data
         "UploadTestData": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.UploadTestData"),
-        "TestDataUploaded": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.TestDataUploaded")
+        "TestDataUploaded": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.TestDataUploaded"),
+        "DownloadTestResults": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.DownloadTestResults"),
+        "TestResultsDownloaded": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.TestResultsDownloaded"),
+        "ParseTestResults": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ParseTestResults"),
+        "TestResultsParsed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.TestResultsParsed")
 
         }
 
@@ -193,7 +197,9 @@ class Model:
         self.LUTsUploadedTag = self.plcTags["LUTsUploaded"]
         
         self.testDataUploadedTag = self.plcTags["TestDataUploaded"]
-
+        self.testResultsDownloadedTag = self.plcTags["TestResultsDownloaded"]
+        self.testResultsParsedTag = self.plcTags["TestResultsParsed"]
+        
 
         ### Subscribed Variables (must also add these to the delete)
         ###     -> Variables that update using a callback based on the status of the tag on the plc 
@@ -206,6 +212,8 @@ class Model:
         self.processPixelTag = self.plcTags["ProcessPixel"]
         self.processCalibrationTag = self.plcTags["ProcessCalibration"]
         self.uploadTestDataTag = self.plcTags["UploadTestData"]
+        self.downloadTestResultsTag = self.plcTags["DownloadTestResults"]
+        self.parseTestResultsTag = self.plcTags["ParseTestResults"]
 
         ### Lookup Tables for Data Outputs #####
         self.testStatusTable = ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
@@ -236,6 +244,8 @@ class Model:
             self.UploadLinearLUTsTag._setAsUpdating()
             self.UploadCalibratedLUTsTag._setAsUpdating()
             self.uploadTestDataTag._setAsUpdating()
+            self.downloadTestResultsTag._setAsUpdating()
+            self.parseTestResultsTag._setAsUpdating()
         except:
             print("OPCUA subscription setup failed")
 
@@ -251,6 +261,8 @@ class Model:
             self.UploadLinearLUTsTag.attachReaction(self.uploadLinearLUTsReaction)
             self.UploadCalibratedLUTsTag.attachReaction(self.uploadCalibratedLUTsReaction)
             self.uploadTestDataTag.attachReaction(self.uploadTestDataReaction)
+            self.downloadTestResultsTag.attachReaction(self.downloadTestResultsReaction)
+            self.parseTestResultsTag.attachReaction(self.parseTestResultsReaction)
         except:
             print("OPCUA reaction setup failed")
 
@@ -311,32 +323,6 @@ class Model:
             for pixelIdx, pixelTested in enumerate(exportData):
                 rawOutputWriter.writerow([pixelIdx + 1] + [self.laserTestStatus[pixelIdx]] + list(pixelTested))
         self.logger.addNewLog("Raw data saved to the tmp folder and " + self.saveLocation)
-
-
-    ## Called when results are ready
-    ## Downloads results file (TODO: parse results and set relevant PLC tags)
-    def getProcessedResults(self):
-        self.logger.addNewLog("Downloading results.......")
-        try:
-            # Placeholder string vars
-            endpoint = "TODO"
-            access_key = "TODO"
-            secret_key = "TODO"
-            bucket = "TODO"
-            local_filepath = "TODO"
-            S3_object_name = "TODO"
-            
-            client = Minio(endpoint, access_key, secret_key)
-            found = client.bucket_exists(bucket)
-            if not found:
-                ... #TODO: handle
-            client.fget_object(bucket, S3_object_name, local_filepath)
-            self.logger.addNewLog(f"S3 object {S3_object_name} downloaded from bucket {bucket} to {local_filepath}")
-        except (S3Error, urllib3.exceptions.MaxRetryError) as e:
-            self.logger.addNewLog(f"Failed to download S3 object {S3_object_name} from bucket {bucket} to {local_filepath}")
-            print("Download failed. Exception:\n", e)
-            ... #TODO: handle
-        ... #TODO: parse results file
 
     
     
@@ -582,6 +568,37 @@ class Model:
             print("Upload failed. Exception:\n", e)
             ... #TODO: add error response
     
+    def downloadTestResults(self):
+        print("downloadTestResults()")
+        try:
+            # Placeholder string vars
+            endpoint = "TODO"
+            access_key = "TODO"
+            secret_key = "TODO"
+            bucket = "TODO"
+            local_filepath = "TODO"
+            S3_object_name = "TODO"
+            
+            client = Minio(endpoint, access_key, secret_key)
+            found = client.bucket_exists(bucket)
+            if not found:
+                self.logger.addNewLog(f"Failed to download S3 object {S3_object_name} from bucket {bucket} to {local_filepath}")
+                print(f"Download failed. Bucket {bucket} not found.")
+                ... #TODO: add error response
+                return
+            client.fget_object(bucket, S3_object_name, local_filepath)
+            self.logger.addNewLog(f"S3 object {S3_object_name} downloaded from bucket {bucket} to {local_filepath}")
+            self.testResultsDownloadedTag.setPlcValue(1)
+        except (S3Error, urllib3.exceptions.MaxRetryError) as e:
+            self.logger.addNewLog(f"Failed to download S3 object {S3_object_name} from bucket {bucket} to {local_filepath}")
+            print("Download failed. Exception:\n", e)
+            ... #TODO: add error response
+
+    
+    def parseTestResults(self):
+        ... # TODO: implement
+        self.testResultsParsedTag.setPlcValue(1)
+    
     ## Use this one function for a bunch of response resets if possible
     def resetResponseTags(self):
         self.exampleResultTag.setPlcValue(0)
@@ -593,6 +610,8 @@ class Model:
         self.calibrationProcessedTag.setPlcValue(0)
         self.LUTsUploadedTag.setPlcValue(0)
         self.testDataUploadedTag.setPlcValue(0)
+        self.testResultsDownloadedTag.setPlcValue(0)
+        self.testResultsParsedTag.setPlcValue(0)
 
     ##################################### TAG REACTIONS ###################################################################
 
@@ -668,6 +687,22 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Upload test data command received from  PLC ")
             self.uploadTestData()
+        if cmd == False:
+            self.resetResponseTags()
+    
+    def downloadTestResultsReaction(self):
+        cmd = self.downloadTestResultsTag.value
+        if cmd == True:
+            self.logger.addNewLog("Download test results command received from  PLC ")
+            self.downloadTestResults()
+        if cmd == False:
+            self.resetResponseTags()
+        
+    def parseTestResultsReaction(self):
+        cmd = self.parseTestResultsTag.value
+        if cmd == True:
+            self.logger.addNewLog("Parse test results command received from  PLC ")
+            self.parseTestResults()
         if cmd == False:
             self.resetResponseTags()
 
