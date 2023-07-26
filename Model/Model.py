@@ -72,6 +72,7 @@ class Model:
         self._lutDataManager = LUTDataManager(self.testSettings) ## Helper class to manage the LUT generation logic
         self.logger = Logger() ## Logger to give information to the gui about the current test status
         self.saveLocation = ".\\tmp" ## Save path in the printer info drive of the processed data 
+        self.resultsLocation = ".\\tmp" ## Results path in the printer info drive of the processed results from MLDS app 
         self.timeStamp = None ## New timestamp is created at the start of each test. Type = datetime.datetime.now()
         #Set initial test type and test mode
         self.TestType = TestType.CALIBRATION
@@ -476,9 +477,12 @@ class Model:
         
         if MachineSettings._simulation:
             self.saveLocation = ".\\tmp\\output"
+            self.resultsLocation = ".\\tmp\\results"
         else:
             self.saveLocation = self._createoutputdirectory()
             os.makedirs(self.saveLocation)
+            self.resultsLocation = self.saveLocation + "_RESULTS"
+            os.makedirs(self.resultsLocation, exist_ok=True) # This directory shouldn't already exist, but crashing is probably more of a hassle than it's worth
 
         # Get pixel mapping
         self.laserSettings.vfpMap = self.vfpMapTag.value
@@ -585,7 +589,7 @@ class Model:
             access_key = "TODO"
             secret_key = "TODO"
             bucket = "TODO"
-            local_filepath = "TODO"
+            local_filepath = self.resultsLocation
             S3_object_name = "TODO"
             
             client = Minio(endpoint, access_key, secret_key)
