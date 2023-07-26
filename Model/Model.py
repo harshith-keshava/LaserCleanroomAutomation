@@ -153,7 +153,12 @@ class Model:
         "DownloadTestResults": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.DownloadTestResults"),
         "TestResultsDownloaded": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.TestResultsDownloaded"),
         "ParseTestResults": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ParseTestResults"),
-        "TestResultsParsed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.TestResultsParsed")
+        "TestResultsParsed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.TestResultsParsed"),
+
+        # Error responses
+        "ErrorBucketNotExist": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ErrorBucketNotExist"),
+        "ErrorS3Connection": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ErrorS3Connection"),
+        "ErrorCaptureFailed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ErrorCaptureFailed")
 
         }
 
@@ -199,6 +204,10 @@ class Model:
         self.testDataUploadedTag = self.plcTags["TestDataUploaded"]
         self.testResultsDownloadedTag = self.plcTags["TestResultsDownloaded"]
         self.testResultsParsedTag = self.plcTags["TestResultsParsed"]
+        
+        self.errorBucketNotExistTag = self.plcTags["ErrorBucketNotExist"]
+        self.errorS3ConnectionTag = self.plcTags["ErrorS3Connection"]
+        self.errorCaptureFailedTag = self.plcTags["ErrorCaptureFailed"]
         
 
         ### Subscribed Variables (must also add these to the delete)
@@ -524,12 +533,12 @@ class Model:
         print("\nframeCaptured: " + str(frameCaptured))
         
         # let the cmd timeout if we fail one of these
-        # TODO: implement a proper error response
         if pyroDataCaptured and frameCaptured:
             # success
             self.pixelCapturedTag.setPlcValue(1)
         else:
             print("capture failed")
+            self.errorCaptureFailedTag.setPlcValue(1)
 
     def processPixel(self):
         print("processPixel()")
@@ -558,7 +567,7 @@ class Model:
             if not client.bucket_exists(bucket):
                 self.logger.addNewLog(f"Failed to upload data from {local_filepath} to bucket {bucket} as {S3_object_name}")
                 print(f"Upload failed. Bucket {bucket} not found.")
-                ... #TODO: add error response
+                self.errorBucketNotExistTag.setPlcValue(1)
                 return
             client.fput_object(bucket, S3_object_name, local_filepath)
             self.logger.addNewLog(f"Data from {local_filepath} uploaded to bucket {bucket} as {S3_object_name}")
@@ -566,7 +575,7 @@ class Model:
         except (S3Error, urllib3.exceptions.MaxRetryError) as e:
             self.logger.addNewLog(f"Failed to upload data from {local_filepath} to bucket {bucket} as {S3_object_name}")
             print("Upload failed. Exception:\n", e)
-            ... #TODO: add error response
+            self.errorS3ConnectionTag.setPlcValue(1)
     
     def downloadTestResults(self):
         print("downloadTestResults()")
@@ -584,7 +593,7 @@ class Model:
             if not found:
                 self.logger.addNewLog(f"Failed to download S3 object {S3_object_name} from bucket {bucket} to {local_filepath}")
                 print(f"Download failed. Bucket {bucket} not found.")
-                ... #TODO: add error response
+                self.errorBucketNotExistTag.setPlcValue(1)
                 return
             client.fget_object(bucket, S3_object_name, local_filepath)
             self.logger.addNewLog(f"S3 object {S3_object_name} downloaded from bucket {bucket} to {local_filepath}")
@@ -592,7 +601,7 @@ class Model:
         except (S3Error, urllib3.exceptions.MaxRetryError) as e:
             self.logger.addNewLog(f"Failed to download S3 object {S3_object_name} from bucket {bucket} to {local_filepath}")
             print("Download failed. Exception:\n", e)
-            ... #TODO: add error response
+            self.errorS3ConnectionTag.setPlcValue(1)
 
     
     def parseTestResults(self):
@@ -612,6 +621,9 @@ class Model:
         self.testDataUploadedTag.setPlcValue(0)
         self.testResultsDownloadedTag.setPlcValue(0)
         self.testResultsParsedTag.setPlcValue(0)
+        self.errorBucketNotExistTag.setPlcValue(0)
+        self.errorS3ConnectionTag.setPlcValue(0)
+        self.errorCaptureFailedTag.setPlcValue(0)
 
     ##################################### TAG REACTIONS ###################################################################
 
