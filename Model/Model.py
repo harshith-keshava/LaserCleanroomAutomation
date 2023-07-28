@@ -757,10 +757,12 @@ class Model:
         if self.camera.isConnected:
             currentFrame = self.camera.fetchFrame()
             # Save to camera-specific subdirectory until otherwise specified. Include binary data for now.
-            if not os.path.exists(os.path.join(self.saveLocation, "cameraData")):
-                os.mkdir(os.path.join(self.saveLocation, "cameraData"))
-            print("saving frame to: " + os.path.join(self.saveLocation, "cameraData", "pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1)))
-            currentFrame.save(os.path.join(self.saveLocation, "cameraData", "pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1)), include_binary=True)
+            camera_dir = os.path.join(self.saveLocation, "cameraData")
+            file_path = os.path.join(camera_dir, "pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1))
+            if not os.path.exists(camera_dir):
+                os.mkdir(camera_dir)
+            print("saving frame to: " + file_path)
+            currentFrame.save(file_path, include_binary=True)
             return True
         else:
             return False
