@@ -558,53 +558,76 @@ class Model:
         
     def uploadTestData(self):
         print("uploadTestData()")
-        try:
-            # Placeholder string vars
-            endpoint = "TODO"
-            access_key = "TODO"
-            secret_key = "TODO"
-            bucket = "TODO"
-            local_filepath = self.saveLocation
-            S3_object_name = "TODO"
-            
-            client = Minio(endpoint, access_key, secret_key)
-            if not client.bucket_exists(bucket):
-                self.logger.addNewLog(f"Failed to upload data from {local_filepath} to bucket {bucket} as {S3_object_name}")
-                print(f"Upload failed. Bucket {bucket} not found.")
-                self.errorBucketNotExistTag.setPlcValue(1)
-                return
-            client.fput_object(bucket, S3_object_name, local_filepath)
-            self.logger.addNewLog(f"Data from {local_filepath} uploaded to bucket {bucket} as {S3_object_name}")
+        success, bucketError = False, False
+        retryNum = 1
+        maxRetries = 5
+        while (retryNum <= maxRetries) and not (success or bucketError):
+            try:
+                # Placeholder string vars
+                endpoint = "TODO"
+                access_key = "TODO"
+                secret_key = "TODO"
+                bucket = "TODO"
+                local_filepath = self.saveLocation
+                S3_object_name = "TODO"
+                
+                client = Minio(endpoint, access_key, secret_key)
+                if not client.bucket_exists(bucket):
+                    bucketError = True
+                else:
+                    client.fput_object(bucket, S3_object_name, local_filepath)
+                    self.logger.addNewLog(f"Data from {local_filepath} uploaded to bucket {bucket} as {S3_object_name}")
+                    success = True
+            except (S3Error, urllib3.exceptions.MaxRetryError) as e:
+                print(f"Upload attempt {retryNum} failed. Exception:\n{e}")
+            finally:
+                retryNum += 1 # always increment attempt number
+        # check results of loop
+        if success:
             self.testDataUploadedTag.setPlcValue(1)
-        except (S3Error, urllib3.exceptions.MaxRetryError) as e:
+        elif bucketError:
             self.logger.addNewLog(f"Failed to upload data from {local_filepath} to bucket {bucket} as {S3_object_name}")
-            print("Upload failed. Exception:\n", e)
+            print(f"Upload failed. Bucket {bucket} not found.")
+            self.errorBucketNotExistTag.setPlcValue(1)
+        else: # error connecting to s3 without bucket not existing
+            self.logger.addNewLog(f"Failed to upload data from {local_filepath} to bucket {bucket} as {S3_object_name}")
             self.errorS3ConnectionTag.setPlcValue(1)
     
     def downloadTestResults(self):
         print("downloadTestResults()")
-        try:
-            # Placeholder string vars
-            endpoint = "TODO"
-            access_key = "TODO"
-            secret_key = "TODO"
-            bucket = "TODO"
-            local_filepath = self.resultsLocation
-            S3_object_name = "TODO"
-            
-            client = Minio(endpoint, access_key, secret_key)
-            found = client.bucket_exists(bucket)
-            if not found:
-                self.logger.addNewLog(f"Failed to download S3 object {S3_object_name} from bucket {bucket} to {local_filepath}")
-                print(f"Download failed. Bucket {bucket} not found.")
-                self.errorBucketNotExistTag.setPlcValue(1)
-                return
-            client.fget_object(bucket, S3_object_name, local_filepath)
-            self.logger.addNewLog(f"S3 object {S3_object_name} downloaded from bucket {bucket} to {local_filepath}")
+        success, bucketError = False, False
+        retryNum = 1
+        maxRetries = 5
+        while (retryNum <= maxRetries) and not (success or bucketError):
+            try:
+                # Placeholder string vars
+                endpoint = "TODO"
+                access_key = "TODO"
+                secret_key = "TODO"
+                bucket = "TODO"
+                local_filepath = self.resultsLocation
+                S3_object_name = "TODO"
+                
+                client = Minio(endpoint, access_key, secret_key)
+                if not client.bucket_exists(bucket):
+                    bucketError = True
+                else:
+                    client.fget_object(bucket, S3_object_name, local_filepath)
+                    self.logger.addNewLog(f"S3 object {S3_object_name} downloaded from bucket {bucket} to {local_filepath}")
+                    success = True
+            except (S3Error, urllib3.exceptions.MaxRetryError) as e:
+                print(f"Download attempt {retryNum} failed. Exception:\n{e}")
+            finally:
+                retryNum += 1 # always increment attempt number
+        # check results of loop
+        if success:
             self.testResultsDownloadedTag.setPlcValue(1)
-        except (S3Error, urllib3.exceptions.MaxRetryError) as e:
+        elif bucketError:
             self.logger.addNewLog(f"Failed to download S3 object {S3_object_name} from bucket {bucket} to {local_filepath}")
-            print("Download failed. Exception:\n", e)
+            print(f"Download failed. Bucket {bucket} not found.")
+            self.errorBucketNotExistTag.setPlcValue(1)
+        else: # error connecting to s3 without bucket not existing
+            self.logger.addNewLog(f"Failed to download S3 object {S3_object_name} from bucket {bucket} to {local_filepath}")
             self.errorS3ConnectionTag.setPlcValue(1)
 
     
