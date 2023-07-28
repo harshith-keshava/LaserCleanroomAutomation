@@ -447,8 +447,7 @@ class Model:
             for vflcrNum, vflcrIP in enumerate(MachineSettings._vflcrIPs):
                 lutExistsStatus[vflcrNum] = not FTP_Manager.lutsEmpty(vflcrIP)
 
-        if not os.path.exists(binpath):
-            os.makedirs(binpath)
+        os.makedirs(binpath, exist_ok=True)
         self.logger.addNewLog("Binaries written to folder complete")
 
         self._lutDataManager.writeBinaryArraysToVFPLCs(calibrationID, self.laserSettings)
@@ -759,8 +758,7 @@ class Model:
             # Save to camera-specific subdirectory until otherwise specified. Include binary data for now.
             camera_dir = os.path.join(self.saveLocation, "cameraData")
             file_path = os.path.join(camera_dir, "pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1))
-            if not os.path.exists(camera_dir):
-                os.makedirs(camera_dir)
+            os.makedirs(camera_dir, exist_ok=True)
             print("saving frame to: " + file_path)
             currentFrame.save(file_path, include_binary=True)
             return True
