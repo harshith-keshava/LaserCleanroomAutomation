@@ -570,7 +570,7 @@ class Model:
                 secret_key = "TODO"
                 bucket = "TODO"
                 local_filepath = os.path.join(self.saveLocation, "cameraData")
-                S3_object_name = "TODO"
+                S3_object_name = os.path.split(local_filepath)[-1]
                 
                 client = Minio(endpoint, access_key, secret_key)
                 if not client.bucket_exists(bucket):
@@ -610,7 +610,7 @@ class Model:
                 secret_key = "TODO"
                 bucket = "TODO"
                 local_filepath = self.resultsLocation
-                S3_object_name = "TODO"
+                S3_object_name = os.path.split(local_filepath)[-1]
                 
                 client = Minio(endpoint, access_key, secret_key)
                 if not client.bucket_exists(bucket):
