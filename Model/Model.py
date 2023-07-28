@@ -570,7 +570,7 @@ class Model:
                 access_key = "TODO"
                 secret_key = "TODO"
                 bucket = "TODO"
-                local_filepath = self.saveLocation
+                local_filepath = self.saveLocation + "\\cameraData"
                 S3_object_name = "TODO"
                 
                 client = Minio(endpoint, access_key, secret_key)
