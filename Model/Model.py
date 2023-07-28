@@ -21,6 +21,7 @@ from Model.OphirCom import OphirJunoCOM
 from Model.LaserSettings import LaserSettings
 from minio import Minio
 from minio.error import S3Error
+import urllib3
 import urllib3.exceptions
 
 ## Test Type Enum for the different types of tests that process team runs
@@ -83,6 +84,7 @@ class Model:
         self.testName = ""
         self.currentPowerLevelIndex = 0 ## power level counter to adjust camera exposure
         self.exposureAt100W = 1 ## 1ms exposure at 100W pulse
+        self.http = urllib3.PoolManager()
     
         ############################################# ADD TAGS #########################################
 
@@ -584,6 +586,9 @@ class Model:
                 retryNum += 1 # always increment attempt number
         # check results of loop
         if success:
+            ml_app_url = "TODO"
+            presigned_download_url = client.get_presigned_url("GET", bucket, S3_object_name)
+            self.http.request('POST', ml_app_url, presigned_download_url)
             self.testDataUploadedTag.setPlcValue(1)
         elif bucketError:
             self.logger.addNewLog(f"Failed to upload data from {local_filepath} to bucket {bucket} as {S3_object_name}")
