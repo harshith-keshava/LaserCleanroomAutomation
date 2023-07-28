@@ -760,7 +760,7 @@ class Model:
             camera_dir = os.path.join(self.saveLocation, "cameraData")
             file_path = os.path.join(camera_dir, "pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1))
             if not os.path.exists(camera_dir):
-                os.mkdir(camera_dir)
+                os.makedirs(camera_dir)
             print("saving frame to: " + file_path)
             currentFrame.save(file_path, include_binary=True)
             return True
