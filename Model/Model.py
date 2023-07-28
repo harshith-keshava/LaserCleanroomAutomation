@@ -69,11 +69,11 @@ class Model:
         self.laserTestStatus = [5 for pixel in range(self.laserSettings.numberOfPixels)] ## Data array that is populated during a test with post test pixel status and postprocessed for later analysis. This array is consumed after data is saved.
         self.commandedPowerData = [[] for pixel in range(self.laserSettings.numberOfPixels)] ## Data array that is populated during a test with commmanded Power Data(W) and postprocessed for later analysis. This array is consumed after data is saved.
         self.commandedPowerLevels = [] ## Array generated with the power levels derived from processing commanded power data
-        self.results = None ## Pandas Dataframe with cols: ["Date","Machine ID","Factory ID", "Test Type", "Pixel", "Process Acceptance", "Status", "Commanded Power", "Pulse Power Average", "Pulse Power Stdv", "Pulse Power Deviation"]. Processed Results of a test
+        self.results = None ## Pandas Dataframe with cols: ["Date", "Machine ID", "Factory ID", "Test Type", "Pixel", "Process Acceptance", "Status", "Commanded Power", "Pulse Power Average", "Pulse Power Stdv", "Pulse Power Deviation"]. Processed Results of a test
         self._lutDataManager = LUTDataManager(self.testSettings) ## Helper class to manage the LUT generation logic
         self.logger = Logger() ## Logger to give information to the gui about the current test status
-        self.saveLocation = ".\\tmp" ## Save path in the printer info drive of the processed data 
-        self.resultsLocation = ".\\tmp" ## Results path in the printer info drive of the processed results from MLDS app 
+        self.saveLocation = os.path.join(".", "tmp") ## Save path in the printer info drive of the processed data 
+        self.resultsLocation = os.path.join(".", "tmp") ## Results path in the printer info drive of the processed results from MLDS app 
         self.timeStamp = None ## New timestamp is created at the start of each test. Type = datetime.datetime.now()
         #Set initial test type and test mode
         self.TestType = TestType.CALIBRATION
@@ -112,8 +112,8 @@ class Model:
         
         # initialize calibration
         "InitializeCalibration": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.InitializeCalibration"),
-        "CalibrationInitialized": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.CalibrationInitialized"),       
-
+        "CalibrationInitialized": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.CalibrationInitialized"),
+        
         # initialize pixel
         "InitializePixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.InitializePixel"),
         "PixelInitialized": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelInitialized"),
@@ -121,11 +121,11 @@ class Model:
         # capture pixel
         "CapturePixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CapturePixel"),
         "PixelCaptured": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelCaptured"),
-        "pulseOnMsec": BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.pulseOnTime_ms"),
-        "numPulsesPerLevel":BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.numPulsesPerLevel"),
+        "pulseOnMsec": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.pulseOnTime_ms"),
+        "numPulsesPerLevel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.numPulsesPerLevel"),
         "startingPowerLevel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.startingPowerLevel"),
         "numPowerLevelSteps":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.numPowerLevels"),
-        "powerLevelIncrement":BNRopcuaTag(self.client,"ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.powerIncrementPerStep"),
+        "powerLevelIncrement":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.powerIncrementPerStep"),
         "CurrentPowerWatts":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CurrentPowerWatts"),
 
         # process pixel
@@ -286,7 +286,7 @@ class Model:
 
     ## Takes care of creating the log file, also goes to printer info drive to give tester info about the test
     def createLogFile(self):
-        with open('tmp\\log.csv', 'w', newline='') as csvfile:
+        with open(os.path.join('tmp', 'log.csv'), 'w', newline='') as csvfile:
             logFileWriter = csv.writer(csvfile, delimiter=',')
             date_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
             logFileWriter.writerow(["Date", date_time])
@@ -296,7 +296,7 @@ class Model:
             settings = self.testSettings.settingsAsDict()
             for setting in settings:
                 logFileWriter.writerow([setting, str(settings[setting])])
-        with open(self.saveLocation + "\\log.csv", 'w', newline='') as csvfile:
+        with open(os.path.join(self.saveLocation, "log.csv"), 'w', newline='') as csvfile:
             logFileWriter = csv.writer(csvfile, delimiter=',')
             date_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
             logFileWriter.writerow(["Date", date_time])
@@ -330,7 +330,7 @@ class Model:
             for pixelIdx, pixelTested in enumerate(exportData):
                 rawOutputWriter.writerow([pixelIdx + 1] + [self.laserTestStatus[pixelIdx]] + list(pixelTested))
         
-        with open(self.saveLocation + '\\LPM_Raw.csv', 'w', newline='') as csvfile:
+        with open(os.path.join(self.saveLocation, 'LPM_Raw.csv'), 'w', newline='') as csvfile:
             rawOutputWriter = csv.writer(csvfile, delimiter=',')
             for pixelIdx, pixelTested in enumerate(exportData):
                 rawOutputWriter.writerow([pixelIdx + 1] + [self.laserTestStatus[pixelIdx]] + list(pixelTested))
@@ -339,7 +339,7 @@ class Model:
     
     
     ## Creating the dataframe for the process team and the database team
-    ## Dataframe headers are ["DateTime","Factory", "Machine", "TestType","Pixel","Rack", "Laser","Status","Commanded Power","Pulse Power Average","Pulse Power Stdv","Pulse Power Deviation"]
+    ## Dataframe headers are ["DateTime", "Factory", "Machine", "TestType", "Pixel", "Rack", "Laser", "Status", "Commanded Power", "Pulse Power Average", "Pulse Power Stdv", "Pulse Power Deviation"]
     ## saves to local temporary folder which is rewritten every test and the printerinfo drive     
     def generateTestResultDataFrame(self):
         self.logger.addNewLog("Created processed data from raw test data......")
@@ -350,7 +350,7 @@ class Model:
                 pulseSplitData.append([])
             else:
                 pulseChangeIndexes = [pwrIdx + 1 for pwrIdx, powerDiff in enumerate(np.diff(self.commandedPowerData[pixelIdx])) if powerDiff > 0]
-                pulseChangeIndexes.insert(0,0)
+                pulseChangeIndexes.insert(0, 0)
                 pulseChangeIndexes.append(len(pixelrawdata) + 1)
                 pulseSplitData.append([pixelrawdata[pulseChangeIndexes[idx]:pulseChangeIndexes[idx+1]] for idx in range(len(pulseChangeIndexes)-1)])
         avg_daq_p_data = np.array([[stat.mean(pixelData[levelNum]) if (levelNum < len(pixelData) and len(pixelData[levelNum]) > 0)  else np.NaN for levelNum in range(len(commandedPowerLevels))] for pixelData in pulseSplitData]).round(decimals=3)
@@ -359,7 +359,7 @@ class Model:
         outputData = []
         for pixelIdx, data in enumerate(self.laserTestData):         
             for powerLevelNum, powerLevelData in enumerate(avg_daq_p_data[pixelIdx]):
-                #["DateTime","Factory", "Machine", "TestType","Pixel","Rack", "Laser","Status","Commanded Power","Pulse Power Average","Pulse Power Stdv","Pulse Power Deviation"]
+                #["DateTime", "Factory", "Machine", "TestType", "Pixel", "Rack", "Laser", "Status", "Commanded Power", "Pulse Power Average", "Pulse Power Stdv", "Pulse Power Deviation"]
                 if self.laserTestStatus[pixelIdx] != 5:
                     commandedPower = round(commandedPowerLevels[powerLevelNum], 2)
                 else:
@@ -369,30 +369,30 @@ class Model:
                 else:
                     numDataPoints = 0
                 if pixelIdx < (self.laserSettings.numberOfPixels):
-                    outputData.append([self.timeStamp.strftime("%Y-%m-%d,%H:%M:%S"), MachineSettings._machineID, MachineSettings._factoryID, self.testTypesAsString[self.testSettings._testType], pixelIdx + 1, self.laserSettings.vfpMap[pixelIdx][2], self.laserSettings.vfpMap[pixelIdx][3],dev_daq_p_data[pixelIdx][powerLevelNum] < 5, self.testStatusTable[self.laserTestStatus[pixelIdx]], commandedPower, avg_daq_p_data[pixelIdx][powerLevelNum], std_daq_p_data[pixelIdx][powerLevelNum], dev_daq_p_data[pixelIdx][powerLevelNum], numDataPoints])
-        cols =["Date","Machine ID","Factory ID", "Test Type", "Pixel", "Rack", "Laser", "Process Acceptance", "Status", "Commanded Power", "Pulse Power Average", "Pulse Power Stdv", "Pulse Power Deviation", "Data Points"] # add rack and laser printer name, name of test(CVER, DVER....), timestamp  
+                    outputData.append([self.timeStamp.strftime("%Y-%m-%d, %H:%M:%S"), MachineSettings._machineID, MachineSettings._factoryID, self.testTypesAsString[self.testSettings._testType], pixelIdx + 1, self.laserSettings.vfpMap[pixelIdx][2], self.laserSettings.vfpMap[pixelIdx][3], dev_daq_p_data[pixelIdx][powerLevelNum] < 5, self.testStatusTable[self.laserTestStatus[pixelIdx]], commandedPower, avg_daq_p_data[pixelIdx][powerLevelNum], std_daq_p_data[pixelIdx][powerLevelNum], dev_daq_p_data[pixelIdx][powerLevelNum], numDataPoints])
+        cols =["Date", "Machine ID", "Factory ID", "Test Type", "Pixel", "Rack", "Laser", "Process Acceptance", "Status", "Commanded Power", "Pulse Power Average", "Pulse Power Stdv", "Pulse Power Deviation", "Data Points"] # add rack and laser printer name, name of test(CVER, DVER....), timestamp  
         self.results = pd.DataFrame(outputData, columns=cols)
-        self.results.to_csv("tmp\\LPM_processed.csv", index=False)
-        self.results.to_csv(self.saveLocation + "\\LPM_processed.csv", index=False)
+        self.results.to_csv(os.path.join("tmp", "LPM_processed.csv"), index=False)
+        self.results.to_csv(os.path.join(self.saveLocation, "LPM_processed.csv"), index=False)
         validRanges = ["ValidRanges"]
         validRanges.append(self.getValidPixelRanges())
-        with open(self.saveLocation + '\\summary.csv', 'w',newline='') as summaryFile:
+        with open(os.path.join(self.saveLocation, 'summary.csv'), 'w', newline='') as summaryFile:
             writer = csv.writer(summaryFile)
             writer.writerows(self.getSummary())
             writer.writerow(validRanges)
         return self.results
 
     def getSummary(self):
-        summary = self.results.groupby("Commanded Power",as_index=False)[['Pulse Power Average', "Pulse Power Stdv", "Pulse Power Deviation"]].mean()
+        summary = self.results.groupby("Commanded Power", as_index=False)[['Pulse Power Average', "Pulse Power Stdv", "Pulse Power Deviation"]].mean()
         summary = np.round_(summary.to_numpy(), decimals=3).astype('str')
-        summary = np.insert(summary,0,['Commanded Power', 'Total Power Average', 'Total Average Power Stdv', 'Total Average Power Deviation'], axis=0).tolist()
+        summary = np.insert(summary, 0, ['Commanded Power', 'Total Power Average', 'Total Average Power Stdv', 'Total Average Power Deviation'], axis=0).tolist()
         return summary
     
     def getValidPixelRanges(self):
         passedPixels = self.results.loc[self.results["Status"] == "Passed"]["Pixel"].to_numpy()
         validRanges = []
         startRange = 1
-        for pixel in range(1,self.laserSettings.numberOfPixels+1):
+        for pixel in range(1, self.laserSettings.numberOfPixels+1):
             if pixel not in passedPixels and startRange is not None:
                 validRanges.append([startRange, pixel-1])
                 startRange = None
@@ -430,7 +430,7 @@ class Model:
         
         self.logger.addNewLog("Writing binaries to folders and printer.......")
         
-        binpath = self.saveLocation + "\\bin\\"
+        binpath = os.path.join(self.saveLocation, "bin")
         self._lutDataManager.writeBinariesToFolder(calibrationID, self.laserSettings, binPath=binpath)
         
         lutExistsStatus = [True for VFLCR in MachineSettings._vflcrIPs]
@@ -478,8 +478,8 @@ class Model:
         self.timeStamp = datetime.utcnow()
         
         if MachineSettings._simulation:
-            self.saveLocation = ".\\tmp\\output"
-            self.resultsLocation = ".\\tmp\\results"
+            self.saveLocation = os.path.join(".", "tmp", "output")
+            self.resultsLocation = os.path.join(".", "tmp", "results")
         else:
             self.saveLocation = self._createoutputdirectory()
             os.makedirs(self.saveLocation)
@@ -570,7 +570,7 @@ class Model:
                 access_key = "TODO"
                 secret_key = "TODO"
                 bucket = "TODO"
-                local_filepath = self.saveLocation + "\\cameraData"
+                local_filepath = os.path.join(self.saveLocation, "cameraData")
                 S3_object_name = "TODO"
                 
                 client = Minio(endpoint, access_key, secret_key)
@@ -757,10 +757,10 @@ class Model:
         if self.camera.isConnected:
             currentFrame = self.camera.fetchFrame()
             # Save to camera-specific subdirectory until otherwise specified. Include binary data for now.
-            if not os.path.exists(self.saveLocation + "\\cameraData"):
-                os.mkdir(self.saveLocation + "\\cameraData")
-            print("saving frame to: " + self.saveLocation + "\\cameraData\\pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1))
-            currentFrame.save(self.saveLocation + "\\cameraData\\pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1), include_binary=True)
+            if not os.path.exists(os.path.join(self.saveLocation, "cameraData")):
+                os.mkdir(os.path.join(self.saveLocation, "cameraData"))
+            print("saving frame to: " + os.path.join(self.saveLocation, "cameraData", "pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1)))
+            currentFrame.save(os.path.join(self.saveLocation, "cameraData", "pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1)), include_binary=True)
             return True
         else:
             return False
@@ -859,21 +859,21 @@ class Model:
         if(self.testType == TestType.LOW_POWER_CHECK):
             time = self.timeStamp.strftime("%H%M")
             calID = self.CurrentLUTIDTag.value
-            drivePath = os.path.join(".","tmp","printerinfo", MachineSettings._factoryID, machineID,"Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_LOWPOWER")
+            drivePath = os.path.join(".", "tmp", "printerinfo", MachineSettings._factoryID, machineID, "Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_LOWPOWER")
             self.testName = machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_LOWPOWER"
         elif(self.testType == TestType.CALIBRATION):    
             calID = self.testSettings._CalId  
-            drivePath = os.path.join(".","tmp","printerinfo", MachineSettings._factoryID, machineID,"Laser Data", "30_Calibrations", machineID + "_LUT_" + str(calID).zfill(5)+"_" + date)
+            drivePath = os.path.join(".", "tmp", "printerinfo", MachineSettings._factoryID, machineID, "Laser Data", "30_Calibrations", machineID + "_LUT_" + str(calID).zfill(5)+"_" + date)
             self.testName = machineID + "_LUT_" + str(calID).zfill(5)+"_" + date + " Calibration"
         elif(self.testType == TestType.CLEAN_POWER_VERIFICATION):
             time = self.timeStamp.strftime("%H%M")
             calID = self.CurrentLUTIDTag.value
-            drivePath = os.path.join(".","tmp","printerinfo", MachineSettings._factoryID, machineID,"Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_CVER")
+            drivePath = os.path.join(".", "tmp", "printerinfo", MachineSettings._factoryID, machineID, "Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_CVER")
             self.testName = machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_CVER"
         elif(self.testType == TestType.DIRTY_POWER_VERIFICATION):
             time = self.timeStamp.strftime("%H%M")
             calID = self.CurrentLUTIDTag.value
-            drivePath = os.path.join(".","tmp","printerinfo", MachineSettings._factoryID, machineID,"Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_DVER")
+            drivePath = os.path.join(".", "tmp", "printerinfo", MachineSettings._factoryID, machineID, "Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_DVER")
             self.testName = machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_DVER"
         
         counter = 1
