@@ -561,7 +561,7 @@ class Model:
         print("uploadTestData()")
         success, bucketError = False, False
         retryNum = 1
-        maxRetries = 5
+        maxRetries = 1
         while (retryNum <= maxRetries) and not (success or bucketError):
             try:
                 # Placeholder string vars
@@ -601,7 +601,7 @@ class Model:
         print("downloadTestResults()")
         success, bucketError = False, False
         retryNum = 1
-        maxRetries = 5
+        maxRetries = 1
         while (retryNum <= maxRetries) and not (success or bucketError):
             try:
                 # Placeholder string vars

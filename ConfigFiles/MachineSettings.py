@@ -1,6 +1,6 @@
 
 class MachineSettings():
-    _simulation = True
+    _simulation = False
     _16BitAnalogMaxPower = 2 ** 16
     _ipAddress = '192.168.200.50'
     _portNumber = '4850'
