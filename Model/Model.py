@@ -720,7 +720,7 @@ class Model:
         cmd = self.UploadCalibratedLUTsTag.value
         if cmd == True:
             self.logger.addNewLog("Upload calibrated LUTs command received from  PLC ")
-            self.uploadCalibratedLuts(self.CurrentLUTIDTag.value)
+            self.uploadCalibratedLuts(self.CurrentLUTIDTag.value+1)
         if cmd == False:
             self.resetResponseTags()
     
