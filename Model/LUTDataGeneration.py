@@ -181,6 +181,9 @@ class LUTDataManager():
         if binaries is None:
             binaries = self.binaries
         vflcrs = MachineSettings._vflcrIPs
+        for rack in range(4):
+            for laser in range(21):
+               FTP_Manager.writeBinaryArrayToVfplc(vflcrs[rack],rack+1,laser+1,binaries[-1], lutNumber) 
         for pixelNum, binary in enumerate(binaries):
             pixel, enable, rack, laser = laserSettings.vfpMap[pixelNum]
             print("Sending data to VFLCR")
