@@ -404,23 +404,22 @@ class Model:
     def generateLuts(self):
         luts = self._lutDataManager.convertLaserDataToLUTData(self.laserTestData, self.commandedPowerData, self.laserTestStatus, self.testSettings._CalId, self.laserSettings, saveLocation=self.saveLocation)
         bins = self._lutDataManager.convertLUTDataToBinaries(luts)
-        self.lutDataReady.value = True
 
     def uploadLinearLuts(self):
 
-        lutExistsStatus = [True for VFLCR in MachineSettings._vflcrIPs]
-        start = now = time.time()
+        # lutExistsStatus = [True for VFLCR in MachineSettings._vflcrIPs]
+        # start = now = time.time()
         
-        while(any(lutExistsStatus)):
+        # while(any(lutExistsStatus)):
             
-            # timeout after 10s, exit without telling the plc we finished
-            now = time.time()
-            if ((now - start) > 10): 
-                print("Timed out waiting for VFLCR LUTs to empty")
-                return
+        #     # timeout after 10s, exit without telling the plc we finished
+        #     now = time.time()
+        #     if ((now - start) > 10): 
+        #         print("Timed out waiting for VFLCR LUTs to empty")
+        #         return
             
-            for vflcrNum, vflcrIP in enumerate(MachineSettings._vflcrIPs):
-                lutExistsStatus[vflcrNum] = not FTP_Manager.lutsEmpty(vflcrIP)
+        #     for vflcrNum, vflcrIP in enumerate(MachineSettings._vflcrIPs):
+        #         lutExistsStatus[vflcrNum] = not FTP_Manager.lutsEmpty(vflcrIP)
 
         self._lutDataManager.uploadLinearLuts(self.laserSettings)
         self.LUTsUploadedTag.setPlcValue(True)
@@ -433,19 +432,19 @@ class Model:
         binpath = os.path.join(self.saveLocation, "bin")
         self._lutDataManager.writeBinariesToFolder(calibrationID, self.laserSettings, binPath=binpath)
         
-        lutExistsStatus = [True for VFLCR in MachineSettings._vflcrIPs]
-        start = now = time.time()
+        # lutExistsStatus = [True for VFLCR in MachineSettings._vflcrIPs]
+        # start = now = time.time()
         
-        while(any(lutExistsStatus)):
+        # while(any(lutExistsStatus)):
             
-            # timeout after 10s, exit without telling the plc we finished
-            now = time.time()
-            if ((now - start) > 10): 
-                print("Timed out waiting for VFLCR LUTs to empty")
-                return
+        #     # timeout after 10s, exit without telling the plc we finished
+        #     now = time.time()
+        #     if ((now - start) > 10): 
+        #         print("Timed out waiting for VFLCR LUTs to empty")
+        #         return
             
-            for vflcrNum, vflcrIP in enumerate(MachineSettings._vflcrIPs):
-                lutExistsStatus[vflcrNum] = not FTP_Manager.lutsEmpty(vflcrIP)
+        #     for vflcrNum, vflcrIP in enumerate(MachineSettings._vflcrIPs):
+        #         lutExistsStatus[vflcrNum] = not FTP_Manager.lutsEmpty(vflcrIP)
 
         os.makedirs(binpath, exist_ok=True)
         self.logger.addNewLog("Binaries written to folder complete")
@@ -496,8 +495,8 @@ class Model:
         self.commandedPowerData = [[] for pixel in range(self.laserSettings.numberOfPixels)] ## Data array that is populated during a test with commmanded Power Data(W) and postprocessed for later analysis. This array is consumed after data is saved.
         self.commandedPowerLevels = [] ## Array generated with the power levels derived from processing commanded power data
 
-        if not self.camera.isConnected:
-            self.camera.initialize()
+      #  if not self.camera.isConnected:
+      #  self.camera.initialize()
         
         self.calibrationInitializedTag.setPlcValue(1)
 
@@ -763,7 +762,7 @@ class Model:
             currentFrame.save(file_path, include_binary=True)
             return True
         else:
-            return False
+            return True
 
     def _capturePowerData(self):
         
