@@ -806,11 +806,11 @@ class Model:
                     # evaluate the variable formerly known as testStatus
                     # check the power of each pulse but only report 1 status per pixel
                     # test status meaning: ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
-                    if measuredPower > (expectedPower * 1.5):
+                    if measuredPower > (expectedPower * 1.05):
                         # high power
                         lastError = 2
                         allPulsesOkay = False
-                    elif measuredPower < (expectedPower * 0.5):
+                    elif measuredPower < (expectedPower * 0.95):
                         # low power
                         lastError = 3
                         allPulsesOkay = False
