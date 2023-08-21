@@ -161,7 +161,11 @@ class Model:
         # Error responses
         "ErrorBucketNotExist": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ErrorBucketNotExist"),
         "ErrorS3Connection": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ErrorS3Connection"),
-        "ErrorCaptureFailed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ErrorCaptureFailed")
+        "ErrorCaptureFailed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ErrorCaptureFailed"),
+
+        # Pixel data sent back to PLC
+        "MeasuredPower": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.MeasuredPower"),
+        "CommandedPower": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.CommandedPower")
 
         }
 
@@ -226,6 +230,8 @@ class Model:
         self.uploadTestDataTag = self.plcTags["UploadTestData"]
         self.downloadTestResultsTag = self.plcTags["DownloadTestResults"]
         self.parseTestResultsTag = self.plcTags["ParseTestResults"]
+        self.MeasuredPowerTag = self.plcTags["MeasuredPower"]
+        self.CommandedPowerTag = self.plcTags["CommandedPower"]
 
         ### Lookup Tables for Data Outputs #####
         self.testStatusTable = ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
@@ -275,6 +281,7 @@ class Model:
             self.uploadTestDataTag.attachReaction(self.uploadTestDataReaction)
             self.downloadTestResultsTag.attachReaction(self.downloadTestResultsReaction)
             self.parseTestResultsTag.attachReaction(self.parseTestResultsReaction)
+
         except:
             print("OPCUA reaction setup failed")
 
@@ -770,8 +777,7 @@ class Model:
         if self.pyrometer.isConnected:
 
             pulses = self.pyrometer.getFullData()
-            self.pyrometer.clearData()
-            
+
             print("\ndata: [ ")
             for pulse in pulses:
                 for datum in pulse:
@@ -779,12 +785,16 @@ class Model:
                 print(";")
             print("]")
 
-            pulsePeak = self.pyrometer.getFullDataPeak()
+            pulsePeak = self.pyrometer.getFullDataPeak(update=False)
             print("\npulsePeak: " + str(pulsePeak[0]))
 
             allPulsesOkay = True   # group status
             lastError = 0
+
+            self.pyrometer.clearData()
             
+            measuredPowderMax = 0 # reset max 
+
             for pulse in pulses:
 
                 energy = pulse[0]
@@ -803,6 +813,8 @@ class Model:
                     self.laserTestEnergy[self.activePixelTag.value - 1].append(measuredEnergy)
                     self.commandedPowerData[self.activePixelTag.value - 1].append(expectedPower)
 
+                    measuredPowderMax = max([measuredPower , measuredPowderMax])
+
                     # evaluate the variable formerly known as testStatus
                     # check the power of each pulse but only report 1 status per pixel
                     # test status meaning: ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
@@ -818,6 +830,9 @@ class Model:
                         # no power
                         lastError = 4
                         allPulsesOkay = False
+                        
+            self.MeasuredPowerTag.setPlcValue(measuredPowderMax) 
+            self.CommandedPowerTag.setPlcValue(self.currentPowerWattsTag.value)
 
             if allPulsesOkay:
                 # pixel pass
