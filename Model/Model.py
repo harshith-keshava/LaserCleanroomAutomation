@@ -793,7 +793,7 @@ class Model:
 
             self.pyrometer.clearData()
             
-            measuredPowderMax = 0 # reset max 
+            measuredPowerMax = 0 # reset max 
 
             for pulse in pulses:
 
@@ -813,7 +813,7 @@ class Model:
                     self.laserTestEnergy[self.activePixelTag.value - 1].append(measuredEnergy)
                     self.commandedPowerData[self.activePixelTag.value - 1].append(expectedPower)
 
-                    measuredPowderMax = max([measuredPower , measuredPowderMax])
+                    measuredPowerMax = max([measuredPower , measuredPowerMax])
 
                     # evaluate the variable formerly known as testStatus
                     # check the power of each pulse but only report 1 status per pixel
@@ -831,7 +831,7 @@ class Model:
                         lastError = 4
                         allPulsesOkay = False
                         
-            self.MeasuredPowerTag.setPlcValue(measuredPowderMax) 
+            self.MeasuredPowerTag.setPlcValue(measuredPowerMax) 
             self.CommandedPowerTag.setPlcValue(self.currentPowerWattsTag.value)
 
             if allPulsesOkay:
