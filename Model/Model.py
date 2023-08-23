@@ -35,6 +35,14 @@ class TestType(Enum):
         DIRTY_POWER_VERIFICATION = 2
         LOW_POWER_CHECK = 3
 
+## Default tolerance percentages for each test type
+testTolerancePercents = {
+        TestType.CALIBRATION: 30,
+        TestType.CLEAN_POWER_VERIFICATION: 10,
+        TestType.DIRTY_POWER_VERIFICATION: 10,
+        TestType.LOW_POWER_CHECK: 50
+    }
+
 ## Varaible that when changed calls a list of functions
 ## These functions can be added to variable in any amount
 class SubscribedVariable:
@@ -481,6 +489,7 @@ class Model:
 
         # read test type
         self.testType = TestType(self.TestTypeTag.value)
+        self.testSettings._tolerancePercent = testTolerancePercents[self.testType] # this is not used by LUT generation, so setting it after changing LUT test settings is OK
 
         self.timeStamp = datetime.utcnow()
         
@@ -820,11 +829,11 @@ class Model:
                     # evaluate the variable formerly known as testStatus
                     # check the power of each pulse but only report 1 status per pixel
                     # test status meaning: ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
-                    if measuredPower > (expectedPower * 1.05):
+                    if measuredPower > (expectedPower * (1 + self.testSettings._tolerancePercent/100)):
                         # high power
                         lastError = 2
                         allPulsesOkay = False
-                    elif measuredPower < (expectedPower * 0.95):
+                    elif measuredPower < (expectedPower * (1 - self.testSettings._tolerancePercent/100)):
                         # low power
                         lastError = 3
                         allPulsesOkay = False
