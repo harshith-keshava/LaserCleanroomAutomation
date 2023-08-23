@@ -165,7 +165,8 @@ class Model:
 
         # Pixel data sent back to PLC
         "MeasuredPower": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.MeasuredPower"),
-        "CommandedPower": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.CommandedPower")
+        "CommandedPower": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.CommandedPower"),
+        "LaserTestStatus": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.LaserTestStatus")
 
         }
 
@@ -232,6 +233,7 @@ class Model:
         self.parseTestResultsTag = self.plcTags["ParseTestResults"]
         self.MeasuredPowerTag = self.plcTags["MeasuredPower"]
         self.CommandedPowerTag = self.plcTags["CommandedPower"]
+        self.LaserTestStatusTag = self.plcTags["LaserTestStatus"]
 
         ### Lookup Tables for Data Outputs #####
         self.testStatusTable = ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
@@ -837,9 +839,10 @@ class Model:
             if allPulsesOkay:
                 # pixel pass
                 self.laserTestStatus[self.activePixelTag.value - 1] = 1
+                self.LaserTestStatusTag.setPlcValue(1)
             else:
                 self.laserTestStatus[self.activePixelTag.value - 1] = lastError
-
+                self.LaserTestStatusTag.setPlcValue(lastError)
             return True
         
         else:
