@@ -160,23 +160,33 @@ class CameraDriver:
             print("An error occurred:", e)
             return 0  # might want to return an appropriate error code
 
-    def getPositionerStatus(self):
+    def getPositionerPosition(self):
         try:
             # Open an ASCII serial connection to the port (replace "COM4" with your actual port)
             connection = zaber.serial.AsciiSerial("COM4")
 
-            # Send the "home" command
-            status = connection.read()
+            # Send the "get pos" command
+            connection.write("get pos")
 
-            # Close the connection
-            connection.close()
+            # Read status
+            current_position_data = str(connection.read())
 
-            return status
+            if len(current_position_data) >= 17:
+                current_position = int(current_position_data[17:])
+                current_position = current_position/1000000
+                print(current_position) # in mm
+                # Close the connection
+                connection.close()
+                return current_position
+            else:
+                # Close the connection
+                connection.close()
+                return 999.99
 
         except Exception as e:
             print("An error occurred:", e)
-            return 0  # might want to return an appropriate error code
-
+            return 999.99 # might want to return an appropriate error code
+      
 class OmsFrame:
     
     def __init__(self, metadata, framedata):

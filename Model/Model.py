@@ -174,7 +174,10 @@ class Model:
         # Pixel data sent back to PLC
         "MeasuredPower": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.MeasuredPower"),
         "CommandedPower": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.CommandedPower"),
-        "LaserTestStatus": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.LaserTestStatus")
+        "LaserTestStatus": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.LaserTestStatus"),
+
+        # Zaber data
+        "ZaberPosition": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ZaberPosition")
 
         }
 
@@ -242,6 +245,8 @@ class Model:
         self.MeasuredPowerTag = self.plcTags["MeasuredPower"]
         self.CommandedPowerTag = self.plcTags["CommandedPower"]
         self.LaserTestStatusTag = self.plcTags["LaserTestStatus"]
+
+        self.ZaberPositionTag = self.plcTags["ZaberPosition"]
 
         ### Lookup Tables for Data Outputs #####
         self.testStatusTable = ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
@@ -475,10 +480,12 @@ class Model:
     ## Example Command
     def exampleCommand(self):
         camera = CameraDriver()
-        self.targetPostion = 10
-        camera.moveRelPositioner(self.targetPostion)
+        #self.targetPostion = 10
+        #camera.moveRelPositioner(self.targetPostion)
         #out = camera.homePositioner()
         #print(out)
+        #print(camera.getPositionerPosition())
+        self.ZaberPositionTag.setPlcValue(camera.getPositionerPosition())
         self.exampleResultTag.setPlcValue(1)
 
     def initializeCalibration(self): 
