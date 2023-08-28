@@ -177,7 +177,8 @@ class Model:
         "LaserTestStatus": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.LaserTestStatus"),
 
         # Zaber data
-        "ZaberPosition": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ZaberPosition")
+        "ZaberPosition": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ZaberPosition"),
+        "ZaberHomed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ZaberHomed")
 
         }
 
@@ -247,6 +248,7 @@ class Model:
         self.LaserTestStatusTag = self.plcTags["LaserTestStatus"]
 
         self.ZaberPositionTag = self.plcTags["ZaberPosition"]
+        self.ZaberHomedTag = self.plcTags["ZaberHomed"]
 
         ### Lookup Tables for Data Outputs #####
         self.testStatusTable = ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
@@ -483,11 +485,9 @@ class Model:
         #self.targetPostion = 100
         #camera.moveRelPositioner(self.targetPostion)
         #camera.moveAbsPositioner(self.targetPostion)
-        #out = camera.homePositioner()
-        #print(out)
-        #print(camera.getPositionerPosition())
+        #camera.homePositioner()
         #self.ZaberPositionTag.setPlcValue(camera.getPositionerPosition())
-        #print("Home status:"+ str(camera.getPositionerRefStatus()))
+        #self.ZaberHomedTag.setPlcValue(camera.getPositionerRefStatus())
         self.exampleResultTag.setPlcValue(1)
 
     def initializeCalibration(self): 

@@ -204,10 +204,10 @@ class CameraDriver:
                 # Close the connection
                 connection.close()
 
-                if warning == "WR" or warning == "WH" : # no reference or not homed
-                    return 0
+                if warning == "WR" or warning == "WH" : # WR: no reference or WH: not homed
+                    return False
                 else: 
-                    return 1
+                    return True
             else:
                 # Close the connection
                 connection.close()
