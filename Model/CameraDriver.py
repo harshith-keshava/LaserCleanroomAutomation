@@ -117,7 +117,7 @@ class CameraDriver:
 
         except Exception as e:
             print("An error occurred:", e)
-            return 0  # might want to return an appropriate error code
+            return 0  #TO DO:  might want to return an appropriate error code
 
     def moveRelPositioner(self,target_position):
         try:
@@ -141,7 +141,7 @@ class CameraDriver:
 
         except Exception as e:
             print("An error occurred:", e)
-            return 0  # might want to return an appropriate error code
+            return 0  #TO DO:  might want to return an appropriate error code
 
     def homePositioner(self):
         try:
@@ -158,7 +158,7 @@ class CameraDriver:
 
         except Exception as e:
             print("An error occurred:", e)
-            return 0  # might want to return an appropriate error code
+            return 0  #TO DO:  might want to return an appropriate error code
 
     def getPositionerPosition(self):
         try:
@@ -185,7 +185,37 @@ class CameraDriver:
 
         except Exception as e:
             print("An error occurred:", e)
-            return 999.99 # might want to return an appropriate error code
+            return 999.99 #TO DO:  might want to return an appropriate error code
+
+    def getPositionerRefStatus(self):
+        try:
+            # Open an ASCII serial connection to the port 
+            connection = zaber.serial.AsciiSerial("COM4")
+
+            # Send the "get pos" command
+            connection.write("get pos")
+
+            # Read status
+            current_position_data = str(connection.read())
+
+            if len(current_position_data) >= 1:
+                warning = str(current_position_data[14:16])
+                print(warning)
+                # Close the connection
+                connection.close()
+
+                if warning == "WR" or warning == "WH" : # no reference or not homed
+                    return 0
+                else: 
+                    return 1
+            else:
+                # Close the connection
+                connection.close()
+                return 0 # TO DO: report error
+
+        except Exception as e:
+            print("An error occurred:", e)
+            return 0 # TO DO: might want to return an appropriate error code       
       
 class OmsFrame:
     

@@ -487,6 +487,7 @@ class Model:
         #print(out)
         #print(camera.getPositionerPosition())
         #self.ZaberPositionTag.setPlcValue(camera.getPositionerPosition())
+        #print("Home status:"+ str(camera.getPositionerRefStatus()))
         self.exampleResultTag.setPlcValue(1)
 
     def initializeCalibration(self): 
