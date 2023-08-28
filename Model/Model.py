@@ -254,6 +254,7 @@ class Model:
     def connectToPlc(self):
         try:
             self.client.connect()  
+
         except:
             print("Could not connect to server")
             self.logger.addNewLog("Could not connect to server, check the connection to the PLC")
@@ -473,6 +474,11 @@ class Model:
 
     ## Example Command
     def exampleCommand(self):
+        camera = CameraDriver()
+        self.targetPostion = 10
+        camera.moveRelPositioner(self.targetPostion)
+        #out = camera.homePositioner()
+        #print(out)
         self.exampleResultTag.setPlcValue(1)
 
     def initializeCalibration(self): 

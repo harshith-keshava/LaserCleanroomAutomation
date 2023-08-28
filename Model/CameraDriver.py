@@ -4,6 +4,7 @@ import png
 import time
 import numpy as np
 import json
+import zaber.serial
 
 class CameraDriver:
     
@@ -93,6 +94,88 @@ class CameraDriver:
             imageData = imageData.reshape((1,-1)) # (numRows=1, numCols=any); if there's a mismatch in rows/cols for any reason, one row will at least contain everything. TODO: does image processing hate this?
         
         return OmsFrame(metadata, imageData)
+
+    def moveAbsPositioner(self,target_position):
+        try:
+            # Open an ASCII serial connection to the port (replace "COM4" with your actual port)
+            connection = zaber.serial.AsciiSerial("COM4")
+
+            rawData = str(target_position * 1000000)  # Convert the value to a string. Conversion factor between disance and raw steps is 1000000
+           
+            # Concatenate "mov abs " with the rawData
+            command_string = "move abs " + rawData
+            
+            print(command_string)
+
+            # Send the "move absolute" command
+            connection.write(command_string)
+
+            # Close the connection
+            connection.close()
+
+            return 1
+
+        except Exception as e:
+            print("An error occurred:", e)
+            return 0  # might want to return an appropriate error code
+
+    def moveRelPositioner(self,target_position):
+        try:
+            # Open an ASCII serial connection to the port (replace "COM4" with your actual port)
+            connection = zaber.serial.AsciiSerial("COM4")
+
+            rawData = str(target_position * 1000000)  # Convert the value to a string. Conversion factor between disance and raw steps is 1000000
+           
+            # Concatenate "mov abs " with the rawData
+            command_string = "move rel " + rawData
+            
+            print(command_string)
+
+            # Send the "move absolute" command
+            connection.write(command_string)
+
+            # Close the connection
+            connection.close()
+
+            return 1
+
+        except Exception as e:
+            print("An error occurred:", e)
+            return 0  # might want to return an appropriate error code
+
+    def homePositioner(self):
+        try:
+            # Open an ASCII serial connection to the port (replace "COM4" with your actual port)
+            connection = zaber.serial.AsciiSerial("COM4")
+
+            # Send the "home" command
+            connection.write("home")
+
+            # Close the connection
+            connection.close()
+
+            return 1
+
+        except Exception as e:
+            print("An error occurred:", e)
+            return 0  # might want to return an appropriate error code
+
+    def getPositionerStatus(self):
+        try:
+            # Open an ASCII serial connection to the port (replace "COM4" with your actual port)
+            connection = zaber.serial.AsciiSerial("COM4")
+
+            # Send the "home" command
+            status = connection.read()
+
+            # Close the connection
+            connection.close()
+
+            return status
+
+        except Exception as e:
+            print("An error occurred:", e)
+            return 0  # might want to return an appropriate error code
 
 class OmsFrame:
     
