@@ -480,12 +480,13 @@ class Model:
     ## Example Command
     def exampleCommand(self):
         camera = CameraDriver()
-        #self.targetPostion = 10
+        #self.targetPostion = 100
         #camera.moveRelPositioner(self.targetPostion)
+        #camera.moveAbsPositioner(self.targetPostion)
         #out = camera.homePositioner()
         #print(out)
         #print(camera.getPositionerPosition())
-        self.ZaberPositionTag.setPlcValue(camera.getPositionerPosition())
+        #self.ZaberPositionTag.setPlcValue(camera.getPositionerPosition())
         self.exampleResultTag.setPlcValue(1)
 
     def initializeCalibration(self): 
