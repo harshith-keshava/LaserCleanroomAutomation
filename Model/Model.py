@@ -715,7 +715,7 @@ class Model:
         self.errorBucketNotExistTag.setPlcValue(0)
         self.errorS3ConnectionTag.setPlcValue(0)
         self.errorCaptureFailedTag.setPlcValue(0)
-        self.ZaberHomedTag.setPlcValue(0)
+        self.ZaberHomeTag.setPlcValue(0)
         self.ZaberMoveRelativeTag.setPlcValue(0)
         self.ZaberMoveAbsoluteTag.setPlcValue(0)
         self.ZaberGetHomeStatusTag.setPlcValue(0)
@@ -856,7 +856,7 @@ class Model:
             self.logger.addNewLog("Zaber get position feedback command received from  PLC ")
             camera = CameraDriver()
             self.ZaberPositionTag.setPlcValue(camera.getPositionerPosition())
-        if cmd == False:
+        if cmd == False: 
             self.resetResponseTags()
 
    ############################## HELPER FUNCTION ##########################################
