@@ -178,7 +178,15 @@ class Model:
 
         # Zaber data
         "ZaberPosition": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ZaberPosition"),
-        "ZaberHomed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ZaberHomed")
+        "ZaberHomed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ZaberHomed"),
+
+        "ZaberRelativePosPar": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ZaberRelativePos_mm"),
+        "ZaberAbsolutePosPar": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ZaberAbsolutePos_mm"),
+        "ZaberHome": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ZaberHome"),
+        "ZaberMoveRelative": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ZaberMoveRelative"),
+        "ZaberMoveAbsolute": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ZaberMoveAbsolute"),
+        "ZaberGetHomeStatus": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ZaberGetHomeStatus"),
+        "ZaberGetPosFeedback": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ZaberGetPosFeedback")
 
         }
 
@@ -250,6 +258,14 @@ class Model:
         self.ZaberPositionTag = self.plcTags["ZaberPosition"]
         self.ZaberHomedTag = self.plcTags["ZaberHomed"]
 
+        self.ZaberRelativePosParTag = self.plcTags["ZaberRelativePosPar"]
+        self.ZaberAbsolutePosParTag = self.plcTags["ZaberAbsolutePosPar"]
+        self.ZaberHomeTag = self.plcTags["ZaberHome"]
+        self.ZaberMoveRelativeTag = self.plcTags["ZaberMoveRelative"]
+        self.ZaberMoveAbsoluteTag = self.plcTags["ZaberMoveAbsolute"]
+        self.ZaberGetHomeStatusTag = self.plcTags["ZaberGetHomeStatus"]
+        self.ZaberGetPosFeedbackTag = self.plcTags["ZaberGetPosFeedback"]
+
         ### Lookup Tables for Data Outputs #####
         self.testStatusTable = ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
         self.testTypesAsString = ["None", "LOWPOWER", "CAL", "CVER", "DVER"]
@@ -282,6 +298,13 @@ class Model:
             self.uploadTestDataTag._setAsUpdating()
             self.downloadTestResultsTag._setAsUpdating()
             self.parseTestResultsTag._setAsUpdating()
+            self.ZaberRelativePosParTag._setAsUpdating()
+            self.ZaberAbsolutePosParTag._setAsUpdating()
+            self.ZaberHomeTag._setAsUpdating()
+            self.ZaberMoveRelativeTag._setAsUpdating()
+            self.ZaberMoveAbsoluteTag._setAsUpdating()
+            self.ZaberGetHomeStatusTag._setAsUpdating()
+            self.ZaberGetPosFeedbackTag._setAsUpdating()
         except:
             print("OPCUA subscription setup failed")
 
@@ -299,6 +322,11 @@ class Model:
             self.uploadTestDataTag.attachReaction(self.uploadTestDataReaction)
             self.downloadTestResultsTag.attachReaction(self.downloadTestResultsReaction)
             self.parseTestResultsTag.attachReaction(self.parseTestResultsReaction)
+            self.ZaberHomeTag.attachReaction(self.ZaberHomeReaction)
+            self.ZaberMoveRelativeTag.attachReaction(self.ZaberMoveRelativeReaction)
+            self.ZaberMoveAbsoluteTag.attachReaction(self.ZaberMoveAbsoluteReaction)
+            self.ZaberGetHomeStatusTag.attachReaction(self.ZaberGetHomeStatusReaction)
+            self.ZaberGetPosFeedbackTag.attachReaction(self.ZaberGetPosFeedbackReaction)
 
         except:
             print("OPCUA reaction setup failed")
@@ -687,6 +715,11 @@ class Model:
         self.errorBucketNotExistTag.setPlcValue(0)
         self.errorS3ConnectionTag.setPlcValue(0)
         self.errorCaptureFailedTag.setPlcValue(0)
+        self.ZaberHomedTag.setPlcValue(0)
+        self.ZaberMoveRelativeTag.setPlcValue(0)
+        self.ZaberMoveAbsoluteTag.setPlcValue(0)
+        self.ZaberGetHomeStatusTag.setPlcValue(0)
+        self.ZaberGetPosFeedbackTag.setPlcValue(0)
 
     ##################################### TAG REACTIONS ###################################################################
 
@@ -778,6 +811,51 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Parse test results command received from  PLC ")
             self.parseTestResults()
+        if cmd == False:
+            self.resetResponseTags()
+
+    def ZaberHomeReaction(self):
+        cmd = self.ZaberHomeTag.value
+        if cmd == True:
+            self.logger.addNewLog("Zaber home command received from  PLC ")
+            camera = CameraDriver()
+            camera.homePositioner()
+        if cmd == False:
+            self.resetResponseTags()
+
+    def ZaberMoveRelativeReaction(self):
+        cmd = self.ZaberMoveRelativeTag.value
+        if cmd == True:
+            self.logger.addNewLog("Zaber move relative command received from  PLC ")
+            camera = CameraDriver()
+            camera.moveRelPositioner(self.ZaberRelativePosParTag)
+        if cmd == False:
+            self.resetResponseTags()
+
+    def ZaberMoveAbsoluteReaction(self):
+        cmd = self.ZaberMoveAbsoluteTag.value
+        if cmd == True:
+            self.logger.addNewLog("Zaber move absolute command received from  PLC ")
+            camera = CameraDriver()
+            camera.moveAbsPositioner(self.ZaberAbsolutePosParTag)
+        if cmd == False:
+            self.resetResponseTags()
+
+    def ZaberGetHomeStatusReaction(self):
+        cmd = self.ZaberGetHomeStatusTag.value
+        if cmd == True:
+            self.logger.addNewLog("Zaber get home status command received from  PLC ")
+            camera = CameraDriver()
+            self.ZaberHomedTag.setPlcValue(camera.getPositionerRefStatus())
+        if cmd == False:
+            self.resetResponseTags()
+
+    def ZaberGetPosFeedbackReaction(self):
+        cmd = self.ZaberGetPosFeedbackTag.value
+        if cmd == True:
+            self.logger.addNewLog("Zaber get position feedback command received from  PLC ")
+            camera = CameraDriver()
+            self.ZaberPositionTag.setPlcValue(camera.getPositionerPosition())
         if cmd == False:
             self.resetResponseTags()
 
