@@ -715,11 +715,11 @@ class Model:
         self.errorBucketNotExistTag.setPlcValue(0)
         self.errorS3ConnectionTag.setPlcValue(0)
         self.errorCaptureFailedTag.setPlcValue(0)
-        self.ZaberHomeTag.setPlcValue(0)
-        self.ZaberMoveRelativeTag.setPlcValue(0)
-        self.ZaberMoveAbsoluteTag.setPlcValue(0)
-        self.ZaberGetHomeStatusTag.setPlcValue(0)
-        self.ZaberGetPosFeedbackTag.setPlcValue(0)
+        #self.ZaberHomeTag.setPlcValue(0)
+        #self.ZaberMoveRelativeTag.setPlcValue(0)
+        #self.ZaberMoveAbsoluteTag.setPlcValue(0)
+        #self.ZaberGetHomeStatusTag.setPlcValue(0)
+        #self.ZaberGetPosFeedbackTag.setPlcValue(0)
 
     ##################################### TAG REACTIONS ###################################################################
 
@@ -828,7 +828,7 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Zaber move relative command received from  PLC ")
             camera = CameraDriver()
-            camera.moveRelPositioner(self.ZaberRelativePosParTag)
+            camera.moveRelPositioner(self.ZaberRelativePosParTag.value)
         if cmd == False:
             self.resetResponseTags()
 
@@ -837,7 +837,7 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Zaber move absolute command received from  PLC ")
             camera = CameraDriver()
-            camera.moveAbsPositioner(self.ZaberAbsolutePosParTag)
+            camera.moveAbsPositioner(self.ZaberAbsolutePosParTag.value)
         if cmd == False:
             self.resetResponseTags()
 
