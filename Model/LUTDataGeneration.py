@@ -175,8 +175,16 @@ class LUTDataManager():
         lineardata[lineardata>np.round(powerModifiedLimit16Bit)] = np.round(powerModifiedLimit16Bit,0)
         luts = np.asarray([lineardata for pixel in range(laserSettings.numberOfPixels)], dtype = np.uint16)
         bins = self.convertLUTDataToBinaries(luts)
-        self.writeBinaryArraysToVFPLCs(99999, bins)
+        self.writeLinearBinaryArraysToVFPLCs(99999, bins)
 
+    def writeLinearBinaryArraysToVFPLCs(self, lutNumber, laserSettings: LaserSettings, binaries=None):
+        if binaries is None:
+            binaries = self.binaries
+        vflcrs = MachineSettings._vflcrIPs
+        for rack in range(4):
+            for laser in range(21):
+               FTP_Manager.writeBinaryArrayToVfplc(vflcrs[rack],rack+1,laser+1,binaries[-1], lutNumber) 
+        
     def writeBinaryArraysToVFPLCs(self, lutNumber, laserSettings: LaserSettings, binaries=None):
         if binaries is None:
             binaries = self.binaries
