@@ -1,0 +1,6 @@
+## requirements that work with pip v10.0.1
+
+# Pyrometer
+
+# Beam Profiling Camera via wxPython
+comtypes==1.1.7

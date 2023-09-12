@@ -1,0 +1,44 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run App",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\\AutolaserCalibrationApplication.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Test Camera",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\\camera_driver_testing.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Test Camera (DataRay",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\\dataray-python-camera-example-2021.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Test Pyro",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\\pyrometer_driver_testing.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}"
+        },
+    ]
+}
