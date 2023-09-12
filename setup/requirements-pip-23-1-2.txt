@@ -1,3 +1,4 @@
+## requirements that work with pip v23.1.2
 numpy
 pandas
 glob2
@@ -8,14 +9,16 @@ apscheduler
 PyQt5
 plotly
 kaleido
-pywin32
 pyinstaller
 cryptography
 
 # Pyrometer
-#pywin32
+pywin32
 
 # Beam Profiling Camera via wxPython
 wxPython==4.0.4
-comtypes==1.1.7
 pypng
+
+# S3 Access
+urllib3<2.0 # urllib3>=2.0 requires OpenSSL>=1.1.1, which is incompatible with python==3.7
+minio

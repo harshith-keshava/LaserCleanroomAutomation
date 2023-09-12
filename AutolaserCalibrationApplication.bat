@@ -1,1 +1,2 @@
-c:/AutoLaserCalibration/venv/Scripts/python.exe c:/AutoLaserCalibration/AutolaserCalibrationApplication.py
+SET scriptPath=%~dp0
+%scriptPath%/venv/Scripts/python.exe %scriptPath%/AutolaserCalibrationApplication.py

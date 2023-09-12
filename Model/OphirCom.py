@@ -20,7 +20,8 @@ class OphirJunoCOM:
             #traceback.print_exc()
 
         self.isConnected = False
-        self.isStreaming = False
+        #TODO: implement isStreaming flag
+        #self.isStreaming = False
         self.data = tuple()
         self.newestDataPeak = (None, None, None)
     
@@ -77,12 +78,15 @@ class OphirJunoCOM:
         self.isConnected = False
     
     def startDataCollection(self):
-        self.OphirCOM.StartStream(self.DeviceHandle, 0)
+        try:
+            self.OphirCOM.StartStream(self.DeviceHandle, 0)
+        except Exception as e:
+            print(e)
     
     def updateData(self):
         # Data should be a sequence of triples for ease of use
         newValues, newTimestamps, newStatuses = self.OphirCOM.GetData(self.DeviceHandle, 0)
-        newData = tuple(zip(newValues, newTimestamps, newStatuses, strict=True)) # set strict mostly as an assertion that all 3 data tuples are the same length
+        newData = tuple(zip(newValues, newTimestamps, newStatuses))#remove strict as it wasn't introduced yet in 3.7.9#, strict=True)) # set strict mostly as an assertion that all 3 data tuples are the same length
         self.newestDataPeak = max(newData, default=self.newestDataPeak, key=lambda tup:tup[0]) # if new data is empty, keep old peak
         self.data += newData
     

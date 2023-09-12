@@ -1,15 +1,8 @@
-import sys, os
-
-import PySide2
 from Model.Model import Model
+from Model.Model import LaserSettings
 from ConfigFiles.TestSettings import TestSettings
 from ConfigFiles.MachineSettings import MachineSettings
-from View.PyQtUI import MainWindow
-from PySide2 import QtWidgets
-from PySide2.QtGui import QIcon
-import sys
-from View.stylesheet import styleSheet
-
+from time import sleep
 
 try:
     from ctypes import windll  # Only exists on Windows.
@@ -20,14 +13,31 @@ except ImportError:
 
 c = TestSettings()
 s = MachineSettings()
-m = Model(s,c)
+l = LaserSettings()
+m = Model(s,c,l)
 
 if __name__ == '__main__':
-    PySide2.QtWidgets.QApplication.setAttribute(PySide2.QtCore.Qt.AA_EnableHighDpiScaling, True)
-    app = QtWidgets.QApplication(sys.argv)
-    basedir = os.path.dirname(__file__)
-    app.setWindowIcon(QIcon(os.path.join(basedir, 'View\images\laser-warning_39051.ico')))
-    app.setStyleSheet(styleSheet)
-    window = MainWindow(m)
-    window.show()
-    app.exec_()
+    m.connectToPlc()
+    
+    # Monitor connection by checking heartbeat
+    try:
+        previousHeartbeat = -1 # initial value that won't match the unsigned heartbeat tag
+        while previousHeartbeat != m.heartBeatIntag.value:
+            previousHeartbeat = m.heartBeatIntag.value
+            sleep(2)
+        print("Loss of connection detected; exiting application")
+
+    except Exception as e:
+        # If the OPCUA connection is lost, reading from a tag will raise an exception
+        # This is actually the typical mode of detecting a lost connection
+        print(e)
+
+    finally:
+        # Disconnect the client so its threads (and by extension, this script) terminate
+        try:
+            m.client.disconnect()
+        except:
+            # If the app isn't connected, including by loss of a prior connection, disconnect will raise an exception
+            # This case is nominal and requires no further action
+            pass
+    
