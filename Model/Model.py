@@ -128,7 +128,9 @@ class Model:
         
         # capture pixel
         "CapturePixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CapturePixel"),
+        "CaptureFrame": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CaptureFrame"),
         "PixelCaptured": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelCaptured"),
+        "FrameCaptured": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.FrameCaptured"),
         "pulseOnMsec": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.pulseOnTime_ms"),
         "numPulsesPerLevel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.numPulsesPerLevel"),
         "startingPowerLevel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.startingPowerLevel"),
@@ -207,6 +209,7 @@ class Model:
         self.pixelInitializedTag = self.plcTags["PixelInitialized"]
         
         self.pixelCapturedTag = self.plcTags["PixelCaptured"]
+        self.frameCapturedTag = self.plcTags["FrameCaptured"]
         self.pulseOnMsecTag = self.plcTags["pulseOnMsec"]
         self.numPulsesPerLevelTag = self.plcTags["numPulsesPerLevel"]
         self.startingPowerLevelTag = self.plcTags["startingPowerLevel"]
@@ -246,6 +249,7 @@ class Model:
         self.initializeCalibrationTag = self.plcTags["InitializeCalibration"]
         self.initializePixelTag = self.plcTags["InitializePixel"]
         self.capturePixelTag = self.plcTags["CapturePixel"]
+        self.captureFrameTag = self.plcTags["CaptureFrame"]
         self.processPixelTag = self.plcTags["ProcessPixel"]
         self.processCalibrationTag = self.plcTags["ProcessCalibration"]
         self.uploadTestDataTag = self.plcTags["UploadTestData"]
@@ -291,6 +295,7 @@ class Model:
             self.initializeCalibrationTag._setAsUpdating()
             self.initializePixelTag._setAsUpdating()
             self.capturePixelTag._setAsUpdating()
+            self.captureFrameTag._setAsUpdating()
             self.processPixelTag._setAsUpdating()
             self.processCalibrationTag._setAsUpdating()
             self.UploadLinearLUTsTag._setAsUpdating()
@@ -315,6 +320,7 @@ class Model:
             self.initializeCalibrationTag.attachReaction(self.initializeCalibrationReaction)
             self.initializePixelTag.attachReaction(self.initializePixelReaction)
             self.capturePixelTag.attachReaction(self.capturePixelReaction)
+            self.captureFrameTag.attachReaction(self.captureFrameReaction)
             self.processPixelTag.attachReaction(self.processPixelReaction)
             self.processCalibrationTag.attachReaction(self.processCalibrationReaction)
             self.UploadLinearLUTsTag.attachReaction(self.uploadLinearLUTsReaction)
@@ -588,22 +594,35 @@ class Model:
 
         pyroDataCaptured = self._capturePowerData()
 
-        frameCaptured = self._captureFrameData()
-        if self.currentPowerLevelIndex < self.numPowerLevelStepsTag.value:
-            # update exposure for next power level if applicable
-            self.currentPowerLevelIndex += 1
-            self.updateExposure(self.currentPowerLevelIndex)
-
         print("\npyroDataCaptured: " + str(pyroDataCaptured))
-        print("\nframeCaptured: " + str(frameCaptured))
         
         # let the cmd timeout if we fail one of these
-        if pyroDataCaptured and frameCaptured:
+        if pyroDataCaptured:
             # success
             self.pixelCapturedTag.setPlcValue(1)
         else:
-            print("capture failed")
+            print("pixel power capture failed")
             self.errorCaptureFailedTag.setPlcValue(1)
+
+    def captureFrame(self):
+        print("captureFrame()")
+
+        frameCaptured = self._captureFrameData()
+
+        # if self.currentPowerLevelIndex < self.numPowerLevelStepsTag.value:
+        #     # update exposure for next power level if applicable
+        #     self.currentPowerLevelIndex += 1
+        #     self.updateExposure(self.currentPowerLevelIndex)
+
+        print("\nframeCaptured: " + str(frameCaptured))
+        
+        # let the cmd timeout if we fail one of these
+        if frameCaptured:
+            # success
+            self.frameCapturedTag.setPlcValue(1)
+        else:
+            print("Camera frame capture failed")
+            #self.errorCaptureFailedTag.setPlcValue(1)
 
     def processPixel(self):
         print("processPixel()")
@@ -705,7 +724,8 @@ class Model:
         self.pixelResultTag.setPlcValue(0)
         self.calibrationInitializedTag.setPlcValue(0)
         self.pixelInitializedTag.setPlcValue(0)
-        self.pixelCapturedTag.setPlcValue(0)     
+        self.pixelCapturedTag.setPlcValue(0)
+        self.frameCapturedTag.setPlcValue(0)     
         self.pixelProcessedTag.setPlcValue(0)
         self.calibrationProcessedTag.setPlcValue(0)
         self.LUTsUploadedTag.setPlcValue(0)
@@ -749,6 +769,14 @@ class Model:
             self.capturePixel()
         if cmd == False:
             self.resetResponseTags()
+
+    def captureFrameReaction(self):
+        cmd = self.captureFrameTag.value
+        if cmd == True:
+            self.logger.addNewLog("Capture Frame command received from  PLC ")
+            self.captureFrame()
+        if cmd == False:
+            self.resetResponseTags()        
 
     def processPixelReaction(self):
         cmd = self.processPixelTag.value
