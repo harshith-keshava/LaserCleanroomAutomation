@@ -172,6 +172,7 @@ class Model:
         "ErrorBucketNotExist": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ErrorBucketNotExist"),
         "ErrorS3Connection": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ErrorS3Connection"),
         "ErrorCaptureFailed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ErrorCaptureFailed"),
+        "ErrorFrameCaptureFailed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ErrorFrameCaptureFailed"),
 
         # Pixel data sent back to PLC
         "MeasuredPower": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.MeasuredPower"),
@@ -239,6 +240,7 @@ class Model:
         self.errorBucketNotExistTag = self.plcTags["ErrorBucketNotExist"]
         self.errorS3ConnectionTag = self.plcTags["ErrorS3Connection"]
         self.errorCaptureFailedTag = self.plcTags["ErrorCaptureFailed"]
+        self.errorFrameCaptureFailedTag = self.plcTags["ErrorFrameCaptureFailed"]
         
 
         ### Subscribed Variables (must also add these to the delete)
@@ -622,7 +624,7 @@ class Model:
             self.frameCapturedTag.setPlcValue(1)
         else:
             print("Camera frame capture failed")
-            #self.errorCaptureFailedTag.setPlcValue(1)
+            self.errorFrameCaptureFailedTag.setPlcValue(1)
 
     def processPixel(self):
         print("processPixel()")
@@ -735,6 +737,7 @@ class Model:
         self.errorBucketNotExistTag.setPlcValue(0)
         self.errorS3ConnectionTag.setPlcValue(0)
         self.errorCaptureFailedTag.setPlcValue(0)
+        self.errorFrameCaptureFailedTag.setPlcValue(0)
         #self.ZaberHomeTag.setPlcValue(0)
         #self.ZaberMoveRelativeTag.setPlcValue(0)
         #self.ZaberMoveAbsoluteTag.setPlcValue(0)
@@ -901,7 +904,7 @@ class Model:
             currentFrame.save(file_path, include_binary=True)
             return True
         else:
-            return True
+            return False
 
     def _capturePowerData(self):
         
