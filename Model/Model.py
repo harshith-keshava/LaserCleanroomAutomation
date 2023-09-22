@@ -578,8 +578,8 @@ class Model:
             print("Active pixel is 0 which isn't really a thing so this is going to end up writing the data for this pixel as the last pixel :shrug:")
 
         ## update exposure counter, set starting exposure
-        self.currentPowerLevelIndex = 0
-        self.updateExposure(self.currentPowerLevelIndex)
+        #self.currentPowerLevelIndex = 0
+        #self.updateExposure(self.currentPowerLevelIndex)
 
         if self.pyrometer.isConnected:
             print("pyrometer: connected")
@@ -611,10 +611,10 @@ class Model:
 
         frameCaptured = self._captureFrameData()
 
-        # if self.currentPowerLevelIndex < self.numPowerLevelStepsTag.value:
-        #     # update exposure for next power level if applicable
-        #     self.currentPowerLevelIndex += 1
-        #     self.updateExposure(self.currentPowerLevelIndex)
+        #if self.currentPowerLevelIndex < self.numPowerLevelStepsTag.value:
+            #update exposure for next power level if applicable
+            #self.currentPowerLevelIndex += 1
+            #self.updateExposure(self.currentPowerLevelIndex)
 
         print("\nframeCaptured: " + str(frameCaptured))
         
@@ -738,11 +738,8 @@ class Model:
         self.errorS3ConnectionTag.setPlcValue(0)
         self.errorCaptureFailedTag.setPlcValue(0)
         self.errorFrameCaptureFailedTag.setPlcValue(0)
-        #self.ZaberHomeTag.setPlcValue(0)
-        #self.ZaberMoveRelativeTag.setPlcValue(0)
-        #self.ZaberMoveAbsoluteTag.setPlcValue(0)
-        #self.ZaberGetHomeStatusTag.setPlcValue(0)
-        #self.ZaberGetPosFeedbackTag.setPlcValue(0)
+        self.ZaberGetHomeStatusTag.setPlcValue(0)
+        self.ZaberGetPosFeedbackTag.setPlcValue(0)
 
     ##################################### TAG REACTIONS ###################################################################
 
