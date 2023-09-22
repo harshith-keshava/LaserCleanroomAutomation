@@ -855,6 +855,8 @@ class Model:
         cmd = self.ZaberMoveRelativeTag.value
         if cmd == True:
             self.logger.addNewLog("Zaber move relative command received from  PLC ")
+            self.currentPowerLevelIndex = 0
+            self.updateExposure(self.currentPowerLevelIndex)
             camera = CameraDriver()
             camera.moveRelPositioner(self.ZaberRelativePosParTag.value)
         if cmd == False:
