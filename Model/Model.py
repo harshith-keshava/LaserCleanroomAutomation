@@ -189,7 +189,11 @@ class Model:
         "ZaberMoveRelative": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ZaberMoveRelative"),
         "ZaberMoveAbsolute": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ZaberMoveAbsolute"),
         "ZaberGetHomeStatus": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ZaberGetHomeStatus"),
-        "ZaberGetPosFeedback": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ZaberGetPosFeedback")
+        "ZaberGetPosFeedback": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ZaberGetPosFeedback"),
+
+        # Additional Meta Data
+        "GantryXPositionStatus": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.GantryXPositionStatus"),
+        "GantryYPositionStatus": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.GantryYPositionStatus")
 
         }
 
@@ -272,6 +276,9 @@ class Model:
         self.ZaberGetHomeStatusTag = self.plcTags["ZaberGetHomeStatus"]
         self.ZaberGetPosFeedbackTag = self.plcTags["ZaberGetPosFeedback"]
 
+        self.GantryXPositionStatusTag = self.plcTags["GantryXPositionStatus"]
+        self.GantryYPositionStatusTag = self.plcTags["GantryYPositionStatus"]
+
         ### Lookup Tables for Data Outputs #####
         self.testStatusTable = ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
         self.testTypesAsString = ["None", "LOWPOWER", "CAL", "CVER", "DVER"]
@@ -312,6 +319,8 @@ class Model:
             self.ZaberMoveAbsoluteTag._setAsUpdating()
             self.ZaberGetHomeStatusTag._setAsUpdating()
             self.ZaberGetPosFeedbackTag._setAsUpdating()
+            self.GantryXPositionStatusTag._setAsUpdating()
+            self.GantryYPositionStatusTag._setAsUpdating()
         except:
             print("OPCUA subscription setup failed")
 
@@ -894,7 +903,16 @@ class Model:
     def _captureFrameData(self):
         print("_captureFrameData()")
         if self.camera.isConnected:
-            currentFrame = self.camera.fetchFrame()
+            camera = CameraDriver()
+            activePixel = self.activePixelTag.value
+            gantryXPosition = self.GantryXPositionStatusTag 
+            gantryXPosition = self.GantryYPositionStatusTag
+            zaberPosition = camera.getPositionerPosition()
+            pulseOnMsec = self.pulseOnMsecTag.value
+            startingPowerLevel = self.startingPowerLevelTag.value
+
+            currentFrame = self.camera.fetchFrame(activePixel,gantryXPosition,gantryXPosition,zaberPosition,pulseOnMsec,startingPowerLevel )
+            
             # Save to camera-specific subdirectory until otherwise specified. Include binary data for now.
             camera_dir = os.path.join(self.saveLocation, "cameraData")
             file_path = os.path.join(camera_dir, "pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1))

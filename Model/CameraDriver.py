@@ -61,7 +61,7 @@ class CameraDriver:
         self.gd.ctrl.SetTargetCameraGain(0, newGain)
         return self.gd.ctrl.GetTargetCameraGain(0)==newGain
     
-    def fetchFrame(self):
+    def fetchFrame(self,activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,startingPowerLevel):
         # Get a new frame cluster containing:
         # Com Error, Exposure, Gain, Full Res, H Res, V Res, and 2D Image.
         deviceOK = self.gd.ctrl.StartDevice()
@@ -72,6 +72,12 @@ class CameraDriver:
             # assert self.isConnected, 'Failed to connect to camera; check hardware connection'
         
         metadata = dict()
+        metadata['ActivePixel'] = activePixel
+        metadata['GantryXPos'] = gantryXPosition
+        metadata['GantryYPos'] = gantryYPosition
+        metadata['ZaberPosition'] = zaberPosition
+        metadata['PulseOnMsec'] = pulseOnMsec
+        metadata['PowerLevel'] = startingPowerLevel
         metadata['CameraNID'] = self.cameraNID
         metadata['Exposure'] = self.getExposure()
         metadata['Gain'] = self.getGain()
