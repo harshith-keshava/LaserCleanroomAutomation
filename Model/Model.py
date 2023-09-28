@@ -926,8 +926,9 @@ class Model:
             zaberPosition = camera.getPositionerPosition()
             pulseOnMsec = self.pulseOnMsecTag.value
             startingPowerLevel = self.startingPowerLevelTag.value
+            machineName = self.MachineNameTag.value
 
-            currentFrame = self.camera.fetchFrame(activePixel,gantryXPosition,gantryXPosition,zaberPosition,pulseOnMsec,startingPowerLevel )
+            currentFrame = self.camera.fetchFrame(activePixel,gantryXPosition,gantryXPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName )
             
             ## TO DO: META DATA WRITER  - IMAGE SAVE AND APPEND META DATA TO MASTER
 
