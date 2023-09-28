@@ -62,7 +62,7 @@ class CameraDriver:
         self.gd.ctrl.SetTargetCameraGain(0, newGain)
         return self.gd.ctrl.GetTargetCameraGain(0)==newGain
     
-    def fetchFrame(self,activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,startingPowerLevel):
+    def fetchFrame(self,activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName):
         # Get a new frame cluster containing:
         # Com Error, Exposure, Gain, Full Res, H Res, V Res, and 2D Image.
         deviceOK = self.gd.ctrl.StartDevice()
@@ -79,6 +79,7 @@ class CameraDriver:
         metadata['ZaberPosition'] = zaberPosition
         metadata['PulseOnMsec'] = pulseOnMsec
         metadata['PowerLevel'] = startingPowerLevel
+        metadata['MachineName'] = machineName
         metadata['CameraNID'] = self.cameraNID
         metadata['Exposure'] = self.getExposure()
         metadata['Gain'] = self.getGain()
@@ -91,17 +92,8 @@ class CameraDriver:
         # Get current time in UTC
         time_utc = datetime.utcnow()
 
-        #metadata['Date'] = time_utc.date()
-        #metadata['Hours'] = time_utc.hour
-        #metadata['Minutes'] = time_utc.minute
-        #metadata['Seconds'] = time_utc.second
-        #metadata['TimeSec'] = time.time()
-        #metadata['TimeStruct'] = time.gmtime(metadata['TimeSec'])
-        #metadata['TimeString'] = time.asctime(metadata['TimeStruct'])
-
         milliseconds = time_utc.microsecond // 1000  # Convert microseconds to milliseconds
         metadata['TimeString'] = f"{time_utc.date()}T{time_utc.hour}{time_utc.minute}{time_utc.second}Z{milliseconds}"
-        #metadata['TimeString'] = str(time_utc.date()) + "T" + str(time_utc.hour) + str(time_utc.minute) + str(time_utc.second) + "Z" + str(milliseconds)
 
         # Convert WinCamData tuple to 2D numpy array
         rawData = self.gd.ctrl.GetWinCamDataAsVariant()

@@ -193,7 +193,14 @@ class Model:
 
         # Additional Meta Data
         "GantryXPositionStatus": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.GantryXPositionStatus"),
-        "GantryYPositionStatus": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.GantryYPositionStatus")
+        "GantryYPositionStatus": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.GantryYPositionStatus"),
+
+        #OMS 
+        "StartOMSTest": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.StartOMSTest"),
+        "MetaDataWriterReady": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.MetaDataWriterReady"),
+        "MetaDataWriterDone": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.MetaDataWriterDone"),
+        "OMSTestComplete": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.OMSTestComplete"),
+        "OMSTestAborted": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.OMSTestAborted")
 
         }
 
@@ -279,6 +286,12 @@ class Model:
         self.GantryXPositionStatusTag = self.plcTags["GantryXPositionStatus"]
         self.GantryYPositionStatusTag = self.plcTags["GantryYPositionStatus"]
 
+        self.StartOMSTestTag = self.plcTags["StartOMSTest"]
+        self.MetaDataWriterReadyTag = self.plcTags["MetaDataWriterReady"]
+        self.MetaDataWriterDoneTag = self.plcTags["MetaDataWriterDone"]
+        self.OMSTestCompleteTag = self.plcTags["OMSTestComplete"]
+        self.OMSTestAbortedTag = self.plcTags["OMSTestAborted"]
+
         ### Lookup Tables for Data Outputs #####
         self.testStatusTable = ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
         self.testTypesAsString = ["None", "LOWPOWER", "CAL", "CVER", "DVER"]
@@ -321,6 +334,9 @@ class Model:
             self.ZaberGetPosFeedbackTag._setAsUpdating()
             self.GantryXPositionStatusTag._setAsUpdating()
             self.GantryYPositionStatusTag._setAsUpdating()
+            self.StartOMSTestTag._setAsUpdating()
+            self.OMSTestCompleteTag._setAsUpdating()
+            self.OMSTestAbortedTag._setAsUpdating()
         except:
             print("OPCUA subscription setup failed")
 
@@ -910,15 +926,18 @@ class Model:
             zaberPosition = camera.getPositionerPosition()
             pulseOnMsec = self.pulseOnMsecTag.value
             startingPowerLevel = self.startingPowerLevelTag.value
+            machineName = self.MachineNameTag.value
 
-            currentFrame = self.camera.fetchFrame(activePixel,gantryXPosition,gantryXPosition,zaberPosition,pulseOnMsec,startingPowerLevel )
+            currentFrame = self.camera.fetchFrame(activePixel,gantryXPosition,gantryXPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName )
             
+            ## TO DO: META DATA WRITER  - IMAGE SAVE AND APPEND META DATA TO MASTER
+
             # Save to camera-specific subdirectory until otherwise specified. Include binary data for now.
-            camera_dir = os.path.join(self.saveLocation, "cameraData")
-            file_path = os.path.join(camera_dir, "pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1))
-            os.makedirs(camera_dir, exist_ok=True)
-            print("saving frame to: " + file_path)
-            currentFrame.save(file_path, include_binary=True)
+            #camera_dir = os.path.join(self.saveLocation, "cameraData")
+            #file_path = os.path.join(camera_dir, "pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1))
+            #os.makedirs(camera_dir, exist_ok=True)
+            #print("saving frame to: " + file_path)
+            #currentFrame.save(file_path, include_binary=True)
             return True
         else:
             return False
