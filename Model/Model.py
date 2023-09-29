@@ -1,28 +1,26 @@
-
-import csv
 import os
-from ConfigFiles.MachineSettings import MachineSettings
-from Model.BNRopcuaTag import BNRopcuaTag
-from Model.LUTDataGeneration import LUTDataManager
-from ConfigFiles.TestSettings import TestSettings
-from opcua import Client
-import numpy as np
-from enum import Enum
-import time
-from datetime import datetime
 import csv
-from Model.Logger import Logger
+import time
 import numpy as np
 import statistics as stat
 import pandas as pd
-from Model.FTP_Manager import FTP_Manager
-from Model.CameraDriver import CameraDriver
-from Model.OphirCom import OphirJunoCOM
-from Model.LaserSettings import LaserSettings
+from enum import Enum
+from datetime import datetime
 from minio import Minio
 from minio.error import S3Error
 import urllib3
 import urllib3.exceptions
+from opcua import Client
+from ConfigFiles.MachineSettings import MachineSettings
+from Model.BNRopcuaTag import BNRopcuaTag
+from Model.LUTDataGeneration import LUTDataManager
+from ConfigFiles.TestSettings import TestSettings
+from Model.Logger import Logger
+from Model.FTP_Manager import FTP_Manager
+from Model.CameraDriver import CameraDriver
+from Model.OphirCom import OphirJunoCOM
+from Model.LaserSettings import LaserSettings
+from Model.metadatawriter import MetadataFileWriter
 
 ## Test Type Enum for the different types of tests that process team runs
 ## Calibration: Predefined tolerance band always run with Linear LUTS, run to generate new LUTs for the VFLCRs
@@ -93,7 +91,7 @@ class Model:
         self.currentPowerLevelIndex = 0 ## power level counter to adjust camera exposure
         self.exposureAt100W = 1 ## 1ms exposure at 100W pulse
         self.http = urllib3.PoolManager()
-    
+        self.metadatafilewriter = None
         ############################################# ADD TAGS #########################################
 
         # Connection of the client using the freeopcua library
@@ -925,24 +923,34 @@ class Model:
             camera = CameraDriver()
             activePixel = self.activePixelTag.value
             gantryXPosition = self.GantryXPositionStatusTag 
-            gantryXPosition = self.GantryYPositionStatusTag
+            gantryYPosition = self.GantryYPositionStatusTag
             zaberPosition = camera.getPositionerPosition()
             pulseOnMsec = self.pulseOnMsecTag.value
             startingPowerLevel = self.startingPowerLevelTag.value
             machineName = self.MachineNameTag.value
 
-            captureFrameStatus = self.camera.fetchFrame(activePixel,gantryXPosition,gantryXPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName )
-            if captureFrameStatus:
-                self.MetaDataWriterDoneTag.setPlcValue(1)
-            else:
-                self.MetaDataWriterDoneTag.setPlcValue(0)
+            metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryXPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName )
+
+            # if captureFrameStatus:
+            #     self.MetaDataWriterDoneTag.setPlcValue(1)
+            # else:
+            #     self.MetaDataWriterDoneTag.setPlcValue(0)
             ## TO DO: META DATA WRITER  - IMAGE SAVE AND APPEND META DATA TO MASTER
 
             # Save to camera-specific subdirectory until otherwise specified. Include binary data for now.
-            #camera_dir = os.path.join(self.saveLocation, "cameraData")
-            #file_path = os.path.join(camera_dir, "pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1))
+            camera_dir = os.path.join(self.saveLocation, "cameraData")
+            if not os.path.exists(camera_dir):
+                os.makedirs(camera_dir, exist_ok=True)
+            
+            file_path = os.path.join(camera_dir, "pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1))
             #os.makedirs(camera_dir, exist_ok=True)
             #print("saving frame to: " + file_path)
+            if self.metadatafilewriter is None:
+                time_start = self.timeStamp.strftime('%Y%m%dT%H%M%SZ%f')
+                self.metadatafilewriter = MetadataFileWriter(machine=metadata['MachineName'], datetime=time_start)
+            ##TODO - get image URL from S3
+            image_url = None
+            self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, camera_dir, image_url)
             #currentFrame.save(file_path, include_binary=True)
             return True
         else:
