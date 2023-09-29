@@ -98,7 +98,6 @@ class MetadataFileWriter:
             'frames': self.frame_list
         }
 
-    ## TODO - call save_file() in Model functions for Abort test and Complete test
     def save_file(self, output_dir, test_status='Aborted'):
         self.create_metadata(test_status)
         with open(os.path.join(output_dir, self.metadata_filename), 'w') as f:
