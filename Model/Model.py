@@ -200,7 +200,8 @@ class Model:
         "MetaDataWriterReady": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.MetaDataWriterReady"),
         "MetaDataWriterDone": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.MetaDataWriterDone"),
         "OMSTestComplete": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.OMSTestComplete"),
-        "OMSTestAborted": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.OMSTestAborted")
+        "OMSTestAborted": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.OMSTestAborted"),
+        "CameraExposure": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CameraExposure")
 
         }
 
@@ -291,7 +292,8 @@ class Model:
         self.MetaDataWriterDoneTag = self.plcTags["MetaDataWriterDone"]
         self.OMSTestCompleteTag = self.plcTags["OMSTestComplete"]
         self.OMSTestAbortedTag = self.plcTags["OMSTestAborted"]
-
+        self.CameraExposureTag = self.plcTags["CameraExposure"]
+    
         ### Lookup Tables for Data Outputs #####
         self.testStatusTable = ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
         self.testTypesAsString = ["None", "LOWPOWER", "CAL", "CVER", "DVER"]
@@ -873,6 +875,7 @@ class Model:
             self.logger.addNewLog("Zaber home command received from  PLC ")
             camera = CameraDriver()
             camera.homePositioner()
+            self.camera.initialize()
         if cmd == False:
             self.resetResponseTags()
 
@@ -880,10 +883,10 @@ class Model:
         cmd = self.ZaberMoveRelativeTag.value
         if cmd == True:
             self.logger.addNewLog("Zaber move relative command received from  PLC ")
-            self.currentPowerLevelIndex = 0
-            self.updateExposure(self.currentPowerLevelIndex)
             camera = CameraDriver()
             camera.moveRelPositioner(self.ZaberRelativePosParTag.value)
+            self.camera.setExposure(self.CameraExposureTag.value) # Set Exposure with zaber move 
+            self.MetaDataWriterDoneTag.setPlcValue(0) # reset done tag used for next iteration 
         if cmd == False:
             self.resetResponseTags()
 
@@ -928,8 +931,11 @@ class Model:
             startingPowerLevel = self.startingPowerLevelTag.value
             machineName = self.MachineNameTag.value
 
-            currentFrame = self.camera.fetchFrame(activePixel,gantryXPosition,gantryXPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName )
-            
+            captureFrameStatus = self.camera.fetchFrame(activePixel,gantryXPosition,gantryXPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName )
+            if captureFrameStatus:
+                self.MetaDataWriterDoneTag.setPlcValue(1)
+            else:
+                self.MetaDataWriterDoneTag.setPlcValue(0)
             ## TO DO: META DATA WRITER  - IMAGE SAVE AND APPEND META DATA TO MASTER
 
             # Save to camera-specific subdirectory until otherwise specified. Include binary data for now.
