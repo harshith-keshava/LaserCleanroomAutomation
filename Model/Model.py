@@ -914,7 +914,7 @@ class Model:
             self.ZaberPositionTag.setPlcValue(camera.getPositionerPosition())
         if cmd == False: 
             self.resetResponseTags()
-            
+
     ##----------- TODO -----------
     def initializeOMScamera_TODO(self):
         self.camera_dir = os.path.join(self.saveLocation, "cameraData")
@@ -945,6 +945,7 @@ class Model:
 
             metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryXPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName )
 
+            ## unclear what this is doing... should it come before or after the image is saved and metadata is appended?
             # if captureFrameStatus:
             #     self.MetaDataWriterDoneTag.setPlcValue(1)
             # else:
