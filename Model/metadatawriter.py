@@ -79,14 +79,11 @@ class MetadataFileWriter:
     def __init__(self, machine=None, datetime=None, oms_calibration_info=None, metadata_filename=None):
         self.metadata_filename = metadata_filename
         self.machine = machine
-        # self.datetime_current = datetime
         self.datetime_start = datetime
         self.oms_calibration_info = oms_calibration_info
         self.metadata = None
-        # self.current_pixel = None
-        # self.current_image_filename = None
-        # self.pixel_list = []
         self.frame_list = []
+        self.current_image_filename = None
         if not machine:
             self.machine = 'unknown'
         if not datetime:
@@ -107,44 +104,42 @@ class MetadataFileWriter:
 
     def add_frame_and_save_image(self, metadata, img, output_dir,
                                  image_url=None):
-
         self.add_frame(metadata, image_url)
         iw = ImageWriter(self.metadata_filename, self.machine, self.current_pixel, self.datetime_current,
                  gantry_x_mm, gantry_y_mm, zaber_z_mm, self.oms_calibration_info, self.current_image_filename)
         iw.save_image(img, output_dir)
 
     def add_frame(self, metadata, image_url=None):
-
         frame_number = len(self.frame_list) + 1
         machine = metadata['MachineName']
         pixel = metadata['ActivePixel']
         timestamp = metadata['TimeString']
-        image_filename = create_image_filename(machine, pixel, timestamp)
+        self.current_image_filename = create_image_filename(machine, pixel, timestamp)
         frame_dict = {'frame': frame_number,
-                      'image_filename': image_filename,
+                      'image_filename': self.current_image_filename,
                       'image_url': image_url}
         frame_dict.update(metadata)
         self.frame_list.append(frame_dict)
 
-
     def create_metadata_filename(self, machine, datetime_start):
         self.metadata_filename = f'OMS_{machine}_{datetime_start}.json'
 
-    def create_metadata(self):
+    def create_metadata(self, test_status='Aborted'):
         datetime_end = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ%f')
         self.metadata = {
             'metadata_filename': self.metadata_filename,
             'machine': self.machine,
             'datetime_start': self.datetime_start,
             'datetime_end': datetime_end,
+            'test_status': test_status,
             'number_pixels_tested': len(self.pixel_list),
             'oms_calibration_info': self.oms_calibration_info,
             'frames': self.frame_list
         }
 
-    def save_file(self, output_dir):
-        self.add_pixel_info() ## add info from the last pixel
-        self.create_metadata()
+    ## TODO - call save_file() in Model functions for Abort test and Complete test
+    def save_file(self, output_dir, test_status='Aborted'):
+        self.create_metadata(test_status)
         with open(os.path.join(output_dir, self.metadata_filename), 'w') as f:
             json.dump(self.metadata, f)
 
