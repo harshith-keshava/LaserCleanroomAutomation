@@ -935,23 +935,19 @@ class Model:
             #     self.MetaDataWriterDoneTag.setPlcValue(1)
             # else:
             #     self.MetaDataWriterDoneTag.setPlcValue(0)
-            ## TO DO: META DATA WRITER  - IMAGE SAVE AND APPEND META DATA TO MASTER
 
-            # Save to camera-specific subdirectory until otherwise specified. Include binary data for now.
+            # Save image to camera-specific subdirectory until otherwise specified. Append to metadata (in memory)
             camera_dir = os.path.join(self.saveLocation, "cameraData")
             if not os.path.exists(camera_dir):
                 os.makedirs(camera_dir, exist_ok=True)
-            
-            file_path = os.path.join(camera_dir, "pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1))
-            #os.makedirs(camera_dir, exist_ok=True)
-            #print("saving frame to: " + file_path)
+
             if self.metadatafilewriter is None:
                 time_start = self.timeStamp.strftime('%Y%m%dT%H%M%SZ%f')
                 self.metadatafilewriter = MetadataFileWriter(machine=metadata['MachineName'], datetime=time_start)
             ##TODO - get image URL from S3
             image_url = None
-            self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, camera_dir, image_url)
-            #currentFrame.save(file_path, include_binary=True)
+            metadata_write_status = self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, camera_dir, image_url)
+            print(f"Saved frame to: {os.path.join(camera_dir, self.metadatafilewriter.current_image_filename)}")
             return True
         else:
             return False

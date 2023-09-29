@@ -6,52 +6,22 @@ from PIL import Image, PngImagePlugin
 from vfomsprocessor import utils
 
 class ImageWriter:
-    def __init__(self, metadata_filename=None, machine=None, pixel_number=None, datetime=None,
-                 gantry_x_mm=None, gantry_y_mm=None, zaber_z_mm=None, oms_calibration_info=None, image_filename=None):
+    def __init__(self, image_filename, metadata_filename=None, metadata=None, oms_calibration_info=None):
         self.image_filename = image_filename
         self.metadata_filename = metadata_filename
-        self.machine = machine
-        self.pixel_number = pixel_number
-        self.datetime = datetime
-        self.gantry_x_mm = gantry_x_mm
-        self.gantry_y_mm = gantry_y_mm
-        self.zaber_z_mm = zaber_z_mm
         self.oms_calibration_info = oms_calibration_info
-        self.metadata = None
+        self.metadata = self.update_metadata(metadata)
 
-    def load_image_filename(self, image_filename):
-        _, machine, pixel, datestr = image_filename.split('.')[0].split('_')
-        self.pixel_number = int(pixel.lower().split('p')[1])
-        self.machine = machine
-        self.datetime = datestr
-
-    def create_image_filename(self):
-        self.image_filename = create_image_filename(self.machine, self.pixel_number, self.datetime)
-
-    def update_position(self, x, y, z):
-        self.gantry_x_mm = x
-        self.gantry_y_mm = y
-        self.zaber_z_mm = z
-
-    def load_calibration_info(self, fpath):
-        self.oms_calibration_info = utils.load_metadata_from_file(fpath)
-
-    def create_metadata(self):
-        if self.datetime is None:
-            utils.get_datestr()
-        if self.image_filename is None:
-            self.create_image_filename()
-        self.metadata = {
+    def update_metadata(self, metadata):
+        metadata_header = {
             'image_filename': self.image_filename,
             'metadata_filename': self.metadata_filename,
-            'machine': self.machine,
-            'pixel_number': self.pixel_number,
-            'datetime': self.datetime,
-            'gantry_x_mm': self.gantry_x_mm,
-            'gantry_y_mm': self.gantry_y_mm,
-            'zaber_z_mm': self.zaber_z_mm,
             'oms_calibration_info': self.oms_calibration_info
         }
+        if metadata is not None:
+            return metadata_header.update(metadata)
+        else:
+            return metadata_header
 
     def save_image(self, img, output_dir):
         if not type(img) == Image.Image:
@@ -60,7 +30,7 @@ class ImageWriter:
             img_to_save = img
         if self.metadata is None:
             self.create_metadata()
-        if (type(self.metadata)==dict) and (os.path.exists(output_dir)):
+        if (type(self.metadata) == dict) and (os.path.exists(output_dir)):
             pnginfo = PngImagePlugin.PngInfo()
             pnginfo.add_text('vf-oms-image-metadata', json.dumps(self.metadata))
             img_to_save.save(os.path.join(output_dir, self.image_filename),
@@ -70,10 +40,6 @@ class ImageWriter:
     def convert_array_to_PIL_image(self, img):
         return Image.fromarray(img.astype('uint16'))
 
-def create_image_filename(machine, pixel_number, datetime=None):
-    if datetime is None:
-        datetime = utils.get_datestr()
-    return f'OMS_{machine}_p{str(pixel_number).zfill(3)}_{datetime}.png'
 
 class MetadataFileWriter:
     def __init__(self, machine=None, datetime=None, oms_calibration_info=None, metadata_filename=None):
@@ -91,30 +57,22 @@ class MetadataFileWriter:
         if not metadata_filename:
             self.create_metadata_filename(self.machine, self.datetime_start)
 
-    def _load_metadata_from_file(self, fpath):
-        try:
-            with open(fpath) as f:
-                return json.load(f)
-        except Exception as e:
-            print(e)
-            return None
-
     def load_calibration_info(self, fpath):
-        self.oms_calibration_info = self._load_metadata_from_file(fpath)
+        self.oms_calibration_info = _load_metadata_from_file(fpath)
 
     def add_frame_and_save_image(self, metadata, img, output_dir,
                                  image_url=None):
         self.add_frame(metadata, image_url)
-        iw = ImageWriter(self.metadata_filename, self.machine, self.current_pixel, self.datetime_current,
-                 gantry_x_mm, gantry_y_mm, zaber_z_mm, self.oms_calibration_info, self.current_image_filename)
+        iw = ImageWriter(self.current_image_filename, self.metadata_filename, metadata, self.oms_calibration_info)
         iw.save_image(img, output_dir)
+        return True
 
     def add_frame(self, metadata, image_url=None):
         frame_number = len(self.frame_list) + 1
         machine = metadata['MachineName']
         pixel = metadata['ActivePixel']
         timestamp = metadata['TimeString']
-        self.current_image_filename = create_image_filename(machine, pixel, timestamp)
+        self.current_image_filename = self.create_image_filename(machine, pixel, timestamp)
         frame_dict = {'frame': frame_number,
                       'image_filename': self.current_image_filename,
                       'image_url': image_url}
@@ -123,6 +81,9 @@ class MetadataFileWriter:
 
     def create_metadata_filename(self, machine, datetime_start):
         self.metadata_filename = f'OMS_{machine}_{datetime_start}.json'
+
+    def create_image_filename(self, machine, pixel_number, datetime):
+        return f'OMS_{machine}_p{str(pixel_number).zfill(3)}_{datetime}.png'
 
     def create_metadata(self, test_status='Aborted'):
         datetime_end = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ%f')
@@ -177,4 +138,10 @@ class CalibrationMetadataWriter:
         with open(os.path.join(output_dir, self.calibration_filename), 'w') as f:
             json.dump(self.metadata, f)
 
-
+def _load_metadata_from_file(fpath):
+    try:
+        with open(fpath) as f:
+            return json.load(f)
+    except Exception as e:
+        print(e)
+        return None
