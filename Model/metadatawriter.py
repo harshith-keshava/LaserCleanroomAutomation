@@ -1,6 +1,6 @@
 import os
 import json
-import datetime
+from datetime import datetime
 from PIL import Image, PngImagePlugin
 
 from vfomsprocessor import utils
@@ -79,79 +79,67 @@ class MetadataFileWriter:
     def __init__(self, machine=None, datetime=None, oms_calibration_info=None, metadata_filename=None):
         self.metadata_filename = metadata_filename
         self.machine = machine
-        self.datetime_current = datetime
+        # self.datetime_current = datetime
         self.datetime_start = datetime
         self.oms_calibration_info = oms_calibration_info
         self.metadata = None
-        self.current_pixel = None
-        self.current_image_filename = None
-        self.current_frame = 0
-        self.image_number = 0
-        self.pixel_list = []
+        # self.current_pixel = None
+        # self.current_image_filename = None
+        # self.pixel_list = []
         self.frame_list = []
+        if not machine:
+            self.machine = 'unknown'
+        if not datetime:
+            self.datetime_start = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ%f')
+        if not metadata_filename:
+            self.create_metadata_filename(self.machine, self.datetime_start)
+
+    def _load_metadata_from_file(self, fpath):
+        try:
+            with open(fpath) as f:
+                return json.load(f)
+        except Exception as e:
+            print(e)
+            return None
 
     def load_calibration_info(self, fpath):
-        self.oms_calibration_info = utils.load_metadata_from_file(fpath)
-
+        self.oms_calibration_info = self._load_metadata_from_file(fpath)
 
     def add_frame_and_save_image(self, metadata, img, output_dir,
-                                 image_url=None, datetime=None):
+                                 image_url=None):
 
-        self.add_frame(pixel_number, gantry_x_mm, gantry_y_mm, zaber_z_mm, datetime, image_url)
+        self.add_frame(metadata, image_url)
         iw = ImageWriter(self.metadata_filename, self.machine, self.current_pixel, self.datetime_current,
                  gantry_x_mm, gantry_y_mm, zaber_z_mm, self.oms_calibration_info, self.current_image_filename)
         iw.save_image(img, output_dir)
 
-    def add_frame(self, pixel_number, gantry_x_mm, gantry_y_mm, zaber_z_mm, datetime=None, image_url=None):
-        if self.current_pixel is None:
-            self.current_pixel = pixel_number
-        elif pixel_number != self.current_pixel:
-            ## add frames from previous pixel
-            self.add_pixel_info()
-            self.frame_list = []
-        self.create_frame_info(gantry_x_mm, gantry_y_mm, zaber_z_mm, datetime, image_url)
+    def add_frame(self, metadata, image_url=None):
 
-    def create_frame_info(self, gantry_x_mm, gantry_y_mm, zaber_z_mm, datetime=None, image_url=None):
-        if datetime is None:
-            self.datetime_current = utils.get_datestr()
-        else:
-            self.datetime_current = datetime
-        if not self.datetime_start:
-            self.datetime_start = self.datetime_current
-        if not self.metadata_filename:
-            self.create_metadata_filename(self.machine, self.datetime_start)
         frame_number = len(self.frame_list) + 1
-        self.current_image_filename = create_image_filename(self.machine, self.current_pixel, self.datetime_current)
-        frame_dict = {'frame_number': frame_number,
-                     'image_filename': self.current_image_filename,
-                     'image_url': image_url,
-                     'datetime': self.datetime_current,
-                     'gantry_x_mm': gantry_x_mm,
-                     'gantry_y_mm': gantry_y_mm,
-                     'zaber_z_mm': zaber_z_mm}
+        machine = metadata['MachineName']
+        pixel = metadata['ActivePixel']
+        timestamp = metadata['TimeString']
+        image_filename = create_image_filename(machine, pixel, timestamp)
+        frame_dict = {'frame': frame_number,
+                      'image_filename': image_filename,
+                      'image_url': image_url}
+        frame_dict.update(metadata)
         self.frame_list.append(frame_dict)
 
-    def update_pixel(self, pixel_number):
-        self.current_pixel = pixel_number
-
-    def add_pixel_info(self):
-        self.pixel_list.append({
-            'pixel_number': self.current_pixel,
-            'frames': self.frame_list
-        })
 
     def create_metadata_filename(self, machine, datetime_start):
         self.metadata_filename = f'OMS_{machine}_{datetime_start}.json'
 
     def create_metadata(self):
+        datetime_end = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ%f')
         self.metadata = {
             'metadata_filename': self.metadata_filename,
             'machine': self.machine,
             'datetime_start': self.datetime_start,
-            'datetime_end': self.datetime_current,
+            'datetime_end': datetime_end,
             'number_pixels_tested': len(self.pixel_list),
             'oms_calibration_info': self.oms_calibration_info,
-            'pixels': self.pixel_list
+            'frames': self.frame_list
         }
 
     def save_file(self, output_dir):
