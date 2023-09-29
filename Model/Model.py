@@ -914,6 +914,20 @@ class Model:
             self.ZaberPositionTag.setPlcValue(camera.getPositionerPosition())
         if cmd == False: 
             self.resetResponseTags()
+            
+    ##----------- TODO -----------
+    def initializeOMScamera_TODO(self):
+        self.camera_dir = os.path.join(self.saveLocation, "cameraData")
+        if not os.path.exists(self.camera_dir):
+            os.makedirs(self.camera_dir, exist_ok=True)
+
+    def abortOMSframeCapture_TODO(self):
+        self.metadatafilewriter.save_file(self.camera_dir, test_status='Aborted')
+
+    def completeOMSframeCapture_TODO(self):
+        self.metadatafilewriter.save_file(self.camera_dir, test_status='Completed')
+
+    ##------- END TODO ---------------------
 
    ############################## HELPER FUNCTION ##########################################
 
@@ -937,9 +951,7 @@ class Model:
             #     self.MetaDataWriterDoneTag.setPlcValue(0)
 
             # Save image to camera-specific subdirectory until otherwise specified. Append to metadata (in memory)
-            camera_dir = os.path.join(self.saveLocation, "cameraData")
-            if not os.path.exists(camera_dir):
-                os.makedirs(camera_dir, exist_ok=True)
+
 
             if self.metadatafilewriter is None:
                 time_start = self.timeStamp.strftime('%Y%m%dT%H%M%SZ%f')
