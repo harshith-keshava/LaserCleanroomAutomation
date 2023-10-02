@@ -940,8 +940,8 @@ class Model:
         if self.camera.isConnected:
             camera = CameraDriver()
             activePixel = self.activePixelTag.value
-            gantryXPosition = self.GantryXPositionStatusTag 
-            gantryXPosition = self.GantryYPositionStatusTag
+            gantryXPosition = self.GantryXPositionStatusTag.value
+            gantryXPosition = self.GantryYPositionStatusTag.value
             zaberPosition = camera.getPositionerPosition()
             pulseOnMsec = self.pulseOnMsecTag.value
             startingPowerLevel = self.startingPowerLevelTag.value
