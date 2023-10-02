@@ -767,8 +767,6 @@ class Model:
         self.errorS3ConnectionTag.setPlcValue(0)
         self.errorCaptureFailedTag.setPlcValue(0)
         self.errorFrameCaptureFailedTag.setPlcValue(0)
-        self.ZaberGetHomeStatusTag.setPlcValue(0)
-        self.ZaberGetPosFeedbackTag.setPlcValue(0)
 
     ##################################### TAG REACTIONS ###################################################################
 
