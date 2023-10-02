@@ -362,6 +362,8 @@ class Model:
             self.ZaberMoveAbsoluteTag.attachReaction(self.ZaberMoveAbsoluteReaction)
             self.ZaberGetHomeStatusTag.attachReaction(self.ZaberGetHomeStatusReaction)
             self.ZaberGetPosFeedbackTag.attachReaction(self.ZaberGetPosFeedbackReaction)
+            self.OMSTestCompleteTag.attachReaction(self.OMSTestCompleteReaction)
+            self.OMSTestAbortedTag.attachReaction(self.OMSTestAbortedReaction)
 
         except:
             print("OPCUA reaction setup failed")
@@ -915,6 +917,22 @@ class Model:
             camera = CameraDriver()
             self.ZaberPositionTag.setPlcValue(camera.getPositionerPosition())
         if cmd == False: 
+            self.resetResponseTags()
+
+    def OMSTestCompleteReaction(self):
+        cmd = self.OMSTestCompleteTag.value
+        #if cmd == True:
+            # Meta data writer to use the flag to do its thing after test complete ( Enable above line )
+
+        if cmd == False:   
+            self.resetResponseTags()
+
+    def OMSTestAbortedReaction(self):
+        cmd = self.OMSTestAbortedTag.value
+        #if cmd == True:
+            # Meta data writer to use the flag to do its thing when test is aborted ( Enable above line )
+
+        if cmd == False:   
             self.resetResponseTags()
 
    ############################## HELPER FUNCTION ##########################################
