@@ -896,7 +896,6 @@ class Model:
             camera = CameraDriver()
             camera.moveAbsPositioner(self.ZaberAbsolutePosParTag.value)
             self.camera.setExposure(self.CameraExposureTag.value) # Set Exposure with zaber move 
-             # reset done tag used for next iteration 
         if cmd == False:
             self.resetResponseTags()
 
