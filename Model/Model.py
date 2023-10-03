@@ -360,6 +360,8 @@ class Model:
             self.ZaberMoveAbsoluteTag.attachReaction(self.ZaberMoveAbsoluteReaction)
             self.ZaberGetHomeStatusTag.attachReaction(self.ZaberGetHomeStatusReaction)
             self.ZaberGetPosFeedbackTag.attachReaction(self.ZaberGetPosFeedbackReaction)
+            self.OMSTestCompleteTag.attachReaction(self.OMSTestCompleteReaction)
+            self.OMSTestAbortedTag.attachReaction(self.OMSTestAbortedReaction)
 
         except:
             print("OPCUA reaction setup failed")
@@ -763,8 +765,7 @@ class Model:
         self.errorS3ConnectionTag.setPlcValue(0)
         self.errorCaptureFailedTag.setPlcValue(0)
         self.errorFrameCaptureFailedTag.setPlcValue(0)
-        self.ZaberGetHomeStatusTag.setPlcValue(0)
-        self.ZaberGetPosFeedbackTag.setPlcValue(0)
+        self.MetaDataWriterDoneTag.setPlcValue(0)
 
     ##################################### TAG REACTIONS ###################################################################
 
@@ -883,8 +884,6 @@ class Model:
             self.logger.addNewLog("Zaber move relative command received from  PLC ")
             camera = CameraDriver()
             camera.moveRelPositioner(self.ZaberRelativePosParTag.value)
-            self.camera.setExposure(self.CameraExposureTag.value) # Set Exposure with zaber move 
-            self.MetaDataWriterDoneTag.setPlcValue(0) # reset done tag used for next iteration 
         if cmd == False:
             self.resetResponseTags()
 
@@ -894,6 +893,7 @@ class Model:
             self.logger.addNewLog("Zaber move absolute command received from  PLC ")
             camera = CameraDriver()
             camera.moveAbsPositioner(self.ZaberAbsolutePosParTag.value)
+            self.camera.setExposure(self.CameraExposureTag.value) # Set Exposure with zaber move 
         if cmd == False:
             self.resetResponseTags()
 
@@ -913,6 +913,22 @@ class Model:
             camera = CameraDriver()
             self.ZaberPositionTag.setPlcValue(camera.getPositionerPosition())
         if cmd == False: 
+            self.resetResponseTags()
+
+    def OMSTestCompleteReaction(self):
+        cmd = self.OMSTestCompleteTag.value
+        #if cmd == True:
+            # Meta data writer to use the flag to do its thing after test complete ( Enable above line )
+
+        if cmd == False:   
+            self.resetResponseTags()
+
+    def OMSTestAbortedReaction(self):
+        cmd = self.OMSTestAbortedTag.value
+        #if cmd == True:
+            # Meta data writer to use the flag to do its thing when test is aborted ( Enable above line )
+
+        if cmd == False:   
             self.resetResponseTags()
 
     ##----------- TODO -----------
@@ -936,14 +952,14 @@ class Model:
         if self.camera.isConnected:
             camera = CameraDriver()
             activePixel = self.activePixelTag.value
-            gantryXPosition = self.GantryXPositionStatusTag 
-            gantryYPosition = self.GantryYPositionStatusTag
+            gantryXPosition = self.GantryXPositionStatusTag.value
+            gantryYPosition = self.GantryYPositionStatusTag.value
             zaberPosition = camera.getPositionerPosition()
             pulseOnMsec = self.pulseOnMsecTag.value
             startingPowerLevel = self.startingPowerLevelTag.value
             machineName = self.MachineNameTag.value
 
-            metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryXPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName )
+            metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName )
 
             ## unclear what this is doing... should it come before or after the image is saved and metadata is appended?
             # if captureFrameStatus:

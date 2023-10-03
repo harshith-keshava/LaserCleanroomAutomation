@@ -36,6 +36,8 @@ class CameraDriver:
             self.softwareVersion = self.gd.ctrl.GetSoftwareVersion() # 8.0D92 is expected here
             #self.gd.ctrl.LoadThisJobFile('ConfigFiles\wincam_settings.ojf')
             self.cameraNID = self.gd.ctrl.GetCameraNID(0)
+        else:
+            print("An error occurred initializing camera. Check Camera connection is ok")    
     
     def getTriggerMode(self):
         return self.gd.ctrl.LCMTriggerMode
