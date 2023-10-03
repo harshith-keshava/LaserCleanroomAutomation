@@ -766,6 +766,7 @@ class Model:
         self.errorCaptureFailedTag.setPlcValue(0)
         self.errorFrameCaptureFailedTag.setPlcValue(0)
         self.MetaDataWriterDoneTag.setPlcValue(0)
+        self.MetaDataWriterReadyTag.setPlcValue(0)
 
     ##################################### TAG REACTIONS ###################################################################
 
@@ -875,6 +876,15 @@ class Model:
             camera = CameraDriver()
             camera.homePositioner()
             self.camera.initialize()
+            #Check camera directory
+            self.camera_dir = os.path.join(self.saveLocation, "cameraData")
+            if not os.path.exists(self.camera_dir):
+                os.makedirs(self.camera_dir, exist_ok=True)
+            # Meta Writer Init
+            if self.metadatafilewriter is None:
+                time_start = self.timeStamp.strftime('%Y%m%dT%H%M%SZ%f')
+                self.metadatafilewriter = MetadataFileWriter(machine=self.MachineNameTag, datetime=time_start)
+            self.MetaDataWriterReadyTag.setPlcValue(1)
         if cmd == False:
             self.resetResponseTags()
 
@@ -917,33 +927,19 @@ class Model:
 
     def OMSTestCompleteReaction(self):
         cmd = self.OMSTestCompleteTag.value
-        #if cmd == True:
-            # Meta data writer to use the flag to do its thing after test complete ( Enable above line )
+        if cmd == True:
+            self.metadatafilewriter.save_file(self.camera_dir, test_status='Completed')
 
         if cmd == False:   
             self.resetResponseTags()
 
     def OMSTestAbortedReaction(self):
         cmd = self.OMSTestAbortedTag.value
-        #if cmd == True:
-            # Meta data writer to use the flag to do its thing when test is aborted ( Enable above line )
+        if cmd == True:
+            self.metadatafilewriter.save_file(self.camera_dir, test_status='Aborted')
 
         if cmd == False:   
             self.resetResponseTags()
-
-    ##----------- TODO -----------
-    def initializeOMScamera_TODO(self):
-        self.camera_dir = os.path.join(self.saveLocation, "cameraData")
-        if not os.path.exists(self.camera_dir):
-            os.makedirs(self.camera_dir, exist_ok=True)
-
-    def abortOMSframeCapture_TODO(self):
-        self.metadatafilewriter.save_file(self.camera_dir, test_status='Aborted')
-
-    def completeOMSframeCapture_TODO(self):
-        self.metadatafilewriter.save_file(self.camera_dir, test_status='Completed')
-
-    ##------- END TODO ---------------------
 
    ############################## HELPER FUNCTION ##########################################
 
@@ -961,22 +957,13 @@ class Model:
 
             metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName )
 
-            ## unclear what this is doing... should it come before or after the image is saved and metadata is appended?
-            # if captureFrameStatus:
-            #     self.MetaDataWriterDoneTag.setPlcValue(1)
-            # else:
-            #     self.MetaDataWriterDoneTag.setPlcValue(0)
-
             # Save image to camera-specific subdirectory until otherwise specified. Append to metadata (in memory)
+            image_url = None  ##TODO - get image URL from S3
+            metadata_write_status = self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, self.camera_dir, image_url)
+            print(f"Saved frame to: {os.path.join(self.camera_dir, self.metadatafilewriter.current_image_filename)}")
 
+            self.MetaDataWriterDoneTag.setPlcValue(1)
 
-            if self.metadatafilewriter is None:
-                time_start = self.timeStamp.strftime('%Y%m%dT%H%M%SZ%f')
-                self.metadatafilewriter = MetadataFileWriter(machine=metadata['MachineName'], datetime=time_start)
-            ##TODO - get image URL from S3
-            image_url = None
-            metadata_write_status = self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, camera_dir, image_url)
-            print(f"Saved frame to: {os.path.join(camera_dir, self.metadatafilewriter.current_image_filename)}")
             return True
         else:
             return False
