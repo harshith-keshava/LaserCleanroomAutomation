@@ -94,8 +94,7 @@ class CameraDriver:
         # Get current time in UTC
         time_utc = datetime.utcnow()
 
-        milliseconds = time_utc.microsecond // 1000  # Convert microseconds to milliseconds
-        metadata['TimeString'] = f"{time_utc.date()}T{time_utc.hour}{time_utc.minute}{time_utc.second}Z{milliseconds}"
+        metadata['TimeString'] = time_utc.strftime('%Y%m%dT%H%M%SZ%f')
 
         # Convert WinCamData tuple to 2D numpy array
         rawData = self.gd.ctrl.GetWinCamDataAsVariant()
@@ -105,7 +104,9 @@ class CameraDriver:
         else:
             imageData = imageData.reshape((1,-1)) # (numRows=1, numCols=any); if there's a mismatch in rows/cols for any reason, one row will at least contain everything. TODO: does image processing hate this?
         
-        return OmsFrame(metadata, imageData)
+        return metadata, imageData
+    
+    
 
     def moveAbsPositioner(self,target_position):
         try:

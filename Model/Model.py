@@ -1,28 +1,26 @@
-
-import csv
 import os
-from ConfigFiles.MachineSettings import MachineSettings
-from Model.BNRopcuaTag import BNRopcuaTag
-from Model.LUTDataGeneration import LUTDataManager
-from ConfigFiles.TestSettings import TestSettings
-from opcua import Client
-import numpy as np
-from enum import Enum
-import time
-from datetime import datetime
 import csv
-from Model.Logger import Logger
+import time
 import numpy as np
 import statistics as stat
 import pandas as pd
-from Model.FTP_Manager import FTP_Manager
-from Model.CameraDriver import CameraDriver
-from Model.OphirCom import OphirJunoCOM
-from Model.LaserSettings import LaserSettings
+from enum import Enum
+from datetime import datetime
 from minio import Minio
 from minio.error import S3Error
 import urllib3
 import urllib3.exceptions
+from opcua import Client
+from ConfigFiles.MachineSettings import MachineSettings
+from Model.BNRopcuaTag import BNRopcuaTag
+from Model.LUTDataGeneration import LUTDataManager
+from ConfigFiles.TestSettings import TestSettings
+from Model.Logger import Logger
+from Model.FTP_Manager import FTP_Manager
+from Model.CameraDriver import CameraDriver
+from Model.OphirCom import OphirJunoCOM
+from Model.LaserSettings import LaserSettings
+from Model.metadatawriter import MetadataFileWriter
 
 ## Test Type Enum for the different types of tests that process team runs
 ## Calibration: Predefined tolerance band always run with Linear LUTS, run to generate new LUTs for the VFLCRs
@@ -93,7 +91,7 @@ class Model:
         self.currentPowerLevelIndex = 0 ## power level counter to adjust camera exposure
         self.exposureAt100W = 1 ## 1ms exposure at 100W pulse
         self.http = urllib3.PoolManager()
-    
+        self.metadatafilewriter = None
         ############################################# ADD TAGS #########################################
 
         # Connection of the client using the freeopcua library
@@ -768,6 +766,7 @@ class Model:
         self.errorCaptureFailedTag.setPlcValue(0)
         self.errorFrameCaptureFailedTag.setPlcValue(0)
         self.MetaDataWriterDoneTag.setPlcValue(0)
+        self.MetaDataWriterReadyTag.setPlcValue(0)
 
     ##################################### TAG REACTIONS ###################################################################
 
@@ -877,6 +876,15 @@ class Model:
             camera = CameraDriver()
             camera.homePositioner()
             self.camera.initialize()
+            #Check camera directory
+            self.camera_dir = os.path.join(self.saveLocation, "cameraData")
+            if not os.path.exists(self.camera_dir):
+                os.makedirs(self.camera_dir, exist_ok=True)
+            # Meta Writer Init
+            if self.metadatafilewriter is None:
+                time_start = self.timeStamp.strftime('%Y%m%dT%H%M%SZ%f')
+                self.metadatafilewriter = MetadataFileWriter(machine=self.MachineNameTag, datetime=time_start)
+            self.MetaDataWriterReadyTag.setPlcValue(1)
         if cmd == False:
             self.resetResponseTags()
 
@@ -919,16 +927,16 @@ class Model:
 
     def OMSTestCompleteReaction(self):
         cmd = self.OMSTestCompleteTag.value
-        #if cmd == True:
-            # Meta data writer to use the flag to do its thing after test complete ( Enable above line )
+        if cmd == True:
+            self.metadatafilewriter.save_file(self.camera_dir, test_status='Completed')
 
         if cmd == False:   
             self.resetResponseTags()
 
     def OMSTestAbortedReaction(self):
         cmd = self.OMSTestAbortedTag.value
-        #if cmd == True:
-            # Meta data writer to use the flag to do its thing when test is aborted ( Enable above line )
+        if cmd == True:
+            self.metadatafilewriter.save_file(self.camera_dir, test_status='Aborted')
 
         if cmd == False:   
             self.resetResponseTags()
@@ -941,25 +949,21 @@ class Model:
             camera = CameraDriver()
             activePixel = self.activePixelTag.value
             gantryXPosition = self.GantryXPositionStatusTag.value
-            gantryXPosition = self.GantryYPositionStatusTag.value
+            gantryYPosition = self.GantryYPositionStatusTag.value
             zaberPosition = camera.getPositionerPosition()
             pulseOnMsec = self.pulseOnMsecTag.value
             startingPowerLevel = self.startingPowerLevelTag.value
             machineName = self.MachineNameTag.value
 
-            captureFrameStatus = self.camera.fetchFrame(activePixel,gantryXPosition,gantryXPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName )
-            if captureFrameStatus:
-                self.MetaDataWriterDoneTag.setPlcValue(1)
-            else:
-                self.MetaDataWriterDoneTag.setPlcValue(0)
-            ## TO DO: META DATA WRITER  - IMAGE SAVE AND APPEND META DATA TO MASTER
+            metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName )
 
-            # Save to camera-specific subdirectory until otherwise specified. Include binary data for now.
-            #camera_dir = os.path.join(self.saveLocation, "cameraData")
-            #file_path = os.path.join(camera_dir, "pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1))
-            #os.makedirs(camera_dir, exist_ok=True)
-            #print("saving frame to: " + file_path)
-            #currentFrame.save(file_path, include_binary=True)
+            # Save image to camera-specific subdirectory until otherwise specified. Append to metadata (in memory)
+            image_url = None  ##TODO - get image URL from S3
+            metadata_write_status = self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, self.camera_dir, image_url)
+            print(f"Saved frame to: {os.path.join(self.camera_dir, self.metadatafilewriter.current_image_filename)}")
+
+            self.MetaDataWriterDoneTag.setPlcValue(1)
+
             return True
         else:
             return False
