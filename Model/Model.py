@@ -767,6 +767,7 @@ class Model:
         self.errorS3ConnectionTag.setPlcValue(0)
         self.errorCaptureFailedTag.setPlcValue(0)
         self.errorFrameCaptureFailedTag.setPlcValue(0)
+        self.MetaDataWriterDoneTag.setPlcValue(0)
 
     ##################################### TAG REACTIONS ###################################################################
 
@@ -895,7 +896,7 @@ class Model:
             camera = CameraDriver()
             camera.moveAbsPositioner(self.ZaberAbsolutePosParTag.value)
             self.camera.setExposure(self.CameraExposureTag.value) # Set Exposure with zaber move 
-            self.MetaDataWriterDoneTag.setPlcValue(0) # reset done tag used for next iteration 
+             # reset done tag used for next iteration 
         if cmd == False:
             self.resetResponseTags()
 
