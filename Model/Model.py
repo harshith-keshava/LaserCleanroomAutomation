@@ -885,8 +885,6 @@ class Model:
             self.logger.addNewLog("Zaber move relative command received from  PLC ")
             camera = CameraDriver()
             camera.moveRelPositioner(self.ZaberRelativePosParTag.value)
-            self.camera.setExposure(self.CameraExposureTag.value) # Set Exposure with zaber move 
-            self.MetaDataWriterDoneTag.setPlcValue(0) # reset done tag used for next iteration 
         if cmd == False:
             self.resetResponseTags()
 
@@ -896,6 +894,8 @@ class Model:
             self.logger.addNewLog("Zaber move absolute command received from  PLC ")
             camera = CameraDriver()
             camera.moveAbsPositioner(self.ZaberAbsolutePosParTag.value)
+            self.camera.setExposure(self.CameraExposureTag.value) # Set Exposure with zaber move 
+            self.MetaDataWriterDoneTag.setPlcValue(0) # reset done tag used for next iteration 
         if cmd == False:
             self.resetResponseTags()
 
