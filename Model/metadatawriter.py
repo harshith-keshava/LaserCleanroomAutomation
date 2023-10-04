@@ -3,8 +3,6 @@ import json
 from datetime import datetime
 from PIL import Image, PngImagePlugin
 
-from vfomsprocessor import utils
-
 class ImageWriter:
     def __init__(self, image_filename, metadata_filename=None, metadata=None, oms_calibration_info=None):
         self.image_filename = image_filename
@@ -101,40 +99,6 @@ class MetadataFileWriter:
     def save_file(self, output_dir, test_status='Aborted'):
         self.create_metadata(test_status)
         with open(os.path.join(output_dir, self.metadata_filename), 'w') as f:
-            json.dump(self.metadata, f)
-
-class CalibrationMetadataWriter:
-    def __init__(self, lateral_mag, pyrometer_loss, boresight_angle_deg, z_offset_mm, oms_calibration_completed,
-                 oms_calibration_due, calibration_filename=None):
-        self.lateral_mag = lateral_mag
-        self.pyrometer_loss = pyrometer_loss
-        self.boresight_angle_deg = boresight_angle_deg
-        self.z_offset_mm = z_offset_mm
-        self.oms_calibration_completed = oms_calibration_completed
-        self.oms_calibration_due = oms_calibration_due
-        self.calibration_filename = calibration_filename
-
-    def create_filename(self, datetime=None):
-        if datetime is None:
-            datetime = utils.get_datestr()
-        self.calibration_filename = f'OMS-cal_{datetime}.json'
-
-    def create_metadata(self):
-        self.metadata = {
-            'oms_calibration_filename': self.calibration_filename,
-            'lateral_mag': self.lateral_mag,
-            'pyrometer_loss': self.pyrometer_loss,
-            'boresight_angle_deg': self.boresight_angle_deg,
-            'z_offset_mm': self.z_offset_mm,
-            'oms_calibration_completed': self.oms_calibration_completed,
-            'oms_calibration_due': self.oms_calibration_due
-        }
-
-    def save_file(self, output_dir):
-        if self.calibration_filename is None:
-            self.create_filename()
-        self.create_metadata()
-        with open(os.path.join(output_dir, self.calibration_filename), 'w') as f:
             json.dump(self.metadata, f)
 
 def _load_metadata_from_file(fpath):
