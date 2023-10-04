@@ -111,7 +111,7 @@ class CameraDriver:
     def moveAbsPositioner(self,target_position):
         try:
             # Open an ASCII serial connection to the port 
-            connection = zaber.serial.AsciiSerial("COM4")
+            connection = zaber.serial.AsciiSerial("COM11")
 
             rawData = str(target_position * 1000000.0)  # Convert the value to a string. Conversion factor between disance and raw steps is 1000000
            
@@ -135,7 +135,7 @@ class CameraDriver:
     def moveRelPositioner(self,target_position):
         try:
             # Open an ASCII serial connection to the port 
-            connection = zaber.serial.AsciiSerial("COM4")
+            connection = zaber.serial.AsciiSerial("COM11")
 
             rawData = str(target_position * 1000000.0)  # Convert the value to a string. Conversion factor between disance and raw steps is 1000000
            
@@ -159,7 +159,7 @@ class CameraDriver:
     def homePositioner(self):
         try:
             # Open an ASCII serial connection to the port 
-            connection = zaber.serial.AsciiSerial("COM4")
+            connection = zaber.serial.AsciiSerial("COM11")
 
             # Send the "home" command
             connection.write("home")
@@ -176,7 +176,7 @@ class CameraDriver:
     def getPositionerPosition(self):
         try:
             # Open an ASCII serial connection to the port 
-            connection = zaber.serial.AsciiSerial("COM4")
+            connection = zaber.serial.AsciiSerial("COM11")
 
             # Send the "get pos" command
             connection.write("get pos")
@@ -203,7 +203,7 @@ class CameraDriver:
     def getPositionerRefStatus(self):
         try:
             # Open an ASCII serial connection to the port 
-            connection = zaber.serial.AsciiSerial("COM4")
+            connection = zaber.serial.AsciiSerial("COM11")
 
             # Send the "get pos" command
             connection.write("get pos")
