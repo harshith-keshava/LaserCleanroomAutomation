@@ -966,6 +966,7 @@ class Model:
 
             return True
         else:
+            print("Camera not connected. Check Camera Connection")
             return False
 
     def _capturePowerData(self):
