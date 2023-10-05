@@ -90,12 +90,14 @@ class Model:
         self.pyrometer = OphirJunoCOM()
         self.pyrometer.connectToJuno()
         print("Juno connection:" + str(self.pyrometer.isConnected))
-        self.ZaberConnection = self.camera.zaberConnect() # Connect Zaber over serial
         self.testName = ""
         self.currentPowerLevelIndex = 0 ## power level counter to adjust camera exposure
         self.exposureAt100W = 1 ## 1ms exposure at 100W pulse
         self.http = urllib3.PoolManager()
         self.metadatafilewriter = None
+
+        #Zaber Init
+        self.ZaberConnection = self.camera.zaberConnect() # Connect Zaber over serial
 
         # Camera init
         self.app = wx.App()

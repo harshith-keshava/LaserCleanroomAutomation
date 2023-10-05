@@ -41,7 +41,7 @@ class CameraDriver:
     
     def setExposureAndGain(self, newExposure, newGain,gdCtrl):
         # Propagate success of both setters
-        return self.setExposure(newExposure) and self.setGain(newGain)
+        return self.setExposure(newExposure,gdCtrl) and self.setGain(newGain,gdCtrl)
 
     def getExposure(self,gdCtrl):
         return gdCtrl.ctrl.GetTargetCameraExposure(0)
@@ -153,7 +153,7 @@ class CameraDriver:
 
     def getPositionerPosition(self,Connection):
         try:
-
+            
             # Send the "get pos" command
             Connection.write("get pos")
 
