@@ -4,8 +4,8 @@ import png
 import time
 import numpy as np
 import json
-import zaber.serial
 from datetime import datetime
+import zaber.serial
 
 class CameraDriver:
     
@@ -110,8 +110,6 @@ class CameraDriver:
 
     def moveAbsPositioner(self,target_position):
         try:
-            # Open an ASCII serial connection to the port 
-            connection = zaber.serial.AsciiSerial("COM11")
 
             rawData = str(target_position * 1000000.0)  # Convert the value to a string. Conversion factor between disance and raw steps is 1000000
            
@@ -121,10 +119,7 @@ class CameraDriver:
             print(command_string)
 
             # Send the "move absolute" command
-            connection.write(command_string)
-
-            # Close the connection
-            connection.close()
+            zaber.serial.AsciiSerial.write(command_string)
 
             return 1
 
@@ -134,21 +129,16 @@ class CameraDriver:
 
     def moveRelPositioner(self,target_position):
         try:
-            # Open an ASCII serial connection to the port 
-            connection = zaber.serial.AsciiSerial("COM11")
 
             rawData = str(target_position * 1000000.0)  # Convert the value to a string. Conversion factor between disance and raw steps is 1000000
            
             # Concatenate "mov abs " with the rawData
-            command_string = "move rel " + rawData
+            command_string = "move rel " + rawData  
             
             print(command_string)
 
             # Send the "move absolute" command
-            connection.write(command_string)
-
-            # Close the connection
-            connection.close()
+            zaber.serial.AsciiSerial.write(command_string)
 
             return 1
 
@@ -158,14 +148,9 @@ class CameraDriver:
 
     def homePositioner(self):
         try:
-            # Open an ASCII serial connection to the port 
-            connection = zaber.serial.AsciiSerial("COM11")
 
             # Send the "home" command
-            connection.write("home")
-
-            # Close the connection
-            connection.close()
+            zaber.serial.AsciiSerial.write("home")
 
             return 1
 
@@ -175,25 +160,21 @@ class CameraDriver:
 
     def getPositionerPosition(self):
         try:
-            # Open an ASCII serial connection to the port 
-            connection = zaber.serial.AsciiSerial("COM11")
 
             # Send the "get pos" command
-            connection.write("get pos")
+            zaber.serial.AsciiSerial.write("get pos")
 
             # Read status
-            current_position_data = str(connection.read())
+            current_position_data = str(zaber.serial.AsciiSerial.read())
 
             if len(current_position_data) >= 17:
                 current_position = int(current_position_data[17:])
                 current_position = current_position/1000000
                 print(current_position) # in mm
-                # Close the connection
-                connection.close()
+
                 return current_position
             else:
-                # Close the connection
-                connection.close()
+
                 return 999.99
 
         except Exception as e:
@@ -202,28 +183,22 @@ class CameraDriver:
 
     def getPositionerRefStatus(self):
         try:
-            # Open an ASCII serial connection to the port 
-            connection = zaber.serial.AsciiSerial("COM11")
 
             # Send the "get pos" command
-            connection.write("get pos")
+            zaber.serial.AsciiSerial.write("get pos")
 
             # Read status
-            current_position_data = str(connection.read())
+            current_position_data = str(zaber.serial.AsciiSerial.read())
 
             if len(current_position_data) >= 1:
                 warning = str(current_position_data[14:16])
                 print(warning)
-                # Close the connection
-                connection.close()
 
                 if warning == "WR" or warning == "WH" : # WR: no reference or WH: not homed
                     return False
                 else: 
                     return True
             else:
-                # Close the connection
-                connection.close()
                 return 0 # TO DO: report error
 
         except Exception as e:

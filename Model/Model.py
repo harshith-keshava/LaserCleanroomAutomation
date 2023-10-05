@@ -21,6 +21,7 @@ from Model.CameraDriver import CameraDriver
 from Model.OphirCom import OphirJunoCOM
 from Model.LaserSettings import LaserSettings
 from Model.metadatawriter import MetadataFileWriter
+import zaber.serial
 
 ## Test Type Enum for the different types of tests that process team runs
 ## Calibration: Predefined tolerance band always run with Linear LUTS, run to generate new LUTs for the VFLCRs
@@ -880,6 +881,8 @@ class Model:
             self.camera_dir = os.path.join(self.saveLocation, "cameraData")
             if not os.path.exists(self.camera_dir):
                 os.makedirs(self.camera_dir, exist_ok=True)
+            #Zaber Connection init
+            self.ZaberConnection = zaber.serial.AsciiSerial("COM11")
             # Meta Writer Init
             if self.metadatafilewriter is None:
                 time_start = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ%f')
@@ -928,6 +931,8 @@ class Model:
     def OMSTestCompleteReaction(self):
         cmd = self.OMSTestCompleteTag.value
         if cmd == True:
+            # Close Zaber connection
+            zaber.serial.AsciiSerial.close()
             self.metadatafilewriter.save_file(self.camera_dir, test_status='Completed')
 
         if cmd == False:   
@@ -936,6 +941,8 @@ class Model:
     def OMSTestAbortedReaction(self):
         cmd = self.OMSTestAbortedTag.value
         if cmd == True:
+            # Close Zaber connection
+            zaber.serial.AsciiSerial.close()
             self.metadatafilewriter.save_file(self.camera_dir, test_status='Aborted')
 
         if cmd == False:   
