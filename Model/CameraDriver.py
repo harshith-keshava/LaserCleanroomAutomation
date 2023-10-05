@@ -101,8 +101,9 @@ class CameraDriver:
     
     
 
-    def moveAbsPositioner(self,target_position,Connection):
+    def moveAbsPositioner(self,target_position):
         try:
+            Connection = zaber.serial.AsciiSerial("COM11")
 
             rawData = str(target_position * 1000000.0)  # Convert the value to a string. Conversion factor between disance and raw steps is 1000000
            
@@ -113,15 +114,16 @@ class CameraDriver:
 
             # Send the "move absolute" command
             Connection.write(command_string)
-
+            Connection.close()
             return 1
 
         except Exception as e:
             print("An error occurred:", e)
             return 0  #TO DO:  might want to return an appropriate error code
 
-    def moveRelPositioner(self,target_position,Connection):
+    def moveRelPositioner(self,target_position):
         try:
+            Connection = zaber.serial.AsciiSerial("COM11")
 
             rawData = str(target_position * 1000000.0)  # Convert the value to a string. Conversion factor between disance and raw steps is 1000000
            
@@ -132,28 +134,30 @@ class CameraDriver:
 
             # Send the "move absolute" command
             Connection.write(command_string)
-
+            Connection.close()
             return 1
 
         except Exception as e:
             print("An error occurred:", e)
             return 0  #TO DO:  might want to return an appropriate error code
 
-    def homePositioner(self,Connection):
+    def homePositioner(self):
         try:
+            Connection = zaber.serial.AsciiSerial("COM11")
 
             # Send the "home" command
             Connection.write("home")
-
+            Connection.close()
             return 1
 
         except Exception as e:
             print("An error occurred:", e)
             return 0  #TO DO:  might want to return an appropriate error code
 
-    def getPositionerPosition(self,Connection):
+    def getPositionerPosition(self):
         try:
-            
+            Connection = zaber.serial.AsciiSerial("COM11")
+
             # Send the "get pos" command
             Connection.write("get pos")
 
@@ -164,18 +168,19 @@ class CameraDriver:
                 current_position = int(current_position_data[17:])
                 current_position = current_position/1000000
                 print(current_position) # in mm
-
+                Connection.close()
                 return current_position
             else:
-
+                Connection.close()
                 return 999.99
 
         except Exception as e:
             print("An error occurred:", e)
             return 999.99 #TO DO:  might want to return an appropriate error code
 
-    def getPositionerRefStatus(self,Connection):
+    def getPositionerRefStatus(self):
         try:
+            Connection = zaber.serial.AsciiSerial("COM11")
 
             # Send the "get pos" command
             Connection.write("get pos")
@@ -188,10 +193,13 @@ class CameraDriver:
                 print(warning)
 
                 if warning == "WR" or warning == "WH" : # WR: no reference or WH: not homed
+                    Connection.close()
                     return False
                 else: 
+                    Connection.close()
                     return True
             else:
+                Connection.close()
                 return 0 # TO DO: report error
 
         except Exception as e:

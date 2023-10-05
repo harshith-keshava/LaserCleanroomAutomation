@@ -96,9 +96,6 @@ class Model:
         self.http = urllib3.PoolManager()
         self.metadatafilewriter = None
 
-        #Zaber Init
-        self.ZaberConnection = self.camera.zaberConnect() # Connect Zaber over serial
-
         # Camera init
         self.app = wx.App()
         self.frame = wx.Frame( parent=None, id=wx.ID_ANY,size=(900,900), 
@@ -911,7 +908,7 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Zaber move relative command received from  PLC ")
             camera = CameraDriver()
-            camera.moveRelPositioner(self.ZaberRelativePosParTag.value,self.ZaberConnection)
+            camera.moveRelPositioner(self.ZaberRelativePosParTag.value)
         if cmd == False:
             self.resetResponseTags()
 
@@ -920,7 +917,7 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Zaber move absolute command received from  PLC ")
             camera = CameraDriver()
-            camera.moveAbsPositioner(self.ZaberAbsolutePosParTag.value,self.ZaberConnection)
+            camera.moveAbsPositioner(self.ZaberAbsolutePosParTag.value)
             self.camera.setExposure(self.CameraExposureTag.value,self.gd) # Set Exposure with zaber move 
         if cmd == False:
             self.resetResponseTags()
@@ -930,7 +927,7 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Zaber get home status command received from  PLC ")
             camera = CameraDriver()
-            self.ZaberHomedTag.setPlcValue(camera.getPositionerRefStatus(self.ZaberConnection))
+            self.ZaberHomedTag.setPlcValue(camera.getPositionerRefStatus())
         if cmd == False:
             self.resetResponseTags()
 
@@ -939,7 +936,7 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Zaber get position feedback command received from  PLC ")
             camera = CameraDriver()
-            self.ZaberPositionTag.setPlcValue(camera.getPositionerPosition(self.ZaberConnection))
+            self.ZaberPositionTag.setPlcValue(camera.getPositionerPosition())
         if cmd == False: 
             self.resetResponseTags()
 
