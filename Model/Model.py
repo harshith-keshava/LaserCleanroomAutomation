@@ -22,6 +22,8 @@ from Model.OphirCom import OphirJunoCOM
 from Model.LaserSettings import LaserSettings
 from Model.metadatawriter import MetadataFileWriter
 import zaber.serial
+import wx
+import wx.lib.activex
 
 ## Test Type Enum for the different types of tests that process team runs
 ## Calibration: Predefined tolerance band always run with Linear LUTS, run to generate new LUTs for the VFLCRs
@@ -88,11 +90,24 @@ class Model:
         self.pyrometer = OphirJunoCOM()
         self.pyrometer.connectToJuno()
         print("Juno connection:" + str(self.pyrometer.isConnected))
+        self.ZaberConnection = self.camera.zaberConnect() # Connect Zaber over serial
         self.testName = ""
         self.currentPowerLevelIndex = 0 ## power level counter to adjust camera exposure
         self.exposureAt100W = 1 ## 1ms exposure at 100W pulse
         self.http = urllib3.PoolManager()
         self.metadatafilewriter = None
+
+        # Camera init
+        self.app = wx.App()
+        self.frame = wx.Frame( parent=None, id=wx.ID_ANY,size=(900,900), 
+                              title='Python Interface to DataRay')
+        p = wx.Panel(self.frame,wx.ID_ANY) # TODO: is this actually necessary?
+        # Get Data
+        self.gd = wx.lib.activex.ActiveXCtrl(p, 'DATARAYOCX.GetDataCtrl.1')
+        # Set some parameters to avoid potential AttributeErrors on failed connection
+        self.softwareVersion = ''
+        self.cameraNID = 0
+
         ############################################# ADD TAGS #########################################
 
         # Connection of the client using the freeopcua library
@@ -875,14 +890,12 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Zaber home command received from  PLC ")
             camera = CameraDriver()
-            camera.homePositioner()
-            self.camera.initialize()
+            camera.homePositioner(self.ZaberConnection)
+            self.camera.initialize(self.gd)
             #Check camera directory
             self.camera_dir = os.path.join(self.saveLocation, "cameraData")
             if not os.path.exists(self.camera_dir):
                 os.makedirs(self.camera_dir, exist_ok=True)
-            #Zaber Connection init
-            self.ZaberConnection = zaber.serial.AsciiSerial("COM11")
             # Meta Writer Init
             if self.metadatafilewriter is None:
                 time_start = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ%f')
@@ -896,7 +909,7 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Zaber move relative command received from  PLC ")
             camera = CameraDriver()
-            camera.moveRelPositioner(self.ZaberRelativePosParTag.value)
+            camera.moveRelPositioner(self.ZaberRelativePosParTag.value,self.ZaberConnection)
         if cmd == False:
             self.resetResponseTags()
 
@@ -905,8 +918,8 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Zaber move absolute command received from  PLC ")
             camera = CameraDriver()
-            camera.moveAbsPositioner(self.ZaberAbsolutePosParTag.value)
-            self.camera.setExposure(self.CameraExposureTag.value) # Set Exposure with zaber move 
+            camera.moveAbsPositioner(self.ZaberAbsolutePosParTag.value,self.ZaberConnection)
+            self.camera.setExposure(self.CameraExposureTag.value,self.gd) # Set Exposure with zaber move 
         if cmd == False:
             self.resetResponseTags()
 
@@ -915,7 +928,7 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Zaber get home status command received from  PLC ")
             camera = CameraDriver()
-            self.ZaberHomedTag.setPlcValue(camera.getPositionerRefStatus())
+            self.ZaberHomedTag.setPlcValue(camera.getPositionerRefStatus(self.ZaberConnection))
         if cmd == False:
             self.resetResponseTags()
 
@@ -924,15 +937,13 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Zaber get position feedback command received from  PLC ")
             camera = CameraDriver()
-            self.ZaberPositionTag.setPlcValue(camera.getPositionerPosition())
+            self.ZaberPositionTag.setPlcValue(camera.getPositionerPosition(self.ZaberConnection))
         if cmd == False: 
             self.resetResponseTags()
 
     def OMSTestCompleteReaction(self):
         cmd = self.OMSTestCompleteTag.value
         if cmd == True:
-            # Close Zaber connection
-            zaber.serial.AsciiSerial.close()
             self.metadatafilewriter.save_file(self.camera_dir, test_status='Completed')
 
         if cmd == False:   
@@ -941,8 +952,6 @@ class Model:
     def OMSTestAbortedReaction(self):
         cmd = self.OMSTestAbortedTag.value
         if cmd == True:
-            # Close Zaber connection
-            zaber.serial.AsciiSerial.close()
             self.metadatafilewriter.save_file(self.camera_dir, test_status='Aborted')
 
         if cmd == False:   
@@ -962,7 +971,7 @@ class Model:
             startingPowerLevel = self.startingPowerLevelTag.value
             machineName = self.MachineNameTag.value
 
-            metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName )
+            metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName,self.gd)
 
             # Save image to camera-specific subdirectory until otherwise specified. Append to metadata (in memory)
             image_url = None  ##TODO - get image URL from S3
@@ -1069,7 +1078,7 @@ class Model:
 
         print("setting exposure to " + str(exposure) + "ms")
         
-        status = self.camera.setExposure(exposure)
+        status = self.camera.setExposure(exposure,self.gd)
 
         print("status: " + str(status))
        
