@@ -91,7 +91,6 @@ class MetadataFileWriter:
             'datetime_start': self.datetime_start,
             'datetime_end': datetime_end,
             'test_status': test_status,
-            'number_pixels_tested': len(self.pixel_list),
             'oms_calibration_info': self.oms_calibration_info,
             'frames': self.frame_list
         }
