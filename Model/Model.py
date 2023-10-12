@@ -972,7 +972,7 @@ class Model:
         startingPowerLevel = self.startingPowerLevelTag.value
         machineName = self.MachineNameTag.value
 
-        metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName,self.gd,image_url)
+        metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName,self.gd)
 
         # Save image to camera-specific subdirectory until otherwise specified. Append to metadata (in memory)
         image_url = None  ##TODO - get image URL from S3
