@@ -667,6 +667,7 @@ class Model:
         if frameCaptured:
             # success
             self.frameCapturedTag.setPlcValue(1)
+            self.MetaDataWriterDoneTag.setPlcValue(1)
         else:
             print("Camera frame capture failed")
             self.errorFrameCaptureFailedTag.setPlcValue(1)
@@ -978,8 +979,6 @@ class Model:
         image_url = None  ##TODO - get image URL from S3
         metadata_write_status = self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, self.camera_dir,image_url)
         print(f"Saved frame to: {os.path.join(self.camera_dir, self.metadatafilewriter.current_image_filename)}")
-
-        self.MetaDataWriterDoneTag.setPlcValue(1)
 
         return True
 
