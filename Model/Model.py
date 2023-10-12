@@ -900,7 +900,7 @@ class Model:
             # Meta Writer Init
             if self.metadatafilewriter is None:
                 time_start = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ%f')
-                self.metadatafilewriter = MetadataFileWriter(machine=self.MachineNameTag, datetime=time_start)
+                self.metadatafilewriter = MetadataFileWriter(machine=self.MachineNameTag.value, datetime=time_start)
             self.MetaDataWriterReadyTag.setPlcValue(1)
         if cmd == False:
             self.resetResponseTags()
