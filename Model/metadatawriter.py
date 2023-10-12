@@ -17,23 +17,23 @@ class ImageWriter:
             'oms_calibration_info': self.oms_calibration_info
         }
         if metadata is not None:
-            return metadata_header.update(metadata)
-        else:
-            return metadata_header
+            metadata_header.update(metadata)
+        return metadata_header
 
     def save_image(self, img, output_dir):
         if not type(img) == Image.Image:
             img_to_save = self.convert_array_to_PIL_image(img)
         else:
             img_to_save = img
-        if self.metadata is None:
-            self.create_metadata()
-        if (type(self.metadata) == dict) and (os.path.exists(output_dir)):
-            pnginfo = PngImagePlugin.PngInfo()
-            pnginfo.add_text('vf-oms-image-metadata', json.dumps(self.metadata))
-            img_to_save.save(os.path.join(output_dir, self.image_filename),
-                             "PNG",
-                             pnginfo=pnginfo)
+        if os.path.exists(output_dir):
+            if self.metadata is None:
+                img_to_save.save(os.path.join(output_dir, self.image_filename), "PNG")
+            elif type(self.metadata) == dict:
+                pnginfo = PngImagePlugin.PngInfo()
+                pnginfo.add_text('vf-oms-image-metadata', json.dumps(self.metadata))
+                img_to_save.save(os.path.join(output_dir, self.image_filename),
+                                 "PNG",
+                                 pnginfo=pnginfo)
 
     def convert_array_to_PIL_image(self, img):
         return Image.fromarray(img.astype('uint16'))
