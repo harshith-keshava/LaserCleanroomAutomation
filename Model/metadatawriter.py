@@ -17,9 +17,8 @@ class ImageWriter:
             'oms_calibration_info': self.oms_calibration_info
         }
         if metadata is not None:
-            return metadata_header.update(metadata)
-        else:
-            return metadata_header
+            metadata_header.update(metadata)
+        return metadata_header
 
     def save_image(self, img, output_dir):
         if not type(img) == Image.Image:
