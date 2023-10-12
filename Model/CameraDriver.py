@@ -58,12 +58,13 @@ class CameraDriver:
         return gdCtrl.ctrl.GetTargetCameraGain(0)==newGain
     
     def fetchFrame(self,activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName,gdCtrl):
+
         # Get a new frame cluster containing:
         # Com Error, Exposure, Gain, Full Res, H Res, V Res, and 2D Image.
         deviceOK = gdCtrl.ctrl.StartDevice()
         # if Error, re-initialize with default values
         if not deviceOK:
-            self.initialize()
+            self.initialize(gdCtrl)
             # TODO: I don't want to error here, but something should happen
             # assert self.isConnected, 'Failed to connect to camera; check hardware connection'
         
@@ -75,9 +76,9 @@ class CameraDriver:
         metadata['PulseOnMsec'] = pulseOnMsec
         metadata['PowerLevel'] = startingPowerLevel
         metadata['MachineName'] = machineName
-        metadata['CameraNID'] = self.cameraNID
-        metadata['Exposure'] = self.getExposure()
-        metadata['Gain'] = self.getGain()
+        metadata['CameraNID'] = gdCtrl.ctrl.GetCameraNID(0)
+        metadata['Exposure'] = self.getExposure(gdCtrl)
+        metadata['Gain'] = self.getGain(gdCtrl)
         metadata['FullRes'] = gdCtrl.ctrl.CaptureIsFullResolution()
         metadata['HRes'] = gdCtrl.ctrl.GetHorizontalPixels()
         metadata['VRes'] = gdCtrl.ctrl.GetVerticalPixels()

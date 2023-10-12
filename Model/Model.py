@@ -35,6 +35,7 @@ class TestType(Enum):
         CLEAN_POWER_VERIFICATION = 1
         DIRTY_POWER_VERIFICATION = 2
         LOW_POWER_CHECK = 3
+        SOMS_TEST = 4
 
 ## Default tolerance percentages for each test type
 testTolerancePercents = {
@@ -651,6 +652,8 @@ class Model:
     def captureFrame(self):
         print("captureFrame()")
 
+        self.MetaDataWriterDoneTag.setPlcValue(0)
+
         frameCaptured = self._captureFrameData()
 
         #if self.currentPowerLevelIndex < self.numPowerLevelStepsTag.value:
@@ -780,7 +783,6 @@ class Model:
         self.errorS3ConnectionTag.setPlcValue(0)
         self.errorCaptureFailedTag.setPlcValue(0)
         self.errorFrameCaptureFailedTag.setPlcValue(0)
-        self.MetaDataWriterDoneTag.setPlcValue(0)
         self.MetaDataWriterReadyTag.setPlcValue(0)
 
     ##################################### TAG REACTIONS ###################################################################
@@ -889,7 +891,7 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Zaber home command received from  PLC ")
             camera = CameraDriver()
-            camera.homePositioner(self.ZaberConnection)
+            camera.homePositioner()
             self.camera.initialize(self.gd)
             #Check camera directory
             self.camera_dir = os.path.join(self.saveLocation, "cameraData")
@@ -960,29 +962,27 @@ class Model:
 
     def _captureFrameData(self):
         print("_captureFrameData()")
-        if self.camera.isConnected:
-            camera = CameraDriver()
-            activePixel = self.activePixelTag.value
-            gantryXPosition = self.GantryXPositionStatusTag.value
-            gantryYPosition = self.GantryYPositionStatusTag.value
-            zaberPosition = camera.getPositionerPosition()
-            pulseOnMsec = self.pulseOnMsecTag.value
-            startingPowerLevel = self.startingPowerLevelTag.value
-            machineName = self.MachineNameTag.value
 
-            metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName,self.gd)
+        camera = CameraDriver()
+        activePixel = self.activePixelTag.value
+        gantryXPosition = self.GantryXPositionStatusTag.value
+        gantryYPosition = self.GantryYPositionStatusTag.value
+        zaberPosition = camera.getPositionerPosition()
+        pulseOnMsec = self.pulseOnMsecTag.value
+        startingPowerLevel = self.startingPowerLevelTag.value
+        machineName = self.MachineNameTag.value
 
-            # Save image to camera-specific subdirectory until otherwise specified. Append to metadata (in memory)
-            image_url = None  ##TODO - get image URL from S3
-            metadata_write_status = self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, self.camera_dir, image_url)
-            print(f"Saved frame to: {os.path.join(self.camera_dir, self.metadatafilewriter.current_image_filename)}")
+        metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName,self.gd,image_url)
 
-            self.MetaDataWriterDoneTag.setPlcValue(1)
+        # Save image to camera-specific subdirectory until otherwise specified. Append to metadata (in memory)
+        image_url = None  ##TODO - get image URL from S3
+        metadata_write_status = self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, self.camera_dir,image_url)
+        print(f"Saved frame to: {os.path.join(self.camera_dir, self.metadatafilewriter.current_image_filename)}")
 
-            return True
-        else:
-            print("Camera not connected. Check Camera Connection")
-            return False
+        self.MetaDataWriterDoneTag.setPlcValue(1)
+
+        return True
+
 
     def _capturePowerData(self):
         
