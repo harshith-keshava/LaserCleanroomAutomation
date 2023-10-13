@@ -108,6 +108,8 @@ class Model:
         self.softwareVersion = ''
         self.cameraNID = 0
 
+        self._PyroMultiplicationFactor = 1
+
         ############################################# ADD TAGS #########################################
 
         # Connection of the client using the freeopcua library
@@ -1028,11 +1030,12 @@ class Model:
                     expectedPower = self.currentPowerWattsTag.value
 
                     # append data for each pulse
-                    self.laserTestData[self.activePixelTag.value - 1].append(measuredPower)
-                    self.laserTestEnergy[self.activePixelTag.value - 1].append(measuredEnergy)
+                    self.laserTestData[self.activePixelTag.value - 1].append(measuredPower * self._PyroMultiplicationFactor)
+                    self.laserTestEnergy[self.activePixelTag.value - 1].append(measuredEnergy * self._PyroMultiplicationFactor)
                     self.commandedPowerData[self.activePixelTag.value - 1].append(expectedPower)
 
                     measuredPowerMax = max([measuredPower , measuredPowerMax])
+                    measuredPowerMax = measuredPowerMax * self._PyroMultiplicationFactor
 
                     # evaluate the variable formerly known as testStatus
                     # check the power of each pulse but only report 1 status per pixel
