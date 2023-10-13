@@ -213,6 +213,8 @@ class Model:
         "StartOMSTest": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.StartOMSTest"),
         "MetaDataWriterReady": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.MetaDataWriterReady"),
         "MetaDataWriterDone": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.MetaDataWriterDone"),
+        "TestCompleteProcessed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.TestCompleteProcessed"),
+        "TestAbortProcessed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.TestAbortProcessed"),
         "OMSTestComplete": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.OMSTestComplete"),
         "OMSTestAborted": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.OMSTestAborted"),
         "CameraExposure": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CameraExposure")
@@ -304,6 +306,8 @@ class Model:
         self.StartOMSTestTag = self.plcTags["StartOMSTest"]
         self.MetaDataWriterReadyTag = self.plcTags["MetaDataWriterReady"]
         self.MetaDataWriterDoneTag = self.plcTags["MetaDataWriterDone"]
+        self.TestCompleteProcessedTag = self.plcTags["TestCompleteProcessed"]
+        self.TestAbortProcessedTag = self.plcTags["TestAbortProcessed"]
         self.OMSTestCompleteTag = self.plcTags["OMSTestComplete"]
         self.OMSTestAbortedTag = self.plcTags["OMSTestAborted"]
         self.CameraExposureTag = self.plcTags["CameraExposure"]
@@ -785,6 +789,8 @@ class Model:
         self.errorCaptureFailedTag.setPlcValue(0)
         self.errorFrameCaptureFailedTag.setPlcValue(0)
         self.MetaDataWriterReadyTag.setPlcValue(0)
+        self.TestCompleteProcessedTag.setPlcValue(0)
+        self.TestAbortProcessedTag.setPlcValue(0)
 
     ##################################### TAG REACTIONS ###################################################################
 
@@ -947,7 +953,7 @@ class Model:
         cmd = self.OMSTestCompleteTag.value
         if cmd == True:
             self.metadatafilewriter.save_file(self.camera_dir, test_status='Completed')
-
+            self.TestCompleteProcessedTag.setPlcValue(1)
         if cmd == False:   
             self.resetResponseTags()
 
@@ -955,6 +961,7 @@ class Model:
         cmd = self.OMSTestAbortedTag.value
         if cmd == True:
             self.metadatafilewriter.save_file(self.camera_dir, test_status='Aborted')
+            self.TestAbortProcessedTag.setPlcValue(1)
 
         if cmd == False:   
             self.resetResponseTags()
