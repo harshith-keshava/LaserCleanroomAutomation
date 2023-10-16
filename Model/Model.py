@@ -1018,7 +1018,7 @@ class Model:
 
             for pulse in pulses:
 
-                energy = pulse[0]
+                energy = pulse[0] * self._PyroMultiplicationFactor
                 timestamp = pulse[1]
                 status = pulse[2]
 
@@ -1030,8 +1030,8 @@ class Model:
                     expectedPower = self.currentPowerWattsTag.value
 
                     # append data for each pulse
-                    self.laserTestData[self.activePixelTag.value - 1].append(measuredPower * self._PyroMultiplicationFactor)
-                    self.laserTestEnergy[self.activePixelTag.value - 1].append(measuredEnergy * self._PyroMultiplicationFactor)
+                    self.laserTestData[self.activePixelTag.value - 1].append(measuredPower)
+                    self.laserTestEnergy[self.activePixelTag.value - 1].append(measuredEnergy)
                     self.commandedPowerData[self.activePixelTag.value - 1].append(expectedPower)
 
                     measuredPowerMax = max([measuredPower , measuredPowerMax])
