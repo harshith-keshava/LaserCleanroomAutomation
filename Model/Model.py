@@ -108,7 +108,7 @@ class Model:
         self.softwareVersion = ''
         self.cameraNID = 0
 
-        self._PyroMultiplicationFactor = 1
+        self._PyroMultiplicationFactor = 1.73
 
         ############################################# ADD TAGS #########################################
 
