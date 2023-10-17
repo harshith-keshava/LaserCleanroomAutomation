@@ -110,6 +110,10 @@ class Model:
 
         self._PyroMultiplicationFactor = 1.73
 
+        # Software Version - vMajor.Minor.Patch eg: v1.2.0
+        self.applicationMajorVersion = 0
+        self.applicationMinorVersion = 2
+        self.applicationPatchVersion = 0
         ############################################# ADD TAGS #########################################
 
         # Connection of the client using the freeopcua library
@@ -121,6 +125,11 @@ class Model:
         # plcTags is a dictionary allowing the user to access the plc tags by string and perform a single action on all of them in a loop
         # new tags can be added without changing the model code
         self.plcTags = {
+
+        # App version
+        "AppMajorVersion":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.AppMajorVersion"),
+        "AppMinorVersion":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.AppMinorVersion"),
+        "AppPatchVersion":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.AppPatchVersion"),
 
         # machine info
         "MachineName": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.MachineName"),
@@ -228,6 +237,10 @@ class Model:
         # this makes tags come up in the autocomplete of the test editor vs having the remember/lookup the exact string
         # new tags do not have to be added here in addition to the dictionary but they can be 
 
+        self.AppMajorVersionTag = self.plcTags["AppMajorVersion"]
+        self.AppMinorVersionTag = self.plcTags["AppMinorVersion"]
+        self.AppPatchVersionTag = self.plcTags["AppPatchVersion"]
+
         self.MachineNameTag = self.plcTags["MachineName"]
         self.FactoryNameTag = self.plcTags["FactoryName"]
 
@@ -324,7 +337,10 @@ class Model:
     ## New subscribed variables can be set as updating here 
     def connectToPlc(self):
         try:
-            self.client.connect()  
+            self.client.connect()
+            self.AppMajorVersionTag.setPlcValue(self.applicationMajorVersion)
+            self.AppMinorVersionTag.setPlcValue(self.applicationMinorVersion)
+            self.AppPatchVersionTag.setPlcValue(self.applicationPatchVersion) 
 
         except:
             print("Could not connect to server")
