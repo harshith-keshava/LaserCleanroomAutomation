@@ -995,10 +995,10 @@ class Model:
         gantryYPosition = self.GantryYPositionStatusTag.value
         zaberPosition = camera.getPositionerPosition()
         pulseOnMsec = self.pulseOnMsecTag.value
-        startingPowerLevel = self.startingPowerLevelTag.value
+        CurrentPowerLevel = self.currentPowerWattsTag.value
         machineName = self.MachineNameTag.value
 
-        metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName,self.gd)
+        metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,CurrentPowerLevel,machineName,self.gd)
 
         # Save image to camera-specific subdirectory until otherwise specified. Append to metadata (in memory)
         image_url = None  ##TODO - get image URL from S3

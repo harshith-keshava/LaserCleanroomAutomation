@@ -57,7 +57,7 @@ class CameraDriver:
         gdCtrl.ctrl.SetTargetCameraGain(0, newGain)
         return gdCtrl.ctrl.GetTargetCameraGain(0)==newGain
     
-    def fetchFrame(self,activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,startingPowerLevel,machineName,gdCtrl):
+    def fetchFrame(self,activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,CurrentPowerLevel,machineName,gdCtrl):
 
         # Get a new frame cluster containing:
         # Com Error, Exposure, Gain, Full Res, H Res, V Res, and 2D Image.
@@ -74,7 +74,7 @@ class CameraDriver:
         metadata['GantryYPos'] = gantryYPosition
         metadata['ZaberPosition'] = zaberPosition
         metadata['PulseOnMsec'] = pulseOnMsec
-        metadata['PowerLevel'] = startingPowerLevel
+        metadata['PowerLevel'] = CurrentPowerLevel
         metadata['MachineName'] = machineName
         metadata['CameraNID'] = gdCtrl.ctrl.GetCameraNID(0)
         metadata['Exposure'] = self.getExposure(gdCtrl)
