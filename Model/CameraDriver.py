@@ -106,7 +106,8 @@ class CameraDriver:
         try:
             Connection = zaber.serial.AsciiSerial("COM11")
 
-            rawData = str(target_position * 1000000.0)  # Convert the value to a string. Conversion factor between disance and raw steps is 1000000
+            rawData = round(target_position * 1000000.0)  # Convert the value to a string. Conversion factor between disance and raw steps is 1000000
+            rawData = str(rawData)
            
             # Concatenate "mov abs " with the rawData
             command_string = "move abs " + rawData
@@ -126,8 +127,9 @@ class CameraDriver:
         try:
             Connection = zaber.serial.AsciiSerial("COM11")
 
-            rawData = str(target_position * 1000000.0)  # Convert the value to a string. Conversion factor between disance and raw steps is 1000000
-           
+            rawData = round(target_position * 1000000.0)  # Convert the value to a string. Conversion factor between disance and raw steps is 1000000
+            rawData = str(rawData)
+
             # Concatenate "mov abs " with the rawData
             command_string = "move rel " + rawData  
             
