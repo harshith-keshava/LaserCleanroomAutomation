@@ -110,7 +110,7 @@ class CameraDriver:
             rawData = str(rawData)
            
             # Concatenate "mov abs " with the rawData
-            command_string = "move abs " + rawData
+            command_string = "move abs " + rawData + ".0"
             
             print(command_string)
 
@@ -131,7 +131,7 @@ class CameraDriver:
             rawData = str(rawData)
 
             # Concatenate "mov abs " with the rawData
-            command_string = "move rel " + rawData  
+            command_string = "move rel " + rawData + ".0"
             
             print(command_string)
 
