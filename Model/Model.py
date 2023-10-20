@@ -986,7 +986,7 @@ class Model:
             self.resetResponseTags()
 
    ############################## HELPER FUNCTION ##########################################
-    def _is_image_new_(self,  new_img):
+    def _is_image_new(self,  new_img):
         if self._last_captured_frame is None:
             self._last_captured_frame = new_img
             return True
@@ -1010,14 +1010,16 @@ class Model:
         machineName = self.MachineNameTag.value
 
         metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,CurrentPowerLevel,machineName,self.gd)
-        is_image_new = self._is_image_news(imageData) #declare fault
+        is_image_new = self._is_image_new(imageData) #declare fault
         # Save image to camera-specific subdirectory until otherwise specified. Append to metadata (in memory)
-        image_url = None  ##TODO - get image URL from S3
-        metadata_write_status = self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, self.camera_dir,image_url)
-        #self._last_captured_frame = imageData
-        print(f"Saved frame to: {os.path.join(self.camera_dir, self.metadatafilewriter.current_image_filename)}")
+        if is_image_new:
+            image_url = None  ##TODO - get image URL from S3
+            metadata_write_status = self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, self.camera_dir,image_url)
 
-        return True
+            print(f"Saved frame to: {os.path.join(self.camera_dir, self.metadatafilewriter.current_image_filename)}")
+            return True
+        else:
+            return False
 
 
     def _capturePowerData(self):
