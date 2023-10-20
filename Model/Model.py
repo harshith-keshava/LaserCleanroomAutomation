@@ -923,9 +923,8 @@ class Model:
             if not os.path.exists(self.camera_dir):
                 os.makedirs(self.camera_dir, exist_ok=True)
             # Meta Writer Init
-            if self.metadatafilewriter is None:
-                time_start = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ%f')
-                self.metadatafilewriter = MetadataFileWriter(machine=self.MachineNameTag.value, datetime=time_start)
+            time_start = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ%f')
+            self.metadatafilewriter = MetadataFileWriter(machine=self.MachineNameTag.value, datetime=time_start)
             self.MetaDataWriterReadyTag.setPlcValue(1)
         if cmd == False:
             self.resetResponseTags()
@@ -978,7 +977,9 @@ class Model:
     def OMSTestAbortedReaction(self):
         cmd = self.OMSTestAbortedTag.value
         if cmd == True:
+            print(f'saving metadata json to {self.camera_dir}')
             self.metadatafilewriter.save_file(self.camera_dir, test_status='Aborted')
+            print(f'saved metadata json to {self.camera_dir}')
             self.TestAbortProcessedTag.setPlcValue(1)
 
         if cmd == False:   
