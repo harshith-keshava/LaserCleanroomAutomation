@@ -97,7 +97,10 @@ class CameraDriver:
             imageData = imageData.reshape((metadata['VRes'], metadata['HRes'])) # (numRows, numCols)
         else:
             imageData = imageData.reshape((1,-1)) # (numRows=1, numCols=any); if there's a mismatch in rows/cols for any reason, one row will at least contain everything. TODO: does image processing hate this?
-        
+
+        # TODO temporarily workaround: reintiailize the setting after image .
+        self.initialize(gdCtrl)
+
         return metadata, imageData
     
     

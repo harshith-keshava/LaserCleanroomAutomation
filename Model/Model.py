@@ -331,6 +331,7 @@ class Model:
         self.testStatusTable = ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
         self.testTypesAsString = ["None", "LOWPOWER", "CAL", "CVER", "DVER"]
 
+        self._last_captured_frame = None
     ############################################ GENERAL TEST FUNCTIONS ######################################################
    
     ## Creates the connection to the PLC and connections to the subscribed variables to their respective plc tags
@@ -985,6 +986,16 @@ class Model:
             self.resetResponseTags()
 
    ############################## HELPER FUNCTION ##########################################
+    def _is_image_new_(self,  new_img):
+        if self._last_captured_frame is None:
+            self._last_captured_frame = new_img
+            return True
+        else:
+            if np.array_equal(self._last_captured_frame, new_img):
+                return False
+            else:
+                self._last_captured_frame = new_img
+                return True
 
     def _captureFrameData(self):
         print("_captureFrameData()")
@@ -999,10 +1010,11 @@ class Model:
         machineName = self.MachineNameTag.value
 
         metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,CurrentPowerLevel,machineName,self.gd)
-
+        is_image_new = self._is_image_news(imageData) #declare fault
         # Save image to camera-specific subdirectory until otherwise specified. Append to metadata (in memory)
         image_url = None  ##TODO - get image URL from S3
         metadata_write_status = self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, self.camera_dir,image_url)
+        #self._last_captured_frame = imageData
         print(f"Saved frame to: {os.path.join(self.camera_dir, self.metadatafilewriter.current_image_filename)}")
 
         return True
