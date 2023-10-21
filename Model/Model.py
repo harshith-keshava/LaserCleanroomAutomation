@@ -1013,14 +1013,12 @@ class Model:
         metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,CurrentPowerLevel,machineName,self.gd)
         is_image_new = self._is_image_new(imageData) #declare fault
         # Save image to camera-specific subdirectory until otherwise specified. Append to metadata (in memory)
-        if is_image_new:
-            image_url = None  ##TODO - get image URL from S3
-            metadata_write_status = self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, self.camera_dir,image_url)
+        metadata.update({'frame_is_a_duplicate': not is_image_new})
+        image_url = None  ##TODO - get image URL from S3
+        metadata_write_status = self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, self.camera_dir,image_url)
 
-            print(f"Saved frame to: {os.path.join(self.camera_dir, self.metadatafilewriter.current_image_filename)}")
-            return True
-        else:
-            return False
+        print(f"Saved frame to: {os.path.join(self.camera_dir, self.metadatafilewriter.current_image_filename)}")
+        return True
 
 
     def _capturePowerData(self):
