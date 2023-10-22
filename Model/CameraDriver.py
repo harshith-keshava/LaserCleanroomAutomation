@@ -7,6 +7,21 @@ from datetime import datetime
 import zaber.serial
 import wx
 import wx.lib.activex
+import logging
+
+""" set up python logger"""
+
+logger = logging.getLogger('camera_driver')
+logger.setLevel(logging.debug)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+fh = logging.FileHandler(filename='camera_driver.log')
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(formatter)
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+ch.setFormatter(formatter)
+logger.addHandler(fh)
+logger.addHandler(ch)
 
 
 class CameraDriver:
@@ -61,6 +76,7 @@ class CameraDriver:
 
         # Get a new frame cluster containing:
         # Com Error, Exposure, Gain, Full Res, H Res, V Res, and 2D Image.
+        print('start fetch frame')
         deviceOK = gdCtrl.ctrl.StartDevice()
         # if Error, re-initialize with default values
         if not deviceOK:
@@ -182,6 +198,7 @@ class CameraDriver:
 
         except Exception as e:
             print("An error occurred:", e)
+            logger.error(e, exc_info=True)
             return 999.99 #TO DO:  might want to return an appropriate error code
 
     def getPositionerRefStatus(self):
