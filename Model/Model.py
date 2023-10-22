@@ -1023,6 +1023,7 @@ class Model:
         machineName = self.MachineNameTag.value
 
         metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,CurrentPowerLevel,machineName,self.gd)
+
         if metadata is None or imageData is None:
             return False
         else:
@@ -1034,7 +1035,7 @@ class Model:
 
             print(f"Saved frame to: {os.path.join(self.camera_dir, self.metadatafilewriter.current_image_filename)}")
             return True
-
+          
 
     def _capturePowerData(self):
         
