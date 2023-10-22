@@ -1018,7 +1018,11 @@ class Model:
         metadata_write_status = self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, self.camera_dir,image_url)
 
         print(f"Saved frame to: {os.path.join(self.camera_dir, self.metadatafilewriter.current_image_filename)}")
-        return True
+        if is_image_new:
+            return True
+        else:
+            return False
+        
 
 
     def _capturePowerData(self):
