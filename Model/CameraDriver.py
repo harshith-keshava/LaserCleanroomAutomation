@@ -84,6 +84,7 @@ class CameraDriver:
         deviceOK = gdCtrl.ctrl.StartDevice()
         # if Error, re-initialize with default values
         if not deviceOK:
+            logger.info('reinialize camera device since deviceOK is Falsed')
             self.initialize(gdCtrl)
             # TODO: I don't want to error here, but something should happen
             # assert self.isConnected, 'Failed to connect to camera; check hardware connection'
@@ -122,6 +123,7 @@ class CameraDriver:
                     imageData = imageData.reshape((metadata['VRes'], metadata['HRes'])) # (numRows, numCols)
                 else:
                     imageData = imageData.reshape((1,-1)) # (numRows=1, numCols=any); if there's a mismatch in rows/cols for any reason, one row will at least contain everything. TODO: does image processing hate this?
+                logger.debug(f'image size: {imageData.shape}')
                 self.initialize(gdCtrl)
                 return metadata, imageData                
             except Exception as e:
