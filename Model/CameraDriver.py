@@ -107,17 +107,21 @@ class CameraDriver:
         metadata['TimeString'] = time_utc.strftime('%Y%m%dT%H%M%SZ%f')
 
         # Convert WinCamData tuple to 2D numpy array
-        rawData = gdCtrl.ctrl.GetWinCamDataAsVariant()
-        imageData = np.array(rawData, dtype=np.uint16)
-        if metadata['VRes']*metadata['HRes'] == len(rawData):
-            imageData = imageData.reshape((metadata['VRes'], metadata['HRes'])) # (numRows, numCols)
-        else:
-            imageData = imageData.reshape((1,-1)) # (numRows=1, numCols=any); if there's a mismatch in rows/cols for any reason, one row will at least contain everything. TODO: does image processing hate this?
-
+        try:
+            rawData = gdCtrl.ctrl.GetWinCamDataAsVariant()
+            imageData = np.array(rawData, dtype=np.uint16)
+            if metadata['VRes']*metadata['HRes'] == len(rawData):
+                imageData = imageData.reshape((metadata['VRes'], metadata['HRes'])) # (numRows, numCols)
+            else:
+                imageData = imageData.reshape((1,-1)) # (numRows=1, numCols=any); if there's a mismatch in rows/cols for any reason, one row will at least contain everything. TODO: does image processing hate this?
+            self.initialize(gdCtrl)
+            return metadata, imageData                
+        except Exception as e:
+            logger.error('error in capture the image')
+            logger.error(e, exc_info=True)
+            return None, None
         # TODO temporarily workaround: reintiailize the setting after image .
-        self.initialize(gdCtrl)
-
-        return metadata, imageData
+        
     
     
 
