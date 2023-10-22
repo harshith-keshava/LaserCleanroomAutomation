@@ -25,6 +25,18 @@ import zaber.serial
 import wx
 import wx.lib.activex
 
+import logging
+logger = logging.getLogger('model')
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+fh = logging.FileHandler(filename='camera_driver.log')
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(formatter)
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+ch.setFormatter(formatter)
+logger.addHandler(fh)
+logger.addHandler(ch)
 ## Test Type Enum for the different types of tests that process team runs
 ## Calibration: Predefined tolerance band always run with Linear LUTS, run to generate new LUTs for the VFLCRs
 ## Clean Power Verification: Verification of laser health with generated LUTs with a clean debris shield
@@ -1011,19 +1023,19 @@ class Model:
         machineName = self.MachineNameTag.value
 
         metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,CurrentPowerLevel,machineName,self.gd)
-        is_image_new = self._is_image_new(imageData) #declare fault
-        # Save image to camera-specific subdirectory until otherwise specified. Append to metadata (in memory)
-        metadata.update({'frame_is_a_duplicate': not is_image_new})
-        image_url = None  ##TODO - get image URL from S3
-        metadata_write_status = self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, self.camera_dir,image_url)
 
-        print(f"Saved frame to: {os.path.join(self.camera_dir, self.metadatafilewriter.current_image_filename)}")
-        if is_image_new:
-            return True
-        else:
+        if metadata is None or imageData is None:
             return False
-        
+        else:
+            is_image_new = self._is_image_new(imageData) #declare fault
+            # Save image to camera-specific subdirectory until otherwise specified. Append to metadata (in memory)
+            metadata.update({'frame_is_a_duplicate': not is_image_new})
+            image_url = None  ##TODO - get image URL from S3
+            metadata_write_status = self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, self.camera_dir,image_url)
 
+            print(f"Saved frame to: {os.path.join(self.camera_dir, self.metadatafilewriter.current_image_filename)}")
+            return True
+          
 
     def _capturePowerData(self):
         
