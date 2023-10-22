@@ -35,7 +35,7 @@ class CameraDriver:
         logger.debug(f"gdCtrl.ctrl.StopDevice {flag_stop}")
         flag_start = gdCtrl.ctrl.StartDriver()
         logger.debug(f"gdCtrl.ctrl.StopDevice {flag_start}")
-        
+
         gdCtrl.ctrl.ResetCamera(0)
         # Set resolution and ROI before starting device
         gdCtrl.ctrl.SetResolutionAndROI(fullResolution, *topLeft, *dimensions) 
@@ -80,6 +80,7 @@ class CameraDriver:
         # Get a new frame cluster containing:
         # Com Error, Exposure, Gain, Full Res, H Res, V Res, and 2D Image.
         print('start fetch frame')
+        logger.info('start fetch frame')
         deviceOK = gdCtrl.ctrl.StartDevice()
         # if Error, re-initialize with default values
         if not deviceOK:
