@@ -18,7 +18,7 @@ fh = logging.FileHandler(filename='camera_driver.log')
 fh.setLevel(logging.DEBUG)
 fh.setFormatter(formatter)
 ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+ch.setLevel(logging.DEBUG)
 ch.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
@@ -31,8 +31,11 @@ class CameraDriver:
         return ZaberConnect
     
     def initialize(self,gdCtrl, exposure=1.0, gain=1.0, triggerMode=3, fullResolution=1, topLeft=(0,0), dimensions=(2048,2048)): #dimensions= (width, height)
-        gdCtrl.ctrl.StopDevice()
-        gdCtrl.ctrl.StartDriver()
+        flag_stop = gdCtrl.ctrl.StopDevice()
+        logger.debug(f"gdCtrl.ctrl.StopDevice {flag_stop}")
+        flag_start = gdCtrl.ctrl.StartDriver()
+        logger.debug(f"gdCtrl.ctrl.StopDevice {flag_start}")
+        
         gdCtrl.ctrl.ResetCamera(0)
         # Set resolution and ROI before starting device
         gdCtrl.ctrl.SetResolutionAndROI(fullResolution, *topLeft, *dimensions) 
