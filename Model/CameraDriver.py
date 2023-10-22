@@ -12,7 +12,7 @@ import logging
 """ set up python logger"""
 
 logger = logging.getLogger('camera_driver')
-logger.setLevel(logging.debug)
+logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 fh = logging.FileHandler(filename='camera_driver.log')
 fh.setLevel(logging.DEBUG)
