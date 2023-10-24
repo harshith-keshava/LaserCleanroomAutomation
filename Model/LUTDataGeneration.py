@@ -195,7 +195,8 @@ class LUTDataManager():
         for pixelNum, binary in enumerate(binaries):
             pixel, enable, rack, laser = laserSettings.vfpMap[pixelNum]
             print("Sending data to VFLCR")
-            FTP_Manager.writeBinaryArrayToVfplc(vflcrs[rack-1],rack,laser,binary, lutNumber)
+            if rack != 0 and laser != 0:
+                FTP_Manager.writeBinaryArrayToVfplc(vflcrs[rack-1],rack,laser,binary, lutNumber)
             
 
     def _generateSaveDir(self, calID):
