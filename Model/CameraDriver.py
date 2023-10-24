@@ -114,9 +114,9 @@ class CameraDriver:
         # Convert WinCamData tuple to 2D numpy array
         retry_counter = 2
         while retry_counter >=1:
+            retry_counter -= 1
             try:
                 logger.info(f'try to fetch image. Conter {retry_counter}')
-                retry_counter += 1
                 rawData = gdCtrl.ctrl.GetWinCamDataAsVariant()
                 imageData = np.array(rawData, dtype=np.uint16)
                 if metadata['VRes']*metadata['HRes'] == len(rawData):
