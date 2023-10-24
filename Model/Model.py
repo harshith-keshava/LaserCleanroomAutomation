@@ -25,6 +25,18 @@ import zaber.serial
 import wx
 import wx.lib.activex
 
+import logging
+logger = logging.getLogger('model')
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+fh = logging.FileHandler(filename='camera_driver.log')
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(formatter)
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+ch.setFormatter(formatter)
+logger.addHandler(fh)
+logger.addHandler(ch)
 ## Test Type Enum for the different types of tests that process team runs
 ## Calibration: Predefined tolerance band always run with Linear LUTS, run to generate new LUTs for the VFLCRs
 ## Clean Power Verification: Verification of laser health with generated LUTs with a clean debris shield
@@ -331,6 +343,7 @@ class Model:
         self.testStatusTable = ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
         self.testTypesAsString = ["None", "LOWPOWER", "CAL", "CVER", "DVER"]
 
+        self._last_captured_frame = None
     ############################################ GENERAL TEST FUNCTIONS ######################################################
    
     ## Creates the connection to the PLC and connections to the subscribed variables to their respective plc tags
@@ -986,6 +999,16 @@ class Model:
             self.resetResponseTags()
 
    ############################## HELPER FUNCTION ##########################################
+    def _is_image_new(self,  new_img):
+        if self._last_captured_frame is None:
+            self._last_captured_frame = new_img
+            return True
+        else:
+            if np.array_equal(self._last_captured_frame, new_img):
+                return False
+            else:
+                self._last_captured_frame = new_img
+                return True
 
     def _captureFrameData(self):
         print("_captureFrameData()")
@@ -1001,13 +1024,18 @@ class Model:
 
         metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,CurrentPowerLevel,machineName,self.gd)
 
-        # Save image to camera-specific subdirectory until otherwise specified. Append to metadata (in memory)
-        image_url = None  ##TODO - get image URL from S3
-        metadata_write_status = self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, self.camera_dir,image_url)
-        print(f"Saved frame to: {os.path.join(self.camera_dir, self.metadatafilewriter.current_image_filename)}")
+        if metadata is None or imageData is None:
+            return False
+        else:
+            is_image_new = self._is_image_new(imageData) #declare fault
+            # Save image to camera-specific subdirectory until otherwise specified. Append to metadata (in memory)
+            metadata.update({'frame_is_a_duplicate': not is_image_new})
+            image_url = None  ##TODO - get image URL from S3
+            metadata_write_status = self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, self.camera_dir,image_url)
 
-        return True
-
+            print(f"Saved frame to: {os.path.join(self.camera_dir, self.metadatafilewriter.current_image_filename)}")
+            return True
+          
 
     def _capturePowerData(self):
         
@@ -1052,7 +1080,7 @@ class Model:
                     self.commandedPowerData[self.activePixelTag.value - 1].append(expectedPower)
 
                     measuredPowerMax = max([measuredPower , measuredPowerMax])
-                    measuredPowerMax = measuredPowerMax * self._PyroMultiplicationFactor
+                    measuredPowerMax = measuredPowerMax
 
                     # evaluate the variable formerly known as testStatus
                     # check the power of each pulse but only report 1 status per pixel

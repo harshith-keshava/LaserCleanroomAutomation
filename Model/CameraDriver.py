@@ -7,6 +7,21 @@ from datetime import datetime
 import zaber.serial
 import wx
 import wx.lib.activex
+import logging
+
+""" set up python logger"""
+
+logger = logging.getLogger('camera_driver')
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+fh = logging.FileHandler(filename='camera_driver.log')
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(formatter)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch.setFormatter(formatter)
+logger.addHandler(fh)
+logger.addHandler(ch)
 
 
 class CameraDriver:
@@ -16,12 +31,16 @@ class CameraDriver:
         return ZaberConnect
     
     def initialize(self,gdCtrl, exposure=1.0, gain=1.0, triggerMode=3, fullResolution=1, topLeft=(0,0), dimensions=(2048,2048)): #dimensions= (width, height)
-        gdCtrl.ctrl.StopDevice()
-        gdCtrl.ctrl.StartDriver()
+        flag_stop = gdCtrl.ctrl.StopDevice()
+        logger.debug(f"gdCtrl.ctrl.StopDevice {flag_stop}")
+        flag_start = gdCtrl.ctrl.StartDriver()
+        logger.debug(f"gdCtrl.ctrl.StartDriver {flag_start}")
+
         gdCtrl.ctrl.ResetCamera(0)
         # Set resolution and ROI before starting device
         gdCtrl.ctrl.SetResolutionAndROI(fullResolution, *topLeft, *dimensions) 
         self.isConnected = gdCtrl.ctrl.StartDevice()
+        logger.debug(f"gdCtrl.ctrl.StartDevice {self.isConnected}")
         if self.isConnected:
             self.setTriggerMode(triggerMode,gdCtrl)
             gdCtrl.ctrl.AutoShutterOn = False # Disable automatic exposure setting; mostly relevant for using mode 0 (freerun)
@@ -61,9 +80,12 @@ class CameraDriver:
 
         # Get a new frame cluster containing:
         # Com Error, Exposure, Gain, Full Res, H Res, V Res, and 2D Image.
+        print('start fetch frame')
+        logger.info('start fetch frame')
         deviceOK = gdCtrl.ctrl.StartDevice()
         # if Error, re-initialize with default values
         if not deviceOK:
+            logger.info('reinialize camera device since deviceOK is Falsed')
             self.initialize(gdCtrl)
             # TODO: I don't want to error here, but something should happen
             # assert self.isConnected, 'Failed to connect to camera; check hardware connection'
@@ -91,14 +113,31 @@ class CameraDriver:
         metadata['TimeString'] = time_utc.strftime('%Y%m%dT%H%M%SZ%f')
 
         # Convert WinCamData tuple to 2D numpy array
-        rawData = gdCtrl.ctrl.GetWinCamDataAsVariant()
-        imageData = np.array(rawData, dtype=np.uint16)
-        if metadata['VRes']*metadata['HRes'] == len(rawData):
-            imageData = imageData.reshape((metadata['VRes'], metadata['HRes'])) # (numRows, numCols)
-        else:
-            imageData = imageData.reshape((1,-1)) # (numRows=1, numCols=any); if there's a mismatch in rows/cols for any reason, one row will at least contain everything. TODO: does image processing hate this?
+        retry_counter = 1
+        while retry_counter >=1:
+            retry_counter -= 1
+            try:
+                logger.info(f'try to fetch image. Counter {retry_counter}')
+                rawData = gdCtrl.ctrl.GetWinCamDataAsVariant()
+                imageData = np.array(rawData, dtype=np.uint16)
+                logger.debug(f'image size: {imageData.shape}')
+                logger.debug(f"meta data Vres: {metadata['VRes']}")
+                logger.debug(f"meta data Hres: {metadata['HRes']}")
+                if metadata['VRes']*metadata['HRes'] == len(rawData):
+                    imageData = imageData.reshape((metadata['VRes'], metadata['HRes'])) # (numRows, numCols)
+                    self.initialize(gdCtrl)
+                    return metadata, imageData  
+                else:
+                    imageData = imageData.reshape((1,-1)) # (numRows=1, numCols=any); if there's a mismatch in rows/cols for any reason, one row will at least contain everything. TODO: does image processing hate this?
+                              
+            except Exception as e:
+                logger.error('error in capture the image')
+                logger.error(e, exc_info=True)
+            time.sleep(5)
+        return None, None
+            
+        # TODO temporarily workaround: reintiailize the setting after image .
         
-        return metadata, imageData
     
     
 
@@ -179,6 +218,7 @@ class CameraDriver:
 
         except Exception as e:
             print("An error occurred:", e)
+            logger.error(e, exc_info=True)
             return 999.99 #TO DO:  might want to return an appropriate error code
 
     def getPositionerRefStatus(self):
