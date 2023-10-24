@@ -34,12 +34,13 @@ class CameraDriver:
         flag_stop = gdCtrl.ctrl.StopDevice()
         logger.debug(f"gdCtrl.ctrl.StopDevice {flag_stop}")
         flag_start = gdCtrl.ctrl.StartDriver()
-        logger.debug(f"gdCtrl.ctrl.StopDevice {flag_start}")
+        logger.debug(f"gdCtrl.ctrl.StartDriver {flag_start}")
 
         gdCtrl.ctrl.ResetCamera(0)
         # Set resolution and ROI before starting device
         gdCtrl.ctrl.SetResolutionAndROI(fullResolution, *topLeft, *dimensions) 
         self.isConnected = gdCtrl.ctrl.StartDevice()
+        logger.debug(f"gdCtrl.ctrl.StartDevice {self.isConnected}")
         if self.isConnected:
             self.setTriggerMode(triggerMode,gdCtrl)
             gdCtrl.ctrl.AutoShutterOn = False # Disable automatic exposure setting; mostly relevant for using mode 0 (freerun)
@@ -112,24 +113,27 @@ class CameraDriver:
         metadata['TimeString'] = time_utc.strftime('%Y%m%dT%H%M%SZ%f')
 
         # Convert WinCamData tuple to 2D numpy array
-        retry_counter = 2
+        retry_counter = 1
         while retry_counter >=1:
             retry_counter -= 1
             try:
-                logger.info(f'try to fetch image. Conter {retry_counter}')
+                logger.info(f'try to fetch image. Counter {retry_counter}')
                 rawData = gdCtrl.ctrl.GetWinCamDataAsVariant()
                 imageData = np.array(rawData, dtype=np.uint16)
+                logger.debug(f'image size: {imageData.shape}')
+                logger.debug(f"meta data Vres: {metadata['VRes']}")
+                logger.debug(f"meta data Hres: {metadata['HRes']}")
                 if metadata['VRes']*metadata['HRes'] == len(rawData):
                     imageData = imageData.reshape((metadata['VRes'], metadata['HRes'])) # (numRows, numCols)
+                    self.initialize(gdCtrl)
+                    return metadata, imageData  
                 else:
                     imageData = imageData.reshape((1,-1)) # (numRows=1, numCols=any); if there's a mismatch in rows/cols for any reason, one row will at least contain everything. TODO: does image processing hate this?
-                logger.debug(f'image size: {imageData.shape}')
-                self.initialize(gdCtrl)
-                return metadata, imageData                
+                              
             except Exception as e:
                 logger.error('error in capture the image')
                 logger.error(e, exc_info=True)
-                time.sleep(1)
+            time.sleep(5)
         return None, None
             
         # TODO temporarily workaround: reintiailize the setting after image .

@@ -1080,7 +1080,7 @@ class Model:
                     self.commandedPowerData[self.activePixelTag.value - 1].append(expectedPower)
 
                     measuredPowerMax = max([measuredPower , measuredPowerMax])
-                    measuredPowerMax = measuredPowerMax * self._PyroMultiplicationFactor
+                    measuredPowerMax = measuredPowerMax
 
                     # evaluate the variable formerly known as testStatus
                     # check the power of each pulse but only report 1 status per pixel
