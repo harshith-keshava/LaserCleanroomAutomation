@@ -52,9 +52,9 @@ class TestType(Enum):
 ## Default tolerance percentages for each test type
 testTolerancePercents = {
         TestType.CALIBRATION: 30,
-        TestType.CLEAN_POWER_VERIFICATION: 10,
-        TestType.DIRTY_POWER_VERIFICATION: 10,
-        TestType.LOW_POWER_CHECK: 50
+        TestType.CLEAN_POWER_VERIFICATION: 5,
+        TestType.DIRTY_POWER_VERIFICATION: 5,
+        TestType.LOW_POWER_CHECK: 10
     }
 
 ## Varaible that when changed calls a list of functions
