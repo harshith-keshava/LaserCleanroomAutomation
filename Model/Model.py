@@ -166,8 +166,9 @@ class Model:
         # capture pixel
         "CapturePixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CapturePixel"),
         "CaptureFrame": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CaptureFrame"),
+        "CaptureFrameInstance": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CaptureFrameInstance"),
+        "FrameCaptureInstanceResponse": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.FrameCaptureInstanceResponse"),
         "PixelCaptured": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelCaptured"),
-        "FrameCaptured": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.FrameCaptured"),
         "pulseOnMsec": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.pulseOnTime_ms"),
         "numPulsesPerLevel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.numPulsesPerLevel"),
         "startingPowerLevel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.startingPowerLevel"),
@@ -235,7 +236,6 @@ class Model:
         #OMS 
         "StartOMSTest": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.StartOMSTest"),
         "MetaDataWriterReady": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.MetaDataWriterReady"),
-        "MetaDataWriterDone": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.MetaDataWriterDone"),
         "TestCompleteProcessed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.TestCompleteProcessed"),
         "TestAbortProcessed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.TestAbortProcessed"),
         "OMSTestComplete": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.OMSTestComplete"),
@@ -265,7 +265,6 @@ class Model:
         self.pixelInitializedTag = self.plcTags["PixelInitialized"]
         
         self.pixelCapturedTag = self.plcTags["PixelCaptured"]
-        self.frameCapturedTag = self.plcTags["FrameCaptured"]
         self.pulseOnMsecTag = self.plcTags["pulseOnMsec"]
         self.numPulsesPerLevelTag = self.plcTags["numPulsesPerLevel"]
         self.startingPowerLevelTag = self.plcTags["startingPowerLevel"]
@@ -307,6 +306,8 @@ class Model:
         self.initializePixelTag = self.plcTags["InitializePixel"]
         self.capturePixelTag = self.plcTags["CapturePixel"]
         self.captureFrameTag = self.plcTags["CaptureFrame"]
+        self.CaptureFrameInstanceTag = self.plcTags["CaptureFrameInstance"]
+        self.FrameCaptureInstanceResponseTag = self.plcTags["FrameCaptureInstanceResponse"]
         self.processPixelTag = self.plcTags["ProcessPixel"]
         self.processCalibrationTag = self.plcTags["ProcessCalibration"]
         self.uploadTestDataTag = self.plcTags["UploadTestData"]
@@ -332,7 +333,6 @@ class Model:
 
         self.StartOMSTestTag = self.plcTags["StartOMSTest"]
         self.MetaDataWriterReadyTag = self.plcTags["MetaDataWriterReady"]
-        self.MetaDataWriterDoneTag = self.plcTags["MetaDataWriterDone"]
         self.TestCompleteProcessedTag = self.plcTags["TestCompleteProcessed"]
         self.TestAbortProcessedTag = self.plcTags["TestAbortProcessed"]
         self.OMSTestCompleteTag = self.plcTags["OMSTestComplete"]
@@ -369,6 +369,7 @@ class Model:
             self.initializePixelTag._setAsUpdating()
             self.capturePixelTag._setAsUpdating()
             self.captureFrameTag._setAsUpdating()
+            self.CaptureFrameInstanceTag._setAsUpdating()
             self.processPixelTag._setAsUpdating()
             self.processCalibrationTag._setAsUpdating()
             self.UploadLinearLUTsTag._setAsUpdating()
@@ -687,8 +688,6 @@ class Model:
     def captureFrame(self):
         print("captureFrame()")
 
-        self.MetaDataWriterDoneTag.setPlcValue(0)
-
         frameCaptured = self._captureFrameData()
 
         #if self.currentPowerLevelIndex < self.numPowerLevelStepsTag.value:
@@ -701,8 +700,7 @@ class Model:
         # let the cmd timeout if we fail one of these
         if frameCaptured:
             # success
-            self.frameCapturedTag.setPlcValue(1)
-            self.MetaDataWriterDoneTag.setPlcValue(1)
+           self.FrameCaptureInstanceResponseTag = self.CaptureFrameInstanceTag
         else:
             print("Camera frame capture failed")
             self.errorFrameCaptureFailedTag.setPlcValue(1)
@@ -807,8 +805,7 @@ class Model:
         self.pixelResultTag.setPlcValue(0)
         self.calibrationInitializedTag.setPlcValue(0)
         self.pixelInitializedTag.setPlcValue(0)
-        self.pixelCapturedTag.setPlcValue(0)
-        self.frameCapturedTag.setPlcValue(0)     
+        self.pixelCapturedTag.setPlcValue(0) 
         self.pixelProcessedTag.setPlcValue(0)
         self.calibrationProcessedTag.setPlcValue(0)
         self.LUTsUploadedTag.setPlcValue(0)
