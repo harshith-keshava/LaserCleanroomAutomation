@@ -700,7 +700,7 @@ class Model:
         # let the cmd timeout if we fail one of these
         if frameCaptured:
             # success
-           self.FrameCaptureInstanceResponseTag.value = self.CaptureFrameInstanceTag.value
+           self.FrameCaptureInstanceResponseTag.setPlcValue(self.CaptureFrameInstanceTag.value)
         else:
             print("Camera frame capture failed")
             self.errorFrameCaptureFailedTag.setPlcValue(1)
