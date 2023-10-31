@@ -167,7 +167,7 @@ class Model:
         "CapturePixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CapturePixel"),
         "CaptureFrame": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CaptureFrame"),
         "CaptureFrameInstance": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CaptureFrameInstance"),
-        "FrameCaptureInstanceResponse": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.FrameCaptureInstanceResponse"),
+        "FrameCaptureInstanceResponse": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.FrameCaptureInstanceResponse"),
         "PixelCaptured": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelCaptured"),
         "pulseOnMsec": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.pulseOnTime_ms"),
         "numPulsesPerLevel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.numPulsesPerLevel"),
