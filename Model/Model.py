@@ -1,29 +1,42 @@
-
-import csv
 import os
-from ConfigFiles.MachineSettings import MachineSettings
-from Model.BNRopcuaTag import BNRopcuaTag
-from Model.LUTDataGeneration import LUTDataManager
-from ConfigFiles.TestSettings import TestSettings
-from opcua import Client
-import numpy as np
-from enum import Enum
-import time
-from datetime import datetime
 import csv
-from Model.Logger import Logger
+import time
 import numpy as np
 import statistics as stat
 import pandas as pd
-from Model.FTP_Manager import FTP_Manager
-from Model.CameraDriver import CameraDriver
-from Model.OphirCom import OphirJunoCOM
-from Model.LaserSettings import LaserSettings
+from enum import Enum
+from datetime import datetime
 from minio import Minio
 from minio.error import S3Error
 import urllib3
 import urllib3.exceptions
+from opcua import Client
+from ConfigFiles.MachineSettings import MachineSettings
+from Model.BNRopcuaTag import BNRopcuaTag
+from Model.LUTDataGeneration import LUTDataManager
+from ConfigFiles.TestSettings import TestSettings
+from Model.Logger import Logger
+from Model.FTP_Manager import FTP_Manager
+from Model.CameraDriver import CameraDriver
+from Model.OphirCom import OphirJunoCOM
+from Model.LaserSettings import LaserSettings
+from Model.metadatawriter import MetadataFileWriter
+import zaber.serial
+import wx
+import wx.lib.activex
 
+import logging
+logger = logging.getLogger('model')
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+fh = logging.FileHandler(filename='camera_driver.log')
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(formatter)
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+ch.setFormatter(formatter)
+logger.addHandler(fh)
+logger.addHandler(ch)
 ## Test Type Enum for the different types of tests that process team runs
 ## Calibration: Predefined tolerance band always run with Linear LUTS, run to generate new LUTs for the VFLCRs
 ## Clean Power Verification: Verification of laser health with generated LUTs with a clean debris shield
@@ -34,13 +47,14 @@ class TestType(Enum):
         CLEAN_POWER_VERIFICATION = 1
         DIRTY_POWER_VERIFICATION = 2
         LOW_POWER_CHECK = 3
+        SOMS_TEST = 4
 
 ## Default tolerance percentages for each test type
 testTolerancePercents = {
         TestType.CALIBRATION: 30,
-        TestType.CLEAN_POWER_VERIFICATION: 10,
-        TestType.DIRTY_POWER_VERIFICATION: 10,
-        TestType.LOW_POWER_CHECK: 50
+        TestType.CLEAN_POWER_VERIFICATION: 5,
+        TestType.DIRTY_POWER_VERIFICATION: 5,
+        TestType.LOW_POWER_CHECK: 10
     }
 
 ## Varaible that when changed calls a list of functions
@@ -93,7 +107,25 @@ class Model:
         self.currentPowerLevelIndex = 0 ## power level counter to adjust camera exposure
         self.exposureAt100W = 1 ## 1ms exposure at 100W pulse
         self.http = urllib3.PoolManager()
-    
+        self.metadatafilewriter = None
+
+        # Camera init
+        self.app = wx.App()
+        self.frame = wx.Frame( parent=None, id=wx.ID_ANY,size=(900,900), 
+                              title='Python Interface to DataRay')
+        p = wx.Panel(self.frame,wx.ID_ANY) # TODO: is this actually necessary?
+        # Get Data
+        self.gd = wx.lib.activex.ActiveXCtrl(p, 'DATARAYOCX.GetDataCtrl.1')
+        # Set some parameters to avoid potential AttributeErrors on failed connection
+        self.softwareVersion = ''
+        self.cameraNID = 0
+
+        self._PyroMultiplicationFactor = 1.73
+
+        # Software Version - vMajor.Minor.Patch eg: v1.2.0
+        self.applicationMajorVersion = 0
+        self.applicationMinorVersion = 2
+        self.applicationPatchVersion = 0
         ############################################# ADD TAGS #########################################
 
         # Connection of the client using the freeopcua library
@@ -105,6 +137,11 @@ class Model:
         # plcTags is a dictionary allowing the user to access the plc tags by string and perform a single action on all of them in a loop
         # new tags can be added without changing the model code
         self.plcTags = {
+
+        # App version
+        "AppMajorVersion":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.AppMajorVersion"),
+        "AppMinorVersion":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.AppMinorVersion"),
+        "AppPatchVersion":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.AppPatchVersion"),
 
         # machine info
         "MachineName": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.MachineName"),
@@ -128,6 +165,9 @@ class Model:
         
         # capture pixel
         "CapturePixel": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CapturePixel"),
+        "CaptureFrame": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CaptureFrame"),
+        "CaptureFrameInstance": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CaptureFrameInstance"),
+        "FrameCaptureInstanceResponse": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.FrameCaptureInstanceResponse"),
         "PixelCaptured": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.PixelCaptured"),
         "pulseOnMsec": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.pulseOnTime_ms"),
         "numPulsesPerLevel":BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.LaserParameters.numPulsesPerLevel"),
@@ -170,6 +210,7 @@ class Model:
         "ErrorBucketNotExist": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ErrorBucketNotExist"),
         "ErrorS3Connection": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ErrorS3Connection"),
         "ErrorCaptureFailed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ErrorCaptureFailed"),
+        "ErrorFrameCaptureFailed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.ErrorFrameCaptureFailed"),
 
         # Pixel data sent back to PLC
         "MeasuredPower": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.MeasuredPower"),
@@ -186,7 +227,20 @@ class Model:
         "ZaberMoveRelative": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ZaberMoveRelative"),
         "ZaberMoveAbsolute": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ZaberMoveAbsolute"),
         "ZaberGetHomeStatus": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ZaberGetHomeStatus"),
-        "ZaberGetPosFeedback": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ZaberGetPosFeedback")
+        "ZaberGetPosFeedback": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ZaberGetPosFeedback"),
+
+        # Additional Meta Data
+        "GantryXPositionStatus": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.GantryXPositionStatus"),
+        "GantryYPositionStatus": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.GantryYPositionStatus"),
+
+        #OMS 
+        "StartOMSTest": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.StartOMSTest"),
+        "MetaDataWriterReady": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.MetaDataWriterReady"),
+        "TestCompleteProcessed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.TestCompleteProcessed"),
+        "TestAbortProcessed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.TestAbortProcessed"),
+        "OMSTestComplete": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.OMSTestComplete"),
+        "OMSTestAborted": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.OMSTestAborted"),
+        "CameraExposure": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CameraExposure")
 
         }
 
@@ -194,6 +248,10 @@ class Model:
         # this is redundant to the dictionary but give the option to use dot operators to access the tags rather than strings
         # this makes tags come up in the autocomplete of the test editor vs having the remember/lookup the exact string
         # new tags do not have to be added here in addition to the dictionary but they can be 
+
+        self.AppMajorVersionTag = self.plcTags["AppMajorVersion"]
+        self.AppMinorVersionTag = self.plcTags["AppMinorVersion"]
+        self.AppPatchVersionTag = self.plcTags["AppPatchVersion"]
 
         self.MachineNameTag = self.plcTags["MachineName"]
         self.FactoryNameTag = self.plcTags["FactoryName"]
@@ -236,6 +294,7 @@ class Model:
         self.errorBucketNotExistTag = self.plcTags["ErrorBucketNotExist"]
         self.errorS3ConnectionTag = self.plcTags["ErrorS3Connection"]
         self.errorCaptureFailedTag = self.plcTags["ErrorCaptureFailed"]
+        self.errorFrameCaptureFailedTag = self.plcTags["ErrorFrameCaptureFailed"]
         
 
         ### Subscribed Variables (must also add these to the delete)
@@ -246,6 +305,9 @@ class Model:
         self.initializeCalibrationTag = self.plcTags["InitializeCalibration"]
         self.initializePixelTag = self.plcTags["InitializePixel"]
         self.capturePixelTag = self.plcTags["CapturePixel"]
+        self.captureFrameTag = self.plcTags["CaptureFrame"]
+        self.CaptureFrameInstanceTag = self.plcTags["CaptureFrameInstance"]
+        self.FrameCaptureInstanceResponseTag = self.plcTags["FrameCaptureInstanceResponse"]
         self.processPixelTag = self.plcTags["ProcessPixel"]
         self.processCalibrationTag = self.plcTags["ProcessCalibration"]
         self.uploadTestDataTag = self.plcTags["UploadTestData"]
@@ -266,17 +328,32 @@ class Model:
         self.ZaberGetHomeStatusTag = self.plcTags["ZaberGetHomeStatus"]
         self.ZaberGetPosFeedbackTag = self.plcTags["ZaberGetPosFeedback"]
 
+        self.GantryXPositionStatusTag = self.plcTags["GantryXPositionStatus"]
+        self.GantryYPositionStatusTag = self.plcTags["GantryYPositionStatus"]
+
+        self.StartOMSTestTag = self.plcTags["StartOMSTest"]
+        self.MetaDataWriterReadyTag = self.plcTags["MetaDataWriterReady"]
+        self.TestCompleteProcessedTag = self.plcTags["TestCompleteProcessed"]
+        self.TestAbortProcessedTag = self.plcTags["TestAbortProcessed"]
+        self.OMSTestCompleteTag = self.plcTags["OMSTestComplete"]
+        self.OMSTestAbortedTag = self.plcTags["OMSTestAborted"]
+        self.CameraExposureTag = self.plcTags["CameraExposure"]
+    
         ### Lookup Tables for Data Outputs #####
         self.testStatusTable = ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
         self.testTypesAsString = ["None", "LOWPOWER", "CAL", "CVER", "DVER"]
 
+        self._last_captured_frame = None
     ############################################ GENERAL TEST FUNCTIONS ######################################################
    
     ## Creates the connection to the PLC and connections to the subscribed variables to their respective plc tags
     ## New subscribed variables can be set as updating here 
     def connectToPlc(self):
         try:
-            self.client.connect()  
+            self.client.connect()
+            self.AppMajorVersionTag.setPlcValue(self.applicationMajorVersion)
+            self.AppMinorVersionTag.setPlcValue(self.applicationMinorVersion)
+            self.AppPatchVersionTag.setPlcValue(self.applicationPatchVersion) 
 
         except:
             print("Could not connect to server")
@@ -286,11 +363,13 @@ class Model:
             self.logger.addNewLog("Connections made")
 
             # monitor for change
-            self.exampleCommandTag._setAsUpdating()
+            #self.exampleCommandTag._setAsUpdating()
             self.heartBeatOutTag._setAsUpdating()
             self.initializeCalibrationTag._setAsUpdating()
             self.initializePixelTag._setAsUpdating()
             self.capturePixelTag._setAsUpdating()
+            self.captureFrameTag._setAsUpdating()
+            self.CaptureFrameInstanceTag._setAsUpdating()
             self.processPixelTag._setAsUpdating()
             self.processCalibrationTag._setAsUpdating()
             self.UploadLinearLUTsTag._setAsUpdating()
@@ -305,6 +384,11 @@ class Model:
             self.ZaberMoveAbsoluteTag._setAsUpdating()
             self.ZaberGetHomeStatusTag._setAsUpdating()
             self.ZaberGetPosFeedbackTag._setAsUpdating()
+            self.GantryXPositionStatusTag._setAsUpdating()
+            self.GantryYPositionStatusTag._setAsUpdating()
+            self.StartOMSTestTag._setAsUpdating()
+            self.OMSTestCompleteTag._setAsUpdating()
+            self.OMSTestAbortedTag._setAsUpdating()
         except:
             print("OPCUA subscription setup failed")
 
@@ -315,6 +399,7 @@ class Model:
             self.initializeCalibrationTag.attachReaction(self.initializeCalibrationReaction)
             self.initializePixelTag.attachReaction(self.initializePixelReaction)
             self.capturePixelTag.attachReaction(self.capturePixelReaction)
+            self.captureFrameTag.attachReaction(self.captureFrameReaction)
             self.processPixelTag.attachReaction(self.processPixelReaction)
             self.processCalibrationTag.attachReaction(self.processCalibrationReaction)
             self.UploadLinearLUTsTag.attachReaction(self.uploadLinearLUTsReaction)
@@ -327,6 +412,8 @@ class Model:
             self.ZaberMoveAbsoluteTag.attachReaction(self.ZaberMoveAbsoluteReaction)
             self.ZaberGetHomeStatusTag.attachReaction(self.ZaberGetHomeStatusReaction)
             self.ZaberGetPosFeedbackTag.attachReaction(self.ZaberGetPosFeedbackReaction)
+            self.OMSTestCompleteTag.attachReaction(self.OMSTestCompleteReaction)
+            self.OMSTestAbortedTag.attachReaction(self.OMSTestAbortedReaction)
 
         except:
             print("OPCUA reaction setup failed")
@@ -570,8 +657,8 @@ class Model:
             print("Active pixel is 0 which isn't really a thing so this is going to end up writing the data for this pixel as the last pixel :shrug:")
 
         ## update exposure counter, set starting exposure
-        self.currentPowerLevelIndex = 0
-        self.updateExposure(self.currentPowerLevelIndex)
+        #self.currentPowerLevelIndex = 0
+        #self.updateExposure(self.currentPowerLevelIndex)
 
         if self.pyrometer.isConnected:
             print("pyrometer: connected")
@@ -588,22 +675,35 @@ class Model:
 
         pyroDataCaptured = self._capturePowerData()
 
-        frameCaptured = self._captureFrameData()
-        if self.currentPowerLevelIndex < self.numPowerLevelStepsTag.value:
-            # update exposure for next power level if applicable
-            self.currentPowerLevelIndex += 1
-            self.updateExposure(self.currentPowerLevelIndex)
-
         print("\npyroDataCaptured: " + str(pyroDataCaptured))
-        print("\nframeCaptured: " + str(frameCaptured))
         
         # let the cmd timeout if we fail one of these
-        if pyroDataCaptured and frameCaptured:
+        if pyroDataCaptured:
             # success
             self.pixelCapturedTag.setPlcValue(1)
         else:
-            print("capture failed")
+            print("pixel power capture failed")
             self.errorCaptureFailedTag.setPlcValue(1)
+
+    def captureFrame(self):
+        print("captureFrame()")
+
+        frameCaptured = self._captureFrameData()
+
+        #if self.currentPowerLevelIndex < self.numPowerLevelStepsTag.value:
+            #update exposure for next power level if applicable
+            #self.currentPowerLevelIndex += 1
+            #self.updateExposure(self.currentPowerLevelIndex)
+
+        print("\nframeCaptured: " + str(frameCaptured))
+        
+        # let the cmd timeout if we fail one of these
+        if frameCaptured:
+            # success
+           self.FrameCaptureInstanceResponseTag.setPlcValue(self.CaptureFrameInstanceTag.value)
+        else:
+            print("Camera frame capture failed")
+            self.errorFrameCaptureFailedTag.setPlcValue(1)
 
     def processPixel(self):
         print("processPixel()")
@@ -705,7 +805,7 @@ class Model:
         self.pixelResultTag.setPlcValue(0)
         self.calibrationInitializedTag.setPlcValue(0)
         self.pixelInitializedTag.setPlcValue(0)
-        self.pixelCapturedTag.setPlcValue(0)     
+        self.pixelCapturedTag.setPlcValue(0) 
         self.pixelProcessedTag.setPlcValue(0)
         self.calibrationProcessedTag.setPlcValue(0)
         self.LUTsUploadedTag.setPlcValue(0)
@@ -715,11 +815,10 @@ class Model:
         self.errorBucketNotExistTag.setPlcValue(0)
         self.errorS3ConnectionTag.setPlcValue(0)
         self.errorCaptureFailedTag.setPlcValue(0)
-        #self.ZaberHomeTag.setPlcValue(0)
-        #self.ZaberMoveRelativeTag.setPlcValue(0)
-        #self.ZaberMoveAbsoluteTag.setPlcValue(0)
-        #self.ZaberGetHomeStatusTag.setPlcValue(0)
-        #self.ZaberGetPosFeedbackTag.setPlcValue(0)
+        self.errorFrameCaptureFailedTag.setPlcValue(0)
+        self.MetaDataWriterReadyTag.setPlcValue(0)
+        self.TestCompleteProcessedTag.setPlcValue(0)
+        self.TestAbortProcessedTag.setPlcValue(0)
 
     ##################################### TAG REACTIONS ###################################################################
 
@@ -749,6 +848,14 @@ class Model:
             self.capturePixel()
         if cmd == False:
             self.resetResponseTags()
+
+    def captureFrameReaction(self):
+        cmd = self.captureFrameTag.value
+        if cmd == True:
+            self.logger.addNewLog("Capture Frame command received from  PLC ")
+            self.captureFrame()
+        if cmd == False:
+            self.resetResponseTags()        
 
     def processPixelReaction(self):
         cmd = self.processPixelTag.value
@@ -820,6 +927,15 @@ class Model:
             self.logger.addNewLog("Zaber home command received from  PLC ")
             camera = CameraDriver()
             camera.homePositioner()
+            self.camera.initialize(self.gd)
+            #Check camera directory
+            self.camera_dir = os.path.join(self.saveLocation, "cameraData")
+            if not os.path.exists(self.camera_dir):
+                os.makedirs(self.camera_dir, exist_ok=True)
+            # Meta Writer Init
+            time_start = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ%f')
+            self.metadatafilewriter = MetadataFileWriter(machine=self.MachineNameTag.value, datetime=time_start)
+            self.MetaDataWriterReadyTag.setPlcValue(1)
         if cmd == False:
             self.resetResponseTags()
 
@@ -838,6 +954,7 @@ class Model:
             self.logger.addNewLog("Zaber move absolute command received from  PLC ")
             camera = CameraDriver()
             camera.moveAbsPositioner(self.ZaberAbsolutePosParTag.value)
+            self.camera.setExposure(self.CameraExposureTag.value,self.gd) # Set Exposure with zaber move 
         if cmd == False:
             self.resetResponseTags()
 
@@ -859,21 +976,63 @@ class Model:
         if cmd == False: 
             self.resetResponseTags()
 
+    def OMSTestCompleteReaction(self):
+        cmd = self.OMSTestCompleteTag.value
+        if cmd == True:
+            self.metadatafilewriter.save_file(self.camera_dir, test_status='Completed')
+            self.TestCompleteProcessedTag.setPlcValue(1)
+        if cmd == False:   
+            self.resetResponseTags()
+
+    def OMSTestAbortedReaction(self):
+        cmd = self.OMSTestAbortedTag.value
+        if cmd == True:
+            print(f'saving metadata json to {self.camera_dir}')
+            self.metadatafilewriter.save_file(self.camera_dir, test_status='Aborted')
+            print(f'saved metadata json to {self.camera_dir}')
+            self.TestAbortProcessedTag.setPlcValue(1)
+
+        if cmd == False:   
+            self.resetResponseTags()
+
    ############################## HELPER FUNCTION ##########################################
+    def _is_image_new(self,  new_img):
+        if self._last_captured_frame is None:
+            self._last_captured_frame = new_img
+            return True
+        else:
+            if np.array_equal(self._last_captured_frame, new_img):
+                return False
+            else:
+                self._last_captured_frame = new_img
+                return True
 
     def _captureFrameData(self):
         print("_captureFrameData()")
-        if self.camera.isConnected:
-            currentFrame = self.camera.fetchFrame()
-            # Save to camera-specific subdirectory until otherwise specified. Include binary data for now.
-            camera_dir = os.path.join(self.saveLocation, "cameraData")
-            file_path = os.path.join(camera_dir, "pixel_" + str(self.activePixelTag.value) + "_level_" + str(self.currentPowerLevelIndex + 1))
-            os.makedirs(camera_dir, exist_ok=True)
-            print("saving frame to: " + file_path)
-            currentFrame.save(file_path, include_binary=True)
-            return True
+
+        camera = CameraDriver()
+        activePixel = self.activePixelTag.value
+        gantryXPosition = self.GantryXPositionStatusTag.value
+        gantryYPosition = self.GantryYPositionStatusTag.value
+        zaberPosition = camera.getPositionerPosition()
+        pulseOnMsec = self.pulseOnMsecTag.value
+        CurrentPowerLevel = self.currentPowerWattsTag.value
+        machineName = self.MachineNameTag.value
+
+        metadata, imageData = self.camera.fetchFrame(activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,CurrentPowerLevel,machineName,self.gd)
+
+        if metadata is None or imageData is None:
+            return False
         else:
+            is_image_new = self._is_image_new(imageData) #declare fault
+            # Save image to camera-specific subdirectory until otherwise specified. Append to metadata (in memory)
+            metadata.update({'frame_is_a_duplicate': not is_image_new})
+            image_url = None  ##TODO - get image URL from S3
+            metadata_write_status = self.metadatafilewriter.add_frame_and_save_image(metadata, imageData, self.camera_dir,image_url)
+
+            print(f"Saved frame to: {os.path.join(self.camera_dir, self.metadatafilewriter.current_image_filename)}")
             return True
+          
 
     def _capturePowerData(self):
         
@@ -901,7 +1060,7 @@ class Model:
 
             for pulse in pulses:
 
-                energy = pulse[0]
+                energy = pulse[0] * self._PyroMultiplicationFactor
                 timestamp = pulse[1]
                 status = pulse[2]
 
@@ -918,6 +1077,7 @@ class Model:
                     self.commandedPowerData[self.activePixelTag.value - 1].append(expectedPower)
 
                     measuredPowerMax = max([measuredPower , measuredPowerMax])
+                    measuredPowerMax = measuredPowerMax
 
                     # evaluate the variable formerly known as testStatus
                     # check the power of each pulse but only report 1 status per pixel
@@ -968,7 +1128,7 @@ class Model:
 
         print("setting exposure to " + str(exposure) + "ms")
         
-        status = self.camera.setExposure(exposure)
+        status = self.camera.setExposure(exposure,self.gd)
 
         print("status: " + str(status))
        

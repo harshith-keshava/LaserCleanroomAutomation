@@ -1,118 +1,161 @@
-import wx
-import wx.lib.activex
+
 import png
 import time
 import numpy as np
 import json
+from datetime import datetime
 import zaber.serial
+import wx
+import wx.lib.activex
+import logging
+
+""" set up python logger"""
+
+logger = logging.getLogger('camera_driver')
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+fh = logging.FileHandler(filename='camera_driver.log')
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(formatter)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch.setFormatter(formatter)
+logger.addHandler(fh)
+logger.addHandler(ch)
+
 
 class CameraDriver:
     
-    def __init__(self):
-        self.app = wx.App()
-        self.frame = wx.Frame( parent=None, id=wx.ID_ANY,size=(900,900), 
-                              title='Python Interface to DataRay')
-        p = wx.Panel(self.frame,wx.ID_ANY) # TODO: is this actually necessary?
-        # Get Data
-        self.gd = wx.lib.activex.ActiveXCtrl(p, 'DATARAYOCX.GetDataCtrl.1')
-        # Set some parameters to avoid potential AttributeErrors on failed connection
-        self.softwareVersion = ''
-        self.cameraNID = 0
-        # Run initialization routine on object creation
-        self.initialize()
+    def zaberConnect(self):
+        ZaberConnect = zaber.serial.AsciiSerial("COM11")
+        return ZaberConnect
     
-    def initialize(self, exposure=1.0, gain=1.0, triggerMode=3, fullResolution=1, topLeft=(0,0), dimensions=(2048,2048)): #dimensions= (width, height)
-        self.gd.ctrl.StopDevice()
-        self.gd.ctrl.StartDriver()
-        self.gd.ctrl.ResetCamera(0)
-        # Set resolution and ROI before starting device
-        self.gd.ctrl.SetResolutionAndROI(fullResolution, *topLeft, *dimensions) 
-        self.isConnected = self.gd.ctrl.StartDevice()
-        if self.isConnected:
-            self.setTriggerMode(triggerMode)
-            self.gd.ctrl.AutoShutterOn = False # Disable automatic exposure setting; mostly relevant for using mode 0 (freerun)
-            self.setExposureAndGain(exposure, gain)
-            self.softwareVersion = self.gd.ctrl.GetSoftwareVersion() # 8.0D92 is expected here
-            #self.gd.ctrl.LoadThisJobFile('ConfigFiles\wincam_settings.ojf')
-            self.cameraNID = self.gd.ctrl.GetCameraNID(0)
-    
-    def getTriggerMode(self):
-        return self.gd.ctrl.LCMTriggerMode
-        
-    def setTriggerMode(self, triggerMode):
-        self.gd.ctrl.LCMTriggerMode = triggerMode
-        return self.gd.ctrl.LCMTriggerMode==triggerMode
-    
-    def setExposureAndGain(self, newExposure, newGain):
-        # Propagate success of both setters
-        return self.setExposure(newExposure) and self.setGain(newGain)
+    def initialize(self,gdCtrl, exposure=1.0, gain=1.0, triggerMode=3, fullResolution=1, topLeft=(0,0), dimensions=(2048,2048)): #dimensions= (width, height)
+        flag_stop = gdCtrl.ctrl.StopDevice()
+        logger.debug(f"gdCtrl.ctrl.StopDevice {flag_stop}")
+        flag_start = gdCtrl.ctrl.StartDriver()
+        logger.debug(f"gdCtrl.ctrl.StartDriver {flag_start}")
 
-    def getExposure(self):
-        return self.gd.ctrl.GetTargetCameraExposure(0)
-        
-    def setExposure(self, newExposure):
-        self.gd.ctrl.SetTargetCameraExposure(0, newExposure)
-        return self.gd.ctrl.GetTargetCameraExposure(0)==newExposure
+        gdCtrl.ctrl.ResetCamera(0)
+        # Set resolution and ROI before starting device
+        gdCtrl.ctrl.SetResolutionAndROI(fullResolution, *topLeft, *dimensions) 
+        self.isConnected = gdCtrl.ctrl.StartDevice()
+        logger.debug(f"gdCtrl.ctrl.StartDevice {self.isConnected}")
+        if self.isConnected:
+            self.setTriggerMode(triggerMode,gdCtrl)
+            gdCtrl.ctrl.AutoShutterOn = False # Disable automatic exposure setting; mostly relevant for using mode 0 (freerun)
+            self.setExposureAndGain(exposure, gain,gdCtrl)
+            self.softwareVersion = gdCtrl.ctrl.GetSoftwareVersion() # 8.0D92 is expected here
+            #gdCtrl.ctrl.LoadThisJobFile('ConfigFiles\wincam_settings.ojf')
+            self.cameraNID = gdCtrl.ctrl.GetCameraNID(0)
+        else:
+            print("An error occurred initializing camera. Check Camera connection is ok")    
     
-    def getGain(self):
-        return self.gd.ctrl.GetTargetCameraGain(0)
+    def getTriggerMode(self,gdCtrl):
+        return gdCtrl.ctrl.LCMTriggerMode
         
-    def setGain(self, newGain):
-        self.gd.ctrl.SetTargetCameraGain(0, newGain)
-        return self.gd.ctrl.GetTargetCameraGain(0)==newGain
+    def setTriggerMode(self, triggerMode,gdCtrl):
+        gdCtrl.ctrl.LCMTriggerMode = triggerMode
+        return gdCtrl.ctrl.LCMTriggerMode==triggerMode
     
-    def fetchFrame(self):
+    def setExposureAndGain(self, newExposure, newGain,gdCtrl):
+        # Propagate success of both setters
+        return self.setExposure(newExposure,gdCtrl) and self.setGain(newGain,gdCtrl)
+
+    def getExposure(self,gdCtrl):
+        return gdCtrl.ctrl.GetTargetCameraExposure(0)
+        
+    def setExposure(self, newExposure,gdCtrl):
+        gdCtrl.ctrl.SetTargetCameraExposure(0, newExposure)
+        return gdCtrl.ctrl.GetTargetCameraExposure(0)==newExposure
+    
+    def getGain(self,gdCtrl):
+        return gdCtrl.ctrl.GetTargetCameraGain(0)
+        
+    def setGain(self, newGain,gdCtrl):
+        gdCtrl.ctrl.SetTargetCameraGain(0, newGain)
+        return gdCtrl.ctrl.GetTargetCameraGain(0)==newGain
+    
+    def fetchFrame(self,activePixel,gantryXPosition,gantryYPosition,zaberPosition,pulseOnMsec,CurrentPowerLevel,machineName,gdCtrl):
+
         # Get a new frame cluster containing:
         # Com Error, Exposure, Gain, Full Res, H Res, V Res, and 2D Image.
-        deviceOK = self.gd.ctrl.StartDevice()
+        print('start fetch frame')
+        logger.info('start fetch frame')
+        deviceOK = gdCtrl.ctrl.StartDevice()
         # if Error, re-initialize with default values
         if not deviceOK:
-            self.initialize()
+            logger.info('reinialize camera device since deviceOK is Falsed')
+            self.initialize(gdCtrl)
             # TODO: I don't want to error here, but something should happen
             # assert self.isConnected, 'Failed to connect to camera; check hardware connection'
         
         metadata = dict()
-        metadata['CameraNID'] = self.cameraNID
-        metadata['Exposure'] = self.getExposure()
-        metadata['Gain'] = self.getGain()
-        metadata['FullRes'] = self.gd.ctrl.CaptureIsFullResolution()
-        metadata['HRes'] = self.gd.ctrl.GetHorizontalPixels()
-        metadata['VRes'] = self.gd.ctrl.GetVerticalPixels()
+        metadata['ActivePixel'] = activePixel
+        metadata['GantryXPos'] = gantryXPosition
+        metadata['GantryYPos'] = gantryYPosition
+        metadata['ZaberPosition'] = zaberPosition
+        metadata['PulseOnMsec'] = pulseOnMsec
+        metadata['PowerLevel'] = CurrentPowerLevel
+        metadata['MachineName'] = machineName
+        metadata['CameraNID'] = gdCtrl.ctrl.GetCameraNID(0)
+        metadata['Exposure'] = self.getExposure(gdCtrl)
+        metadata['Gain'] = self.getGain(gdCtrl)
+        metadata['FullRes'] = gdCtrl.ctrl.CaptureIsFullResolution()
+        metadata['HRes'] = gdCtrl.ctrl.GetHorizontalPixels()
+        metadata['VRes'] = gdCtrl.ctrl.GetVerticalPixels()
         
         # Get timestamp and convert to various formats
-        # To refactor for local time instead of GMT, use time.localtime instead of time.gmtime (same usage)
-        metadata['TimeSec'] = time.time()
-        metadata['TimeStruct'] = time.gmtime(metadata['TimeSec'])
-        metadata['TimeString'] = time.asctime(metadata['TimeStruct'])
+
+        # Get current time in UTC
+        time_utc = datetime.utcnow()
+
+        metadata['TimeString'] = time_utc.strftime('%Y%m%dT%H%M%SZ%f')
 
         # Convert WinCamData tuple to 2D numpy array
-        rawData = self.gd.ctrl.GetWinCamDataAsVariant()
-        imageData = np.array(rawData, dtype=np.uint16)
-        if metadata['VRes']*metadata['HRes'] == len(rawData):
-            imageData = imageData.reshape((metadata['VRes'], metadata['HRes'])) # (numRows, numCols)
-        else:
-            imageData = imageData.reshape((1,-1)) # (numRows=1, numCols=any); if there's a mismatch in rows/cols for any reason, one row will at least contain everything. TODO: does image processing hate this?
+        retry_counter = 1
+        while retry_counter >=1:
+            retry_counter -= 1
+            try:
+                logger.info(f'try to fetch image. Counter {retry_counter}')
+                rawData = gdCtrl.ctrl.GetWinCamDataAsVariant()
+                imageData = np.array(rawData, dtype=np.uint16)
+                logger.debug(f'image size: {imageData.shape}')
+                logger.debug(f"meta data Vres: {metadata['VRes']}")
+                logger.debug(f"meta data Hres: {metadata['HRes']}")
+                if metadata['VRes']*metadata['HRes'] == len(rawData):
+                    imageData = imageData.reshape((metadata['VRes'], metadata['HRes'])) # (numRows, numCols)
+                    self.initialize(gdCtrl)
+                    return metadata, imageData  
+                else:
+                    imageData = imageData.reshape((1,-1)) # (numRows=1, numCols=any); if there's a mismatch in rows/cols for any reason, one row will at least contain everything. TODO: does image processing hate this?
+                              
+            except Exception as e:
+                logger.error('error in capture the image')
+                logger.error(e, exc_info=True)
+            time.sleep(5)
+        return None, None
+            
+        # TODO temporarily workaround: reintiailize the setting after image .
         
-        return OmsFrame(metadata, imageData)
+    
+    
 
     def moveAbsPositioner(self,target_position):
         try:
-            # Open an ASCII serial connection to the port 
-            connection = zaber.serial.AsciiSerial("COM4")
+            Connection = zaber.serial.AsciiSerial("COM11")
 
-            rawData = str(target_position * 1000000.0)  # Convert the value to a string. Conversion factor between disance and raw steps is 1000000
+            rawData = round(target_position * 1000000.0)  # Convert the value to a string. Conversion factor between disance and raw steps is 1000000
+            rawData = str(rawData)
            
             # Concatenate "mov abs " with the rawData
-            command_string = "move abs " + rawData
+            command_string = "move abs " + rawData + ".0"
             
             print(command_string)
 
             # Send the "move absolute" command
-            connection.write(command_string)
-
-            # Close the connection
-            connection.close()
-
+            Connection.write(command_string)
+            Connection.close()
             return 1
 
         except Exception as e:
@@ -121,22 +164,19 @@ class CameraDriver:
 
     def moveRelPositioner(self,target_position):
         try:
-            # Open an ASCII serial connection to the port 
-            connection = zaber.serial.AsciiSerial("COM4")
+            Connection = zaber.serial.AsciiSerial("COM11")
 
-            rawData = str(target_position * 1000000.0)  # Convert the value to a string. Conversion factor between disance and raw steps is 1000000
-           
+            rawData = round(target_position * 1000000.0)  # Convert the value to a string. Conversion factor between disance and raw steps is 1000000
+            rawData = str(rawData)
+
             # Concatenate "mov abs " with the rawData
-            command_string = "move rel " + rawData
+            command_string = "move rel " + rawData + ".0"
             
             print(command_string)
 
             # Send the "move absolute" command
-            connection.write(command_string)
-
-            # Close the connection
-            connection.close()
-
+            Connection.write(command_string)
+            Connection.close()
             return 1
 
         except Exception as e:
@@ -145,15 +185,11 @@ class CameraDriver:
 
     def homePositioner(self):
         try:
-            # Open an ASCII serial connection to the port 
-            connection = zaber.serial.AsciiSerial("COM4")
+            Connection = zaber.serial.AsciiSerial("COM11")
 
             # Send the "home" command
-            connection.write("home")
-
-            # Close the connection
-            connection.close()
-
+            Connection.write("home")
+            Connection.close()
             return 1
 
         except Exception as e:
@@ -162,55 +198,51 @@ class CameraDriver:
 
     def getPositionerPosition(self):
         try:
-            # Open an ASCII serial connection to the port 
-            connection = zaber.serial.AsciiSerial("COM4")
+            Connection = zaber.serial.AsciiSerial("COM11")
 
             # Send the "get pos" command
-            connection.write("get pos")
+            Connection.write("get pos")
 
             # Read status
-            current_position_data = str(connection.read())
+            current_position_data = str(Connection.read())
 
             if len(current_position_data) >= 17:
                 current_position = int(current_position_data[17:])
                 current_position = current_position/1000000
                 print(current_position) # in mm
-                # Close the connection
-                connection.close()
+                Connection.close()
                 return current_position
             else:
-                # Close the connection
-                connection.close()
+                Connection.close()
                 return 999.99
 
         except Exception as e:
             print("An error occurred:", e)
+            logger.error(e, exc_info=True)
             return 999.99 #TO DO:  might want to return an appropriate error code
 
     def getPositionerRefStatus(self):
         try:
-            # Open an ASCII serial connection to the port 
-            connection = zaber.serial.AsciiSerial("COM4")
+            Connection = zaber.serial.AsciiSerial("COM11")
 
             # Send the "get pos" command
-            connection.write("get pos")
+            Connection.write("get pos")
 
             # Read status
-            current_position_data = str(connection.read())
+            current_position_data = str(Connection.read())
 
             if len(current_position_data) >= 1:
                 warning = str(current_position_data[14:16])
                 print(warning)
-                # Close the connection
-                connection.close()
 
                 if warning == "WR" or warning == "WH" : # WR: no reference or WH: not homed
+                    Connection.close()
                     return False
                 else: 
+                    Connection.close()
                     return True
             else:
-                # Close the connection
-                connection.close()
+                Connection.close()
                 return 0 # TO DO: report error
 
         except Exception as e:
