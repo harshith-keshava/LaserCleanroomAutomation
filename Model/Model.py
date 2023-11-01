@@ -363,7 +363,7 @@ class Model:
             self.logger.addNewLog("Connections made")
 
             # monitor for change
-            self.exampleCommandTag._setAsUpdating()
+            #self.exampleCommandTag._setAsUpdating()
             self.heartBeatOutTag._setAsUpdating()
             self.initializeCalibrationTag._setAsUpdating()
             self.initializePixelTag._setAsUpdating()
