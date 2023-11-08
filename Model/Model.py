@@ -120,7 +120,6 @@ class Model:
         self.softwareVersion = ''
         self.cameraNID = 0
 
-        self._PyroMultiplicationFactor = 1.73
 
         # Software Version - vMajor.Minor.Patch eg: v1.2.0
         self.applicationMajorVersion = 0
@@ -240,7 +239,8 @@ class Model:
         "TestAbortProcessed": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_FromGen3CalibApp.TestAbortProcessed"),
         "OMSTestComplete": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.OMSTestComplete"),
         "OMSTestAborted": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.OMSTestAborted"),
-        "CameraExposure": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CameraExposure")
+        "CameraExposure": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CameraExposure"),
+        "PyroMultiplicationFactor": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.PyroMultiplicationFactor")
 
         }
 
@@ -338,6 +338,8 @@ class Model:
         self.OMSTestCompleteTag = self.plcTags["OMSTestComplete"]
         self.OMSTestAbortedTag = self.plcTags["OMSTestAborted"]
         self.CameraExposureTag = self.plcTags["CameraExposure"]
+
+        self.PyroMultiplicationFactorTag = self.plcTags["PyroMultiplicationFactor"]
     
         ### Lookup Tables for Data Outputs #####
         self.testStatusTable = ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
@@ -389,6 +391,7 @@ class Model:
             self.StartOMSTestTag._setAsUpdating()
             self.OMSTestCompleteTag._setAsUpdating()
             self.OMSTestAbortedTag._setAsUpdating()
+            self.PyroMultiplicationFactorTag._setAsUpdating()
         except:
             print("OPCUA subscription setup failed")
 
@@ -665,6 +668,7 @@ class Model:
             print("pyrometer: clearing buffer")
             self.pyrometer.clearData()
             print("pyromter: starting streaming")
+            time.sleep(5)
             self.pyrometer.startDataCollection()
             self.pixelInitializedTag.setPlcValue(1)
         else:
@@ -1060,7 +1064,7 @@ class Model:
 
             for pulse in pulses:
 
-                energy = pulse[0] * self._PyroMultiplicationFactor
+                energy = pulse[0] * self.PyroMultiplicationFactorTag.value
                 timestamp = pulse[1]
                 status = pulse[2]
 
