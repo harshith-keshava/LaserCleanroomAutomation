@@ -449,6 +449,16 @@ class Model:
             settings = self.testSettings.settingsAsDict()
             for setting in settings:
                 logFileWriter.writerow([setting, str(settings[setting])])
+        with open(os.path.join(self.saveLocationNetwork, "log.csv"), 'w', newline='') as csvfile:
+            logFileWriter = csv.writer(csvfile, delimiter=',')
+            date_time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+            logFileWriter.writerow(["Date", date_time])
+            logFileWriter.writerow(["Operator", self.testSettings._operatorName])
+            logFileWriter.writerow(["Sensor Number", self.testSettings._sensorNumber])
+            logFileWriter.writerow(["Juno+ Serial", self.testSettings._junoPlusSerial])
+            settings = self.testSettings.settingsAsDict()
+            for setting in settings:
+                logFileWriter.writerow([setting, str(settings[setting])])
    
     ## Called at the end of the test. Calls the functions to post-process the data and the save the end of test files
     def endTest(self):
@@ -474,6 +484,11 @@ class Model:
                 rawOutputWriter.writerow([pixelIdx + 1] + [self.laserTestStatus[pixelIdx]] + list(pixelTested))
         
         with open(os.path.join(self.saveLocation, 'LPM_Raw.csv'), 'w', newline='') as csvfile:
+            rawOutputWriter = csv.writer(csvfile, delimiter=',')
+            for pixelIdx, pixelTested in enumerate(exportData):
+                rawOutputWriter.writerow([pixelIdx + 1] + [self.laserTestStatus[pixelIdx]] + list(pixelTested))
+
+        with open(os.path.join(self.saveLocationNetwork, 'LPM_Raw.csv'), 'w', newline='') as csvfile:
             rawOutputWriter = csv.writer(csvfile, delimiter=',')
             for pixelIdx, pixelTested in enumerate(exportData):
                 rawOutputWriter.writerow([pixelIdx + 1] + [self.laserTestStatus[pixelIdx]] + list(pixelTested))
@@ -517,6 +532,7 @@ class Model:
         self.results = pd.DataFrame(outputData, columns=cols)
         self.results.to_csv(os.path.join("tmp", "LPM_processed.csv"), index=False)
         self.results.to_csv(os.path.join(self.saveLocation, "LPM_processed.csv"), index=False)
+        self.results.to_csv(os.path.join(self.saveLocationNetwork, "LPM_processed.csv"), index=False)
         validRanges = ["ValidRanges"]
         validRanges.append(self.getValidPixelRanges())
         with open(os.path.join(self.saveLocation, 'summary.csv'), 'w', newline='') as summaryFile:
@@ -634,6 +650,8 @@ class Model:
             os.makedirs(self.saveLocation)
             self.resultsLocation = self.saveLocation + "_RESULTS"
             os.makedirs(self.resultsLocation, exist_ok=True) # This directory shouldn't already exist, but crashing is probably more of a hassle than it's worth
+            self.saveLocationNetwork = self._createoutputdirectoryNetwork()
+            os.makedirs(self.saveLocationNetwork) 
 
         # Get pixel mapping
         self.laserSettings.vfpMap = self.vfpMapTag.value
@@ -1166,6 +1184,40 @@ class Model:
             drivePath = drivePath + '_' + str(counter).zfill(2)
             counter += 1
         return drivePath
+    
+    
+    def _createoutputdirectoryNetwork(self):
+        date = self.timeStamp.strftime("%Y%m%d")
+        machineID = str(MachineSettings._machineID)[0:2] + str(MachineSettings._machineID[2:]).zfill(2)
+        if(self.testType == TestType.LOW_POWER_CHECK):
+            time = self.timeStamp.strftime("%H%M")
+            calID = self.CurrentLUTIDTag.value
+            drivePathNetwork = os.path.join(r"\\brl-nas02\printerinfo", MachineSettings._factoryID, machineID, "Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_LOWPOWER")
+            self.testName = machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_LOWPOWER"
+        elif(self.testType == TestType.CALIBRATION):    
+            calID = self.testSettings._CalId  
+            drivePathNetwork = os.path.join(r"\\brl-nas02\printerinfo", MachineSettings._factoryID, machineID, "Laser Data", "30_Calibrations", machineID + "_LUT_" + str(calID).zfill(5)+"_" + date)
+            self.testName = machineID + "_LUT_" + str(calID).zfill(5)+"_" + date + " Calibration"
+        elif(self.testType == TestType.CLEAN_POWER_VERIFICATION):
+            time = self.timeStamp.strftime("%H%M")
+            calID = self.CurrentLUTIDTag.value
+            drivePathNetwork = os.path.join(r"\\brl-nas02\printerinfo", MachineSettings._factoryID, machineID, "Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_CVER")
+            self.testName = machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_CVER"
+        elif(self.testType == TestType.DIRTY_POWER_VERIFICATION):
+            time = self.timeStamp.strftime("%H%M")
+            calID = self.CurrentLUTIDTag.value
+            drivePathNetwork = os.path.join(r"\\brl-nas02\printerinfo", MachineSettings._factoryID, machineID, "Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_DVER")
+            self.testName = machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_DVER"
+        
+    
+        count = 1
+        while(os.path.exists(drivePathNetwork)):
+            if drivePathNetwork[-3] == '_':
+                drivePathNetwork = drivePathNetwork[:-3]
+            drivePathNetwork = drivePathNetwork + '_' + str(count).zfill(2)
+            count += 1
+        return drivePathNetwork
+
 
     @staticmethod
     def percentDiff(numA, numB):
