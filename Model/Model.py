@@ -527,7 +527,7 @@ class Model:
                 else:
                     numDataPoints = 0
                 if pixelIdx < (self.laserSettings.numberOfPixels):
-                    outputData.append([self.timeStamp.strftime("%Y-%m-%d, %H:%M:%S"), MachineSettings._machineID, MachineSettings._factoryID, self.testTypesAsString[self.testSettings._testType], pixelIdx + 1, self.laserSettings.vfpMap[pixelIdx][2], self.laserSettings.vfpMap[pixelIdx][3], dev_daq_p_data[pixelIdx][powerLevelNum] < 5, self.testStatusTable[self.laserTestStatus[pixelIdx]], commandedPower, avg_daq_p_data[pixelIdx][powerLevelNum], std_daq_p_data[pixelIdx][powerLevelNum], dev_daq_p_data[pixelIdx][powerLevelNum], numDataPoints])
+                    outputData.append([self.timeStamp.strftime("%Y-%m-%d, %H:%M:%S"), MachineSettings._machineID, MachineSettings._factoryID, self.testType, pixelIdx + 1, self.laserSettings.vfpMap[pixelIdx][2], self.laserSettings.vfpMap[pixelIdx][3], dev_daq_p_data[pixelIdx][powerLevelNum] < 5, self.testStatusTable[self.laserTestStatus[pixelIdx]], commandedPower, avg_daq_p_data[pixelIdx][powerLevelNum], std_daq_p_data[pixelIdx][powerLevelNum], dev_daq_p_data[pixelIdx][powerLevelNum], numDataPoints])
         cols =["Date", "Machine ID", "Factory ID", "Test Type", "Pixel", "Rack", "Laser", "Process Acceptance", "Status", "Commanded Power", "Pulse Power Average", "Pulse Power Stdv", "Pulse Power Deviation", "Data Points"] # add rack and laser printer name, name of test(CVER, DVER....), timestamp  
         self.results = pd.DataFrame(outputData, columns=cols)
         self.results.to_csv(os.path.join("tmp", "LPM_processed.csv"), index=False)
