@@ -1162,10 +1162,11 @@ class Model:
             calID = self.CurrentLUTIDTag.value
             drivePath = os.path.join(".", "tmp", "printerinfo", MachineSettings._factoryID, machineID, "Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_LOWPOWER")
             self.testName = machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_LOWPOWER"
-        elif(self.testType == TestType.CALIBRATION):    
-            calID = self.testSettings._CalId  
+        elif(self.testType == TestType.CALIBRATION):
+            time = self.timeStamp.strftime("%H%M")   
+            calID = self.CurrentLUTIDTag.value  
             drivePath = os.path.join(".", "tmp", "printerinfo", MachineSettings._factoryID, machineID, "Laser Data", "30_Calibrations", machineID + "_LUT_" + str(calID).zfill(5)+"_" + date)
-            self.testName = machineID + "_LUT_" + str(calID).zfill(5)+"_" + date + " Calibration"
+            self.testName = machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5) + " Calibration"
         elif(self.testType == TestType.CLEAN_POWER_VERIFICATION):
             time = self.timeStamp.strftime("%H%M")
             calID = self.CurrentLUTIDTag.value
@@ -1195,9 +1196,10 @@ class Model:
             drivePathNetwork = os.path.join(r"\\brl-nas02\printerinfo", MachineSettings._factoryID, machineID, "Laser Data", "40_Verifications", machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_LOWPOWER")
             self.testName = machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5)+"_LOWPOWER"
         elif(self.testType == TestType.CALIBRATION):    
-            calID = self.testSettings._CalId  
+            time = self.timeStamp.strftime("%H%M")   
+            calID = self.CurrentLUTIDTag.value   
             drivePathNetwork = os.path.join(r"\\brl-nas02\printerinfo", MachineSettings._factoryID, machineID, "Laser Data", "30_Calibrations", machineID + "_LUT_" + str(calID).zfill(5)+"_" + date)
-            self.testName = machineID + "_LUT_" + str(calID).zfill(5)+"_" + date + " Calibration"
+            self.testName = machineID + "-" + date + "-" + time + "-LUT-" + str(calID).zfill(5) + " Calibration"
         elif(self.testType == TestType.CLEAN_POWER_VERIFICATION):
             time = self.timeStamp.strftime("%H%M")
             calID = self.CurrentLUTIDTag.value
