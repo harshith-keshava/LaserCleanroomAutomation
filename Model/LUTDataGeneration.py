@@ -65,7 +65,7 @@ class LUTDataManager():
             self.lutStatus[pixel] = ("Power Called Failure") 
         return lutScaledData
         
-    def convertLaserDataToLUTData(self, laserCalibrationData, commandedPowerData, lasertestStatus, calID, laserSettings: LaserSettings, saveLocation=None,time=None):
+    def convertLaserDataToLUTData(self, laserCalibrationData, commandedPowerData, lasertestStatus, calID, laserSettings: LaserSettings, saveLocation=None,saveLocationNetwork=None,time=None):
         #Get current time for the purpose of file naming and database tags
         time=datetime.now()
         #Convert the test settings into distinct power levels in WATTS to be able to split the raw data up and compare the values 
@@ -118,6 +118,10 @@ class LUTDataManager():
         if saveLocation is not None:
             self.results_coeff.to_csv(saveLocation + "\\LUT_Coeff.csv")
             self.results_lut.to_csv(saveLocation + "\\LUT_Raw.csv")  
+        return luts
+        if saveLocationNetwork is not None:
+            self.results_coeff.to_csv(saveLocationNetwork + "\\LUT_Coeff.csv")
+            self.results_lut.to_csv(saveLocationNetwork + "\\LUT_Raw.csv")
         return luts
 
     def writeLUTDataToFolder(self, calID, csvPath=None, luts=None):

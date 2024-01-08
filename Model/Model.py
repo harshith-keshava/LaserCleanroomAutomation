@@ -240,7 +240,8 @@ class Model:
         "OMSTestComplete": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.OMSTestComplete"),
         "OMSTestAborted": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.OMSTestAborted"),
         "CameraExposure": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.CameraExposure"),
-        "PyroMultiplicationFactor": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.PyroMultiplicationFactor")
+        "PyroMultiplicationFactor": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.PyroMultiplicationFactor"),
+        "ComPortNumber": BNRopcuaTag(self.client, "ns=6;s=::AsGlobalPV:gOpcData_ToGen3CalibApp.ComPortNumber")
 
         }
 
@@ -340,6 +341,7 @@ class Model:
         self.CameraExposureTag = self.plcTags["CameraExposure"]
 
         self.PyroMultiplicationFactorTag = self.plcTags["PyroMultiplicationFactor"]
+        self.comPortNumberTag = self.plcTags["ComPortNumber"]
     
         ### Lookup Tables for Data Outputs #####
         self.testStatusTable = ["In Progress", "Passed", "High Power Failure", "Low Power Failure", "No Power Failure", "Untested", "", "", "", "", "Abort"]
@@ -392,6 +394,7 @@ class Model:
             self.OMSTestCompleteTag._setAsUpdating()
             self.OMSTestAbortedTag._setAsUpdating()
             self.PyroMultiplicationFactorTag._setAsUpdating()
+            self.comPortNumberTag._setAsUpdating()
         except:
             print("OPCUA subscription setup failed")
 
@@ -561,7 +564,7 @@ class Model:
 
 
     def generateLuts(self):
-        luts = self._lutDataManager.convertLaserDataToLUTData(self.laserTestData, self.commandedPowerData, self.laserTestStatus, self.testSettings._CalId, self.laserSettings, saveLocation=self.saveLocation)
+        luts = self._lutDataManager.convertLaserDataToLUTData(self.laserTestData, self.commandedPowerData, self.laserTestStatus, self.testSettings._CalId, self.laserSettings, saveLocation=self.saveLocation, saveLocationNetwork = self.saveLocationNetwork)
         bins = self._lutDataManager.convertLUTDataToBinaries(luts)
 
     def uploadLinearLuts(self):
@@ -948,7 +951,7 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Zaber home command received from  PLC ")
             camera = CameraDriver()
-            camera.homePositioner()
+            camera.homePositioner(self.comPortNumberTag.value)
             self.camera.initialize(self.gd)
             #Check camera directory
             self.camera_dir = os.path.join(self.saveLocation, "cameraData")
@@ -966,7 +969,7 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Zaber move relative command received from  PLC ")
             camera = CameraDriver()
-            camera.moveRelPositioner(self.ZaberRelativePosParTag.value)
+            camera.moveRelPositioner(self.ZaberRelativePosParTag.value,self.comPortNumberTag.value)
         if cmd == False:
             self.resetResponseTags()
 
@@ -975,7 +978,7 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Zaber move absolute command received from  PLC ")
             camera = CameraDriver()
-            camera.moveAbsPositioner(self.ZaberAbsolutePosParTag.value)
+            camera.moveAbsPositioner(self.ZaberAbsolutePosParTag.value,self.comPortNumberTag.value)
             self.camera.setExposure(self.CameraExposureTag.value,self.gd) # Set Exposure with zaber move 
         if cmd == False:
             self.resetResponseTags()
@@ -985,7 +988,7 @@ class Model:
         if cmd == True:
             self.logger.addNewLog("Zaber get home status command received from  PLC ")
             camera = CameraDriver()
-            self.ZaberHomedTag.setPlcValue(camera.getPositionerRefStatus())
+            self.ZaberHomedTag.setPlcValue(camera.getPositionerRefStatus(self.comPortNumberTag.value))
         if cmd == False:
             self.resetResponseTags()
 
@@ -1036,7 +1039,7 @@ class Model:
         activePixel = self.activePixelTag.value
         gantryXPosition = self.GantryXPositionStatusTag.value
         gantryYPosition = self.GantryYPositionStatusTag.value
-        zaberPosition = camera.getPositionerPosition()
+        zaberPosition = camera.getPositionerPosition(self.comPortNumberTag.value)
         pulseOnMsec = self.pulseOnMsecTag.value
         CurrentPowerLevel = self.currentPowerWattsTag.value
         machineName = self.MachineNameTag.value

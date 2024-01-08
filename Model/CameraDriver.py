@@ -162,9 +162,10 @@ class CameraDriver:
             print("An error occurred:", e)
             return 0  #TO DO:  might want to return an appropriate error code
 
-    def moveRelPositioner(self,target_position):
+    def moveRelPositioner(self,target_position,comPortNumber):
         try:
-            Connection = zaber.serial.AsciiSerial("COM11")
+            portString = "COM" + comPortNumber
+            Connection = zaber.serial.AsciiSerial(portString)
 
             rawData = round(target_position * 1000000.0)  # Convert the value to a string. Conversion factor between disance and raw steps is 1000000
             rawData = str(rawData)
@@ -183,9 +184,10 @@ class CameraDriver:
             print("An error occurred:", e)
             return 0  #TO DO:  might want to return an appropriate error code
 
-    def homePositioner(self):
+    def homePositioner(self,comPortNumber):
         try:
-            Connection = zaber.serial.AsciiSerial("COM11")
+            portString = "COM" + comPortNumber
+            Connection = zaber.serial.AsciiSerial(portString)
 
             # Send the "home" command
             Connection.write("home")
@@ -196,9 +198,10 @@ class CameraDriver:
             print("An error occurred:", e)
             return 0  #TO DO:  might want to return an appropriate error code
 
-    def getPositionerPosition(self):
+    def getPositionerPosition(self,comPortNumber):
         try:
-            Connection = zaber.serial.AsciiSerial("COM11")
+            portString = "COM" + comPortNumber
+            Connection = zaber.serial.AsciiSerial(portString)
 
             # Send the "get pos" command
             Connection.write("get pos")
@@ -221,9 +224,10 @@ class CameraDriver:
             logger.error(e, exc_info=True)
             return 999.99 #TO DO:  might want to return an appropriate error code
 
-    def getPositionerRefStatus(self):
+    def getPositionerRefStatus(self,comPortNumber):
         try:
-            Connection = zaber.serial.AsciiSerial("COM11")
+            portString = "COM" + comPortNumber
+            Connection = zaber.serial.AsciiSerial(portString)
 
             # Send the "get pos" command
             Connection.write("get pos")
